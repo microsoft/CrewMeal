@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
+  <div class="progress" id="progress" aria-hidden="true"></div>
   <!-- NAV -->
   <header class="nav">
     <div class="wrap nav-inner">
@@ -20,17 +21,22 @@
         <span class="logo">🍱</span>
         <div>CrewMeal <small data-ko="검색 콘텐츠 강화" data-en="Search Content Enrichment">검색 콘텐츠 강화</small></div>
       </div>
-      <nav class="nav-links">
+      <nav class="nav-links" aria-label="sections">
+        <a href="#grounding" data-ko="그라운딩" data-en="Grounding">그라운딩</a>
+        <a href="#enhance" data-ko="강화하기" data-en="Enhance">강화하기</a>
+        <a href="#results" data-ko="결과" data-en="Results">결과</a>
         <a href="#features" data-ko="기능" data-en="Features">기능</a>
-        <a href="#formats" data-ko="지원 포맷" data-en="Formats">지원 포맷</a>
+        <a href="#formats" data-ko="포맷" data-en="Formats">포맷</a>
         <a href="#screens" data-ko="화면" data-en="Screens">화면</a>
-        <a href="#pipeline" data-ko="파이프라인" data-en="Pipeline">파이프라인</a>
+        <a href="#pipeline" data-ko="흐름" data-en="Pipeline">흐름</a>
+      </nav>
+      <div class="nav-ctl">
         <div class="lang" role="group" aria-label="language">
           <button data-lang="ko" class="active">KO</button>
           <button data-lang="en">EN</button>
         </div>
         <a class="ghost" href="https://github.com/microsoft/CrewMeal" target="_blank" rel="noopener">GitHub ↗</a>
-      </nav>
+      </div>
     </div>
   </header>
 
@@ -43,7 +49,7 @@
 
       <div class="cta">
         <a class="btn primary" href="https://github.com/microsoft/CrewMeal" target="_blank" rel="noopener" data-ko="GitHub에서 보기" data-en="View on GitHub">GitHub에서 보기</a>
-        <a class="btn secondary" href="#screens" data-ko="실제 화면 보기" data-en="See it in action">실제 화면 보기</a>
+        <a class="btn secondary" href="#results" data-ko="강화 전후 결과 보기" data-en="See before vs after">강화 전후 결과 보기</a>
       </div>
 
       <div class="hero-note">
@@ -66,6 +72,151 @@
           <p style="margin:8px 0 0;color:var(--muted);font-size:14px" data-ko="이름에 담긴 뜻: Copilot이 잘 일하도록 먹여주는 잘 차려진 한 끼." data-en="The name in a bite: a well-plated meal that keeps your Copilot flying well.">이름에 담긴 뜻: Copilot이 잘 일하도록 먹여주는 잘 차려진 한 끼.</p>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- GROUNDING -->
+  <section id="grounding">
+    <div class="wrap">
+      <div class="eyebrow" data-ko="듀얼 인덱스 그라운딩" data-en="Dual-index grounding">듀얼 인덱스 그라운딩</div>
+      <h2 class="sec" data-ko="원본은 그대로, 강화 사본으로 Copilot을 그라운딩" data-en="Keep the original — ground Copilot on the enriched copy">원본은 그대로, 강화 사본으로 Copilot을 그라운딩</h2>
+      <p class="sec-lead" data-ko="CrewMeal은 문서를 좌표 정확 HTML로 강화해 Microsoft Graph 커넥터에 별도 색인합니다. 같은 문서가 SharePoint 원본과 외부 인덱스에 함께 있으면, Copilot은 정확도가 높은 외부(강화) 사본을 우선 근거로 답변합니다." data-en="CrewMeal enriches each document into geometry-accurate HTML and indexes it separately through the Microsoft Graph connector. When the same document exists both as the SharePoint original and the external index, Copilot answers from the higher-fidelity external (enriched) copy first.">CrewMeal은 문서를 좌표 정확 HTML로 강화해 Microsoft Graph 커넥터에 별도 색인합니다. 같은 문서가 SharePoint 원본과 외부 인덱스에 함께 있으면, Copilot은 정확도가 높은 외부(강화) 사본을 우선 근거로 답변합니다.</p>
+
+      <figure class="arch zoom">
+        <img src="./assets/deck/arch-dual-index.png" width="3840" height="2160" alt="Dual-index grounding architecture: source, enhancement worker, processing, publish, consumption" loading="lazy" />
+        <figcaption data-ko="전체 데이터 흐름 — 소스 · Microsoft 365 → 향상 워커 → 처리 파이프라인(좌표 기준값) → 게시(ACL) → 듀얼 인덱스에서 외부 사본 우선 소비. (고객 제안 자료)" data-en="End-to-end flow — Source · Microsoft 365 → enhancement worker → processing (geometry ground-truth) → publish (ACL) → dual-index consumption with the external copy prioritized. (Customer proposal deck)">전체 데이터 흐름 — 소스 · Microsoft 365 → 향상 워커 → 처리 파이프라인(좌표 기준값) → 게시(ACL) → 듀얼 인덱스에서 외부 사본 우선 소비. (고객 제안 자료)</figcaption>
+      </figure>
+
+      <div class="grid tri">
+        <div class="card"><div class="ic bad">!</div><h3 data-ko="문제" data-en="Problem">문제</h3><p data-ko="Copilot은 문서를 추출 텍스트로만 인식합니다. 표의 값, 도형의 관계, 다이어그램 구조를 놓치거나 잘못 해석(할루시네이션)해 답변 신뢰도가 떨어집니다." data-en="Copilot sees documents only as extracted text. It misses table values, shape relationships and diagram structure — or hallucinates them — which erodes answer reliability.">Copilot은 문서를 추출 텍스트로만 인식합니다. 표의 값, 도형의 관계, 다이어그램 구조를 놓치거나 잘못 해석(할루시네이션)해 답변 신뢰도가 떨어집니다.</p></div>
+        <div class="card"><div class="ic good">✓</div><h3 data-ko="해결" data-en="Solution">해결</h3><p data-ko="슬라이드의 정확한 좌표(OOXML 지오메트리)를 기준값으로 삼아 고품질 HTML로 변환하고, Microsoft Graph 커넥터로 외부 인덱스에 별도 색인합니다." data-en="We take the exact coordinates (OOXML geometry) as ground truth, convert to high-quality HTML, and index it separately as an external item through the Microsoft Graph connector.">슬라이드의 정확한 좌표(OOXML 지오메트리)를 기준값으로 삼아 고품질 HTML로 변환하고, Microsoft Graph 커넥터로 외부 인덱스에 별도 색인합니다.</p></div>
+        <div class="card"><div class="ic star">★</div><h3 data-ko="효과" data-en="Impact">효과</h3><p data-ko="강화 사본을 우선 근거로 사용해 답변 정확도가 올라갑니다. 원본 권한(ACL)은 그대로 유지되고, 변경분은 자동으로 동기화됩니다." data-en="Using the enriched copy as the primary source raises answer accuracy. The original permissions (ACL) are preserved, and changes sync automatically.">강화 사본을 우선 근거로 사용해 답변 정확도가 올라갑니다. 원본 권한(ACL)은 그대로 유지되고, 변경분은 자동으로 동기화됩니다.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ENHANCE -->
+  <section id="enhance">
+    <div class="wrap">
+      <div class="eyebrow" data-ko="사용 방법" data-en="How it works">사용 방법</div>
+      <h2 class="sec" data-ko="사용자는 이렇게 인덱스를 강화합니다" data-en="This is how a user enriches the index">사용자는 이렇게 인덱스를 강화합니다</h2>
+      <p class="sec-lead" data-ko="운영자가 SharePoint에서 문서를 고르고 명령 한 번으로 강화를 시작합니다. 나머지는 워커가 비동기로 처리합니다. 아래는 실제 고객 제안 POC 화면입니다." data-en="An operator picks a document in SharePoint and starts enrichment with a single command; the worker handles the rest asynchronously. Below are real customer-proposal PoC screens.">운영자가 SharePoint에서 문서를 고르고 명령 한 번으로 강화를 시작합니다. 나머지는 워커가 비동기로 처리합니다. 아래는 실제 고객 제안 POC 화면입니다.</p>
+
+      <div class="steps">
+        <figure class="estep zoom">
+          <span class="badge-step pre" data-ko="선행 설정 · 1회" data-en="One-time setup">선행 설정 · 1회</span>
+          <img src="./assets/deck/flow-0-memory.png" width="1236" height="725" alt="Copilot memory: prioritize External over SharePoint native" loading="lazy" />
+          <figcaption><b data-ko="Copilot 메모리 각인" data-en="Register a Copilot memory">Copilot 메모리 각인</b><span data-ko="“SharePoint와 External이 함께 검색되면 External(강화 사본)을 우선 근거로 답하라”고 한 번 각인해 인덱스 이중화 충돌을 피합니다." data-en="Tell Copilot once: when both SharePoint and External results appear, ground on the External (enriched) copy first — avoiding dual-index conflicts.">“SharePoint와 External이 함께 검색되면 External(강화 사본)을 우선 근거로 답하라”고 한 번 각인해 인덱스 이중화 충돌을 피합니다.</span></figcaption>
+        </figure>
+
+        <figure class="estep zoom">
+          <span class="badge-step" data-ko="1단계" data-en="Step 1">1단계</span>
+          <img src="./assets/deck/flow-1-command.png" width="1440" height="914" alt="Select a document in SharePoint and run the enhance command" loading="lazy" />
+          <figcaption><b data-ko="문서 선택 → 「코파일럿을 위해 검색강화」" data-en="Select a document → “Enhance for Copilot”">문서 선택 → 「코파일럿을 위해 검색강화」</b><span data-ko="SharePoint 문서 라이브러리에서 대상 문서를 고르고 컨텍스트 메뉴의 검색강화 명령을 실행합니다." data-en="Pick the target document in the SharePoint library and run the search-enhancement command from the context menu.">SharePoint 문서 라이브러리에서 대상 문서를 고르고 컨텍스트 메뉴의 검색강화 명령을 실행합니다.</span></figcaption>
+        </figure>
+
+        <figure class="estep zoom">
+          <span class="badge-step" data-ko="2단계" data-en="Step 2">2단계</span>
+          <img src="./assets/deck/flow-2-queued.png" width="1439" height="646" alt="The request is registered as an async job" loading="lazy" />
+          <figcaption><b data-ko="비동기 작업 등록" data-en="Async job queued">비동기 작업 등록</b><span data-ko="강화 요청이 서버에 비동기 작업으로 등록되고, 상태 페이지 링크로 진행 상황을 추적합니다." data-en="The request is registered as an async job on the server; a status-page link tracks its progress.">강화 요청이 서버에 비동기 작업으로 등록되고, 상태 페이지 링크로 진행 상황을 추적합니다.</span></figcaption>
+        </figure>
+
+        <figure class="estep zoom">
+          <span class="badge-step" data-ko="3단계" data-en="Step 3">3단계</span>
+          <img src="./assets/deck/flow-3-processing.png" width="1379" height="648" alt="Processing takes minutes depending on size and complexity" loading="lazy" />
+          <figcaption><b data-ko="처리 · 수분~십수분" data-en="Processing · minutes">처리 · 수분~십수분</b><span data-ko="문서의 크기와 복잡도에 따라 렌더·분석·게시가 수분에서 십수분가량 진행됩니다. 완료되면 외부 인덱스에 강화 사본이 게시됩니다." data-en="Rendering, analysis and publishing take a few to a dozen-plus minutes depending on size and complexity. On completion, the enriched copy is published to the external index.">문서의 크기와 복잡도에 따라 렌더·분석·게시가 수분에서 십수분가량 진행됩니다. 완료되면 외부 인덱스에 강화 사본이 게시됩니다.</span></figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section id="results">
+    <div class="wrap">
+      <div class="eyebrow" data-ko="결과" data-en="Results">결과</div>
+      <h2 class="sec" data-ko="강화 전후, Copilot의 답변이 달라집니다" data-en="Before vs after — the answer changes">강화 전후, Copilot의 답변이 달라집니다</h2>
+      <p class="sec-lead" data-ko="실제 고객 제안 POC에서 캡처한 화면입니다. 표·도형·이미지로 표현된 정보는 강화 전에는 답변하지 못하지만, 강화 후에는 정확한 근거와 출처로 답변합니다. 이미지를 클릭하면 크게 볼 수 있습니다." data-en="Captured from a real customer-proposal PoC. Information expressed as tables, shapes and images cannot be answered before enrichment — but is answered accurately, with sources, afterward. Click any image to enlarge.">실제 고객 제안 POC에서 캡처한 화면입니다. 표·도형·이미지로 표현된 정보는 강화 전에는 답변하지 못하지만, 강화 후에는 정확한 근거와 출처로 답변합니다. 이미지를 클릭하면 크게 볼 수 있습니다.</p>
+
+      <!-- case 1: Gantt -->
+      <article class="demo">
+        <header class="demo-head">
+          <span class="kind" data-ko="간트 차트" data-en="Gantt chart">간트 차트</span>
+          <h3 data-ko="표와 막대로 그려진 일정" data-en="A schedule drawn as a table of bars">표와 막대로 그려진 일정</h3>
+          <p data-ko="W1~W12 막대와 마일스톤(Kick-Off · To-Be 확정 · OPEN · 완료보고)이 도형으로 배치된 슬라이드. 막대 위치가 곧 일정입니다." data-en="A slide where W1–W12 bars and milestones (Kick-Off · To-Be · OPEN · completion) are laid out as shapes. The bar position is the schedule.">W1~W12 막대와 마일스톤(Kick-Off · To-Be 확정 · OPEN · 완료보고)이 도형으로 배치된 슬라이드. 막대 위치가 곧 일정입니다.</p>
+        </header>
+        <div class="demo-grid">
+          <figure class="demo-src zoom">
+            <img src="./assets/deck/case-gantt-source.png" width="1156" height="805" alt="Source Gantt slide with W1-W12 bars and milestones" loading="lazy" />
+            <figcaption data-ko="원본 슬라이드 「4. 프로젝트 구축일정」" data-en="Source slide “4. Project schedule”">원본 슬라이드 「4. 프로젝트 구축일정」</figcaption>
+          </figure>
+          <div class="ba">
+            <figure class="ba-card before zoom">
+              <div class="ba-tag" data-ko="강화 전" data-en="Before">강화 전</div>
+              <img src="./assets/deck/case-gantt-before.png" width="1440" height="914" alt="Before: Copilot cannot determine the week range" loading="lazy" />
+              <figcaption><b class="fail" data-ko="답변 실패" data-en="Cannot answer">답변 실패</b><span data-ko="“통합 테스트는 언제인가?” — 작업이 있다는 것은 알지만 막대가 텍스트로 추출되지 않아 정확한 주차(W)를 확인할 수 없다고 답합니다." data-en="“When is the integration test?” — it knows the task exists but says it can't determine the exact week (W), because the bars aren't extracted as text.">“통합 테스트는 언제인가?” — 작업이 있다는 것은 알지만 막대가 텍스트로 추출되지 않아 정확한 주차(W)를 확인할 수 없다고 답합니다.</span></figcaption>
+            </figure>
+            <figure class="ba-card after zoom">
+              <div class="ba-tag" data-ko="강화 후" data-en="After">강화 후</div>
+              <img src="./assets/deck/case-gantt-after.png" width="1305" height="602" alt="After: Copilot answers the exact W12 / end-of-April timing" loading="lazy" />
+              <figcaption><b class="ok" data-ko="정확 답변" data-en="Answered">정확 답변</b><span data-ko="“완료보고 시점은?” — W12 종료 시점(4월 말, 안정화·인수인계 완료 후)까지 근거·출처와 함께 정확히 답합니다." data-en="“When is the completion report?” — it answers precisely: the W12 end point (late April, after stabilization/handover), with evidence and a source.">“완료보고 시점은?” — W12 종료 시점(4월 말, 안정화·인수인계 완료 후)까지 근거·출처와 함께 정확히 답합니다.</span></figcaption>
+            </figure>
+          </div>
+        </div>
+      </article>
+
+      <!-- case 2: Org chart -->
+      <article class="demo">
+        <header class="demo-head">
+          <span class="kind" data-ko="도형 조직도" data-en="Shape org chart">도형 조직도</span>
+          <h3 data-ko="도형과 연결선으로 그린 조직도" data-en="An org chart of connected shapes">도형과 연결선으로 그린 조직도</h3>
+          <p data-ko="Project Manager · Advisor · 현업 · 컨설턴트/개발자 · 운영지원이 연결선으로 이어진 조직도. 관계가 곧 정보입니다." data-en="Project Manager · Advisor · business · consultants/developers · operations, tied together by connector lines. The relationships are the information.">Project Manager · Advisor · 현업 · 컨설턴트/개발자 · 운영지원이 연결선으로 이어진 조직도. 관계가 곧 정보입니다.</p>
+        </header>
+        <div class="demo-grid">
+          <figure class="demo-src zoom">
+            <img src="./assets/deck/case-org-source.png" width="1152" height="801" alt="Source org-chart slide built from connected shapes" loading="lazy" />
+            <figcaption data-ko="원본 슬라이드 「6. 프로젝트 조직」" data-en="Source slide “6. Project organization”">원본 슬라이드 「6. 프로젝트 조직」</figcaption>
+          </figure>
+          <div class="ba">
+            <figure class="ba-card before zoom">
+              <div class="ba-tag" data-ko="강화 전" data-en="Before">강화 전</div>
+              <img src="./assets/deck/case-org-before.png" width="1440" height="914" alt="Before: Copilot cannot answer the org relationships" loading="lazy" />
+              <figcaption><b class="fail" data-ko="답변 실패" data-en="Cannot answer">답변 실패</b><span data-ko="도형의 연결 관계가 텍스트로 남지 않아 역할·보고 라인을 제대로 답변하지 못합니다." data-en="Because the shape connections aren't preserved as text, it can't properly answer roles and reporting lines.">도형의 연결 관계가 텍스트로 남지 않아 역할·보고 라인을 제대로 답변하지 못합니다.</span></figcaption>
+            </figure>
+            <figure class="ba-card after zoom">
+              <div class="ba-tag" data-ko="강화 후" data-en="After">강화 후</div>
+              <img src="./assets/deck/case-org-after.png" width="1388" height="747" alt="After: Copilot answers roles and reporting lines" loading="lazy" />
+              <figcaption><b class="ok" data-ko="정확 답변" data-en="Answered">정확 답변</b><span data-ko="좌표 기반으로 복원된 구조 덕분에 담당자·팀·보고 라인을 정확히 답변합니다." data-en="Thanks to the geometry-restored structure, it answers the people, teams and reporting lines accurately.">좌표 기반으로 복원된 구조 덕분에 담당자·팀·보고 라인을 정확히 답변합니다.</span></figcaption>
+            </figure>
+          </div>
+        </div>
+      </article>
+
+      <!-- case 3: Process diagram -->
+      <article class="demo">
+        <header class="demo-head">
+          <span class="kind" data-ko="이미지 프로세스도" data-en="Image-only process map">이미지 프로세스도</span>
+          <h3 data-ko="통째로 이미지로 붙은 스윔레인" data-en="A swim-lane pasted as one image">통째로 이미지로 붙은 스윔레인</h3>
+          <p data-ko="사업부 · 회계/자금팀 · 자금팀 시스템 · VAN/은행 레인의 외화 펌뱅킹 프로세스 흐름도. 슬라이드에 한 장의 이미지로 삽입돼 텍스트가 전혀 없습니다." data-en="A foreign-currency firm-banking process across business · accounting/treasury · treasury-system · VAN/bank lanes — inserted as a single image with no text at all.">사업부 · 회계/자금팀 · 자금팀 시스템 · VAN/은행 레인의 외화 펌뱅킹 프로세스 흐름도. 슬라이드에 한 장의 이미지로 삽입돼 텍스트가 전혀 없습니다.</p>
+        </header>
+        <div class="demo-grid">
+          <figure class="demo-src zoom">
+            <img src="./assets/deck/case-process-source.png" width="1147" height="808" alt="Source slide: a swim-lane process diagram pasted as one image" loading="lazy" />
+            <figcaption data-ko="원본 슬라이드 「외화 펌뱅킹 프로세스 정의」" data-en="Source slide “FX firm-banking process”">원본 슬라이드 「외화 펌뱅킹 프로세스 정의」</figcaption>
+          </figure>
+          <div class="ba">
+            <figure class="ba-card before zoom">
+              <div class="ba-tag" data-ko="강화 전" data-en="Before">강화 전</div>
+              <img src="./assets/deck/case-process-before.png" width="1440" height="914" alt="Before: Copilot cannot read the image-only process" loading="lazy" />
+              <figcaption><b class="fail" data-ko="답변 실패" data-en="Cannot answer">답변 실패</b><span data-ko="이미지 안의 텍스트와 흐름이 인덱스에 없어 프로세스 단계를 답변하지 못합니다." data-en="With the in-image text and flow absent from the index, it can't answer the process steps.">이미지 안의 텍스트와 흐름이 인덱스에 없어 프로세스 단계를 답변하지 못합니다.</span></figcaption>
+            </figure>
+            <figure class="ba-card after zoom">
+              <div class="ba-tag" data-ko="강화 후" data-en="After">강화 후</div>
+              <img src="./assets/deck/case-process-after.png" width="1398" height="728" alt="After: Copilot answers the process flow" loading="lazy" />
+              <figcaption><b class="ok" data-ko="정확 답변" data-en="Answered">정확 답변</b><span data-ko="비전 분석으로 이미지 속 레인·단계를 복원해 프로세스 흐름을 정확히 답변합니다." data-en="Vision analysis restores the lanes and steps inside the image, so it answers the process flow accurately.">비전 분석으로 이미지 속 레인·단계를 복원해 프로세스 흐름을 정확히 답변합니다.</span></figcaption>
+            </figure>
+          </div>
+        </div>
+      </article>
     </div>
   </section>
 
@@ -181,43 +332,43 @@
       <div class="shots">
         <div class="shot wide">
           <div class="cap"><div class="dots"><i></i><i></i><i></i></div><span>/admin/settings</span></div>
-          <img src="./assets/screenshots/admin-settings.png" alt="Admin settings: format toggles, vision model swap, decryption" loading="lazy" />
+          <img src="./assets/screenshots/admin-settings.png" width="1425" height="2510" alt="Admin settings: format toggles, vision model swap, decryption" loading="lazy" />
           <div class="desc"><b data-ko="설정: 포맷 토글 · 모델 교체 · 복호화" data-en="Settings: format toggles · model swap · decryption">설정: 포맷 토글 · 모델 교체 · 복호화</b><span data-ko="포맷별 on/off, 비전 모델 provider/배포/엔드포인트 교체, MIP·기타 복호화 토글을 한 화면에서 관리합니다." data-en="Per-format on/off, vision-model provider/deployment/endpoint swap, and MIP/other decryption toggles in one screen.">포맷별 on/off, 비전 모델 provider/배포/엔드포인트 교체, MIP·기타 복호화 토글을 한 화면에서 관리합니다.</span></div>
         </div>
 
         <div class="shot">
           <div class="cap"><div class="dots"><i></i><i></i><i></i></div><span>/admin</span></div>
-          <img src="./assets/screenshots/admin-dashboard.png" alt="Admin dashboard with cost and status counts" loading="lazy" />
+          <img src="./assets/screenshots/admin-dashboard.png" width="1425" height="1099" alt="Admin dashboard with cost and status counts" loading="lazy" />
           <div class="desc"><b data-ko="관리자 대시보드" data-en="Admin dashboard">관리자 대시보드</b><span data-ko="문서 상태 집계, 최근 작업, 누적 토큰 비용(추정)을 한눈에." data-en="Document status counts, recent jobs and estimated cumulative token cost at a glance.">문서 상태 집계, 최근 작업, 누적 토큰 비용(추정)을 한눈에.</span></div>
         </div>
 
         <div class="shot">
           <div class="cap"><div class="dots"><i></i><i></i><i></i></div><span>/admin/documents</span></div>
-          <img src="./assets/screenshots/admin-documents.png" alt="Document list across formats and statuses" loading="lazy" />
+          <img src="./assets/screenshots/admin-documents.png" width="1440" height="900" alt="Document list across formats and statuses" loading="lazy" />
           <div class="desc"><b data-ko="문서 목록" data-en="Document list">문서 목록</b><span data-ko="PPTX·PDF·HWP가 SharePoint·업로드 소스로 섞여 상태별로 나열됩니다." data-en="PPTX, PDF and HWP from SharePoint and upload sources, listed by status.">PPTX·PDF·HWP가 SharePoint·업로드 소스로 섞여 상태별로 나열됩니다.</span></div>
         </div>
 
         <div class="shot">
           <div class="cap"><div class="dots"><i></i><i></i><i></i></div><span>/s/{token}</span></div>
-          <img src="./assets/screenshots/status-ready.png" alt="User status page with progress timeline and cost" loading="lazy" />
+          <img src="./assets/screenshots/status-ready.png" width="1425" height="2092" alt="User status page with progress timeline and cost" loading="lazy" />
           <div class="desc"><b data-ko="상태 페이지 (완료)" data-en="Status page (ready)">상태 페이지 (완료)</b><span data-ko="단계별 타임라인, 소요 시간, 강화 비용(추정), 추출 HTML 미리보기를 사용자에게 제공합니다." data-en="A stage-by-stage timeline, durations, estimated cost and an extracted-HTML preview for the end user.">단계별 타임라인, 소요 시간, 강화 비용(추정), 추출 HTML 미리보기를 사용자에게 제공합니다.</span></div>
         </div>
 
         <div class="shot">
           <div class="cap"><div class="dots"><i></i><i></i><i></i></div><span>/s/{token}</span></div>
-          <img src="./assets/screenshots/status-processing.png" alt="In-flight progress with per-slide sub-progress" loading="lazy" />
+          <img src="./assets/screenshots/status-processing.png" width="1425" height="1201" alt="In-flight progress with per-slide sub-progress" loading="lazy" />
           <div class="desc"><b data-ko="상태 페이지 (진행 중)" data-en="Status page (in flight)">상태 페이지 (진행 중)</b><span data-ko="HWP 문서가 분석되는 동안 18/30쪽 같은 슬라이드 단위 진행률을 실시간으로 보여줍니다." data-en="While an HWP document is analyzed, per-slide sub-progress like 18/30 updates in real time.">HWP 문서가 분석되는 동안 18/30쪽 같은 슬라이드 단위 진행률을 실시간으로 보여줍니다.</span></div>
         </div>
 
         <div class="shot">
           <div class="cap"><div class="dots"><i></i><i></i><i></i></div><span>/s/{token}/html</span></div>
-          <img src="./assets/screenshots/enhanced-html.png" alt="Structured enhanced HTML output" loading="lazy" />
+          <img src="./assets/screenshots/enhanced-html.png" width="1440" height="900" alt="Structured enhanced HTML output" loading="lazy" />
           <div class="desc"><b data-ko="강화된 구조화 HTML" data-en="Enhanced structured HTML">강화된 구조화 HTML</b><span data-ko="원본 페이지의 시각 콘텐츠가 제목·문단·표·목록의 허용 태그 HTML로 구조화됩니다." data-en="The visual content of each page becomes structured allow-listed HTML — headings, paragraphs, tables and lists.">원본 페이지의 시각 콘텐츠가 제목·문단·표·목록의 허용 태그 HTML로 구조화됩니다.</span></div>
         </div>
 
         <div class="shot">
           <div class="cap"><div class="dots"><i></i><i></i><i></i></div><span>/admin/tryout</span></div>
-          <img src="./assets/screenshots/admin-tryout.png" alt="Tryout uploader supporting multiple formats" loading="lazy" />
+          <img src="./assets/screenshots/admin-tryout.png" width="1440" height="900" alt="Tryout uploader supporting multiple formats" loading="lazy" />
           <div class="desc"><b data-ko="시연 업로드" data-en="Tryout uploader">시연 업로드</b><span data-ko="문서를 직접 올려 동일 파이프라인을 시험합니다. 지원 형식이 활성 포맷에 따라 자동으로 표시됩니다." data-en="Upload a document to try the same pipeline. Accepted formats reflect the enabled formats automatically.">문서를 직접 올려 동일 파이프라인을 시험합니다. 지원 형식이 활성 포맷에 따라 자동으로 표시됩니다.</span></div>
         </div>
       </div>

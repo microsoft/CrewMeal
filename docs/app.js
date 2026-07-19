@@ -29,7 +29,7 @@
   var box = document.getElementById("lightbox");
   var boxImg = box ? box.querySelector("img") : null;
 
-  document.querySelectorAll(".shot img").forEach(function (img) {
+  document.querySelectorAll(".shot img, .zoom img").forEach(function (img) {
     img.addEventListener("click", function () {
       if (!box || !boxImg) return;
       boxImg.src = img.src;
@@ -43,6 +43,42 @@
       if (e.key === "Escape") box.classList.remove("open");
     });
   }
+
+  // ---- scroll progress + scrollspy ----------------------------------------
+  var progress = document.getElementById("progress");
+  var links = Array.prototype.slice.call(
+    document.querySelectorAll('.nav-links a[href^="#"]')
+  );
+  var sections = links.map(function (a) {
+    return document.getElementById(a.getAttribute("href").slice(1));
+  });
+  var ticking = false;
+
+  function update() {
+    ticking = false;
+    var doc = document.documentElement;
+    var scrollY = window.scrollY || window.pageYOffset || 0;
+    var max = doc.scrollHeight - doc.clientHeight;
+    if (progress) progress.style.width = (max > 0 ? (scrollY / max) * 100 : 0) + "%";
+
+    var pos = scrollY + 100; // account for sticky header
+    var current = -1;
+    for (var i = 0; i < sections.length; i++) {
+      var s = sections[i];
+      if (!s) continue;
+      var top = s.getBoundingClientRect().top + scrollY;
+      if (top <= pos) current = i;
+    }
+    links.forEach(function (a, i) { a.classList.toggle("active", i === current); });
+  }
+
+  function onScroll() {
+    if (!ticking) { ticking = true; window.requestAnimationFrame(update); }
+  }
+
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("resize", onScroll);
+  update();
 
   // ---- footer year ---------------------------------------------------------
   var y = document.getElementById("year");
