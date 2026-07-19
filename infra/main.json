@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.42.1.51946",
-      "templateHash": "6581074727892334010"
+      "templateHash": "18288698427745716621"
     }
   },
   "parameters": {
@@ -178,7 +178,7 @@
       "type": "object",
       "defaultValue": {
         "azd-env-name": "[parameters('environmentName')]",
-        "application": "crewmeal-ppt",
+        "application": "crewmeal",
         "purpose": "content-understanding-poc"
       },
       "metadata": {
@@ -235,7 +235,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.42.1.51946",
-              "templateHash": "16233776037867208500"
+              "templateHash": "15387586589969986182"
             }
           },
           "parameters": {
@@ -276,6 +276,13 @@
                 "description": "The GPT model deployment name used by Content Understanding."
               }
             },
+            "lunaDeploymentName": {
+              "type": "string",
+              "defaultValue": "gpt-5-6-luna-test",
+              "metadata": {
+                "description": "The GPT-5.6 Luna deployment used for production slide-image analysis."
+              }
+            },
             "gptMiniDeploymentName": {
               "type": "string",
               "defaultValue": "gpt-5-mini",
@@ -292,9 +299,16 @@
             },
             "gptCapacity": {
               "type": "int",
-              "defaultValue": 100,
+              "defaultValue": 500,
               "metadata": {
                 "description": "TPM capacity (GlobalStandard units, 1 unit = 1K TPM) for the primary GPT deployment."
+              }
+            },
+            "lunaCapacity": {
+              "type": "int",
+              "defaultValue": 500,
+              "metadata": {
+                "description": "TPM capacity (GlobalStandard units, 1 unit = 1K TPM) for GPT-5.6 Luna."
               }
             },
             "embeddingCapacity": {
@@ -380,6 +394,19 @@
                         "sku": {
                           "name": "GlobalStandard",
                           "capacity": 100
+                        },
+                        "versionUpgradeOption": "NoAutoUpgrade"
+                      },
+                      {
+                        "name": "[parameters('lunaDeploymentName')]",
+                        "model": {
+                          "format": "OpenAI",
+                          "name": "gpt-5.6-luna",
+                          "version": "2026-07-09"
+                        },
+                        "sku": {
+                          "name": "GlobalStandard",
+                          "capacity": "[parameters('lunaCapacity')]"
                         },
                         "versionUpgradeOption": "NoAutoUpgrade"
                       },
@@ -2960,6 +2987,10 @@
               "type": "string",
               "value": "[parameters('gptDeploymentName')]"
             },
+            "lunaDeploymentName": {
+              "type": "string",
+              "value": "[parameters('lunaDeploymentName')]"
+            },
             "gptMiniDeploymentName": {
               "type": "string",
               "value": "[parameters('gptMiniDeploymentName')]"
@@ -3065,7 +3096,10 @@
             "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'foundry'), '2025-04-01').outputs.gptDeploymentName.value]"
           },
           "slideImageDeployment": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'foundry'), '2025-04-01').outputs.gptDeploymentName.value]"
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'foundry'), '2025-04-01').outputs.lunaDeploymentName.value]"
+          },
+          "slideImageModel": {
+            "value": "gpt-5.6-luna"
           },
           "contentUnderstandingEmbeddingDeployment": {
             "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'foundry'), '2025-04-01').outputs.embeddingDeploymentName.value]"
@@ -3078,7 +3112,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.42.1.51946",
-              "templateHash": "913533008417066399"
+              "templateHash": "15475178653265107986"
             }
           },
           "parameters": {
@@ -3244,6 +3278,34 @@
                 "description": "Slide-image deployment name from Foundry."
               }
             },
+            "slideImageModel": {
+              "type": "string",
+              "defaultValue": "gpt-5.6-luna",
+              "metadata": {
+                "description": "Model label recorded for slide-image token usage."
+              }
+            },
+            "priceModelLabel": {
+              "type": "string",
+              "defaultValue": "gpt-5.6-luna",
+              "metadata": {
+                "description": "Model label shown with token-cost estimates."
+              }
+            },
+            "priceInputUsdPerMillion": {
+              "type": "string",
+              "defaultValue": "1",
+              "metadata": {
+                "description": "Estimated input-token price in USD per million tokens."
+              }
+            },
+            "priceOutputUsdPerMillion": {
+              "type": "string",
+              "defaultValue": "6",
+              "metadata": {
+                "description": "Estimated output-token price in USD per million tokens."
+              }
+            },
             "contentUnderstandingEmbeddingDeployment": {
               "type": "string",
               "metadata": {
@@ -3254,7 +3316,7 @@
               "type": "int",
               "defaultValue": 4,
               "metadata": {
-                "description": "Number of slides analyzed concurrently per enhancement job (per-job GPT parallelism). Bounded by the gpt-5.2 deployment TPM capacity."
+                "description": "Number of slides analyzed concurrently per enhancement job (per-job GPT parallelism). Bounded by the active slide-image deployment TPM capacity."
               }
             },
             "workerMaxReplicas": {
@@ -3263,7 +3325,7 @@
               "minValue": 1,
               "maxValue": 10,
               "metadata": {
-                "description": "Maximum worker replicas for cross-job parallelism. KEDA scales out toward this ceiling based on enhancement job queue depth. Keep aligned with the gpt-5.2 deployment TPM capacity."
+                "description": "Maximum worker replicas for cross-job parallelism. KEDA scales out toward this ceiling based on enhancement job queue depth. Keep aligned with the active slide-image deployment TPM capacity."
               }
             },
             "workerQueueScaleTarget": {
@@ -3592,7 +3654,7 @@
                     {
                       "name": "web",
                       "image": "[parameters('containerImage')]",
-                      "env": "[concat(createArray(createObject('name', 'AZURE_CLIENT_ID', 'value', reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('managedIdentityName')), '2023-01-31').clientId), createObject('name', 'DATABASE_URL', 'secretRef', 'database-url'), createObject('name', 'CREWMEAL_ARTIFACT_BACKEND', 'value', 'database'), createObject('name', 'CREWMEAL_ARTIFACT_DIR', 'value', '/tmp/crewmeal-artifacts'), createObject('name', 'CREWMEAL_M365_TENANT_ID', 'value', parameters('m365TenantId')), createObject('name', 'CREWMEAL_M365_CLIENT_ID', 'value', parameters('m365ClientId')), createObject('name', 'CREWMEAL_M365_CLIENT_SECRET', 'secretRef', 'm365-client-secret'), createObject('name', 'CREWMEAL_M365_SITE_ID', 'value', parameters('m365SiteId')), createObject('name', 'CREWMEAL_M365_DRIVE_ID', 'value', parameters('m365DriveId')), createObject('name', 'CREWMEAL_M365_LIST_ID', 'value', parameters('m365ListId')), createObject('name', 'CREWMEAL_M365_SITE_URL', 'value', parameters('m365SiteUrl')), createObject('name', 'CREWMEAL_M365_CONNECTION_ID', 'value', parameters('m365ConnectionId'))), createArray(createObject('name', 'APP_ROLE', 'value', 'web'), createObject('name', 'PORT', 'value', '8000'), createObject('name', 'CREWMEAL_WEB_BASE_URL', 'value', format('https://{0}.{1}', variables('webAppName'), reference(resourceId('Microsoft.App/managedEnvironments', variables('containerAppsEnvironmentName')), '2024-03-01').defaultDomain)), createObject('name', 'CREWMEAL_ADMIN_KEY', 'secretRef', 'admin-key'), createObject('name', 'CREWMEAL_WEB_SESSION_SECRET', 'secretRef', 'session-secret'), createObject('name', 'CREWMEAL_INGEST_TENANT_ID', 'value', parameters('ingestTenantId')), createObject('name', 'CREWMEAL_INGEST_AUDIENCE', 'value', parameters('ingestAudience')), createObject('name', 'CREWMEAL_INGEST_ALLOWED_APP_IDS', 'value', parameters('ingestAllowedAppIds')), createObject('name', 'CREWMEAL_INGEST_ALLOWED_ORIGINS', 'value', parameters('ingestAllowedOrigins')), createObject('name', 'CREWMEAL_INGEST_REQUIRE_AUTH', 'value', parameters('ingestRequireAuth'))))]"
+                      "env": "[concat(createArray(createObject('name', 'AZURE_CLIENT_ID', 'value', reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('managedIdentityName')), '2023-01-31').clientId), createObject('name', 'DATABASE_URL', 'secretRef', 'database-url'), createObject('name', 'CREWMEAL_ARTIFACT_BACKEND', 'value', 'database'), createObject('name', 'CREWMEAL_ARTIFACT_DIR', 'value', '/tmp/crewmeal-artifacts'), createObject('name', 'CREWMEAL_M365_TENANT_ID', 'value', parameters('m365TenantId')), createObject('name', 'CREWMEAL_M365_CLIENT_ID', 'value', parameters('m365ClientId')), createObject('name', 'CREWMEAL_M365_CLIENT_SECRET', 'secretRef', 'm365-client-secret'), createObject('name', 'CREWMEAL_M365_SITE_ID', 'value', parameters('m365SiteId')), createObject('name', 'CREWMEAL_M365_DRIVE_ID', 'value', parameters('m365DriveId')), createObject('name', 'CREWMEAL_M365_LIST_ID', 'value', parameters('m365ListId')), createObject('name', 'CREWMEAL_M365_SITE_URL', 'value', parameters('m365SiteUrl')), createObject('name', 'CREWMEAL_M365_CONNECTION_ID', 'value', parameters('m365ConnectionId')), createObject('name', 'SLIDE_IMAGE_MODEL', 'value', parameters('slideImageModel')), createObject('name', 'SLIDE_IMAGE_DEPLOYMENT', 'value', parameters('slideImageDeployment')), createObject('name', 'CREWMEAL_PRICE_MODEL_LABEL', 'value', parameters('priceModelLabel')), createObject('name', 'CREWMEAL_PRICE_INPUT_USD_PER_M', 'value', parameters('priceInputUsdPerMillion')), createObject('name', 'CREWMEAL_PRICE_OUTPUT_USD_PER_M', 'value', parameters('priceOutputUsdPerMillion'))), createArray(createObject('name', 'APP_ROLE', 'value', 'web'), createObject('name', 'PORT', 'value', '8000'), createObject('name', 'CREWMEAL_WEB_BASE_URL', 'value', format('https://{0}.{1}', variables('webAppName'), reference(resourceId('Microsoft.App/managedEnvironments', variables('containerAppsEnvironmentName')), '2024-03-01').defaultDomain)), createObject('name', 'CREWMEAL_ADMIN_KEY', 'secretRef', 'admin-key'), createObject('name', 'CREWMEAL_WEB_SESSION_SECRET', 'secretRef', 'session-secret'), createObject('name', 'CREWMEAL_INGEST_TENANT_ID', 'value', parameters('ingestTenantId')), createObject('name', 'CREWMEAL_INGEST_AUDIENCE', 'value', parameters('ingestAudience')), createObject('name', 'CREWMEAL_INGEST_ALLOWED_APP_IDS', 'value', parameters('ingestAllowedAppIds')), createObject('name', 'CREWMEAL_INGEST_ALLOWED_ORIGINS', 'value', parameters('ingestAllowedOrigins')), createObject('name', 'CREWMEAL_INGEST_REQUIRE_AUTH', 'value', parameters('ingestRequireAuth'))))]"
                     }
                   ],
                   "scale": {
@@ -3640,7 +3702,7 @@
                     {
                       "name": "worker",
                       "image": "[parameters('containerImage')]",
-                      "env": "[concat(createArray(createObject('name', 'AZURE_CLIENT_ID', 'value', reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('managedIdentityName')), '2023-01-31').clientId), createObject('name', 'DATABASE_URL', 'secretRef', 'database-url'), createObject('name', 'CREWMEAL_ARTIFACT_BACKEND', 'value', 'database'), createObject('name', 'CREWMEAL_ARTIFACT_DIR', 'value', '/tmp/crewmeal-artifacts'), createObject('name', 'CREWMEAL_M365_TENANT_ID', 'value', parameters('m365TenantId')), createObject('name', 'CREWMEAL_M365_CLIENT_ID', 'value', parameters('m365ClientId')), createObject('name', 'CREWMEAL_M365_CLIENT_SECRET', 'secretRef', 'm365-client-secret'), createObject('name', 'CREWMEAL_M365_SITE_ID', 'value', parameters('m365SiteId')), createObject('name', 'CREWMEAL_M365_DRIVE_ID', 'value', parameters('m365DriveId')), createObject('name', 'CREWMEAL_M365_LIST_ID', 'value', parameters('m365ListId')), createObject('name', 'CREWMEAL_M365_SITE_URL', 'value', parameters('m365SiteUrl')), createObject('name', 'CREWMEAL_M365_CONNECTION_ID', 'value', parameters('m365ConnectionId'))), createArray(createObject('name', 'APP_ROLE', 'value', 'worker'), createObject('name', 'CONTENTUNDERSTANDING_ENDPOINT', 'value', parameters('contentUnderstandingEndpoint')), createObject('name', 'CONTENTUNDERSTANDING_ANALYZER_ID', 'value', 'prebuilt-documentSearch'), createObject('name', 'CONTENTUNDERSTANDING_API_VERSION', 'value', '2025-11-01'), createObject('name', 'CONTENTUNDERSTANDING_GPT_DEPLOYMENT', 'value', parameters('contentUnderstandingGptDeployment')), createObject('name', 'SLIDE_IMAGE_DEPLOYMENT', 'value', parameters('slideImageDeployment')), createObject('name', 'CONTENTUNDERSTANDING_EMBEDDING_DEPLOYMENT', 'value', parameters('contentUnderstandingEmbeddingDeployment')), createObject('name', 'SLIDE_IMAGE_MAX_WORKERS', 'value', string(parameters('slideImageMaxWorkers')))))]"
+                      "env": "[concat(createArray(createObject('name', 'AZURE_CLIENT_ID', 'value', reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('managedIdentityName')), '2023-01-31').clientId), createObject('name', 'DATABASE_URL', 'secretRef', 'database-url'), createObject('name', 'CREWMEAL_ARTIFACT_BACKEND', 'value', 'database'), createObject('name', 'CREWMEAL_ARTIFACT_DIR', 'value', '/tmp/crewmeal-artifacts'), createObject('name', 'CREWMEAL_M365_TENANT_ID', 'value', parameters('m365TenantId')), createObject('name', 'CREWMEAL_M365_CLIENT_ID', 'value', parameters('m365ClientId')), createObject('name', 'CREWMEAL_M365_CLIENT_SECRET', 'secretRef', 'm365-client-secret'), createObject('name', 'CREWMEAL_M365_SITE_ID', 'value', parameters('m365SiteId')), createObject('name', 'CREWMEAL_M365_DRIVE_ID', 'value', parameters('m365DriveId')), createObject('name', 'CREWMEAL_M365_LIST_ID', 'value', parameters('m365ListId')), createObject('name', 'CREWMEAL_M365_SITE_URL', 'value', parameters('m365SiteUrl')), createObject('name', 'CREWMEAL_M365_CONNECTION_ID', 'value', parameters('m365ConnectionId')), createObject('name', 'SLIDE_IMAGE_MODEL', 'value', parameters('slideImageModel')), createObject('name', 'SLIDE_IMAGE_DEPLOYMENT', 'value', parameters('slideImageDeployment')), createObject('name', 'CREWMEAL_PRICE_MODEL_LABEL', 'value', parameters('priceModelLabel')), createObject('name', 'CREWMEAL_PRICE_INPUT_USD_PER_M', 'value', parameters('priceInputUsdPerMillion')), createObject('name', 'CREWMEAL_PRICE_OUTPUT_USD_PER_M', 'value', parameters('priceOutputUsdPerMillion'))), createArray(createObject('name', 'APP_ROLE', 'value', 'worker'), createObject('name', 'CONTENTUNDERSTANDING_ENDPOINT', 'value', parameters('contentUnderstandingEndpoint')), createObject('name', 'CONTENTUNDERSTANDING_ANALYZER_ID', 'value', 'prebuilt-documentSearch'), createObject('name', 'CONTENTUNDERSTANDING_API_VERSION', 'value', '2025-11-01'), createObject('name', 'CONTENTUNDERSTANDING_GPT_DEPLOYMENT', 'value', parameters('contentUnderstandingGptDeployment')), createObject('name', 'CONTENTUNDERSTANDING_EMBEDDING_DEPLOYMENT', 'value', parameters('contentUnderstandingEmbeddingDeployment')), createObject('name', 'SLIDE_IMAGE_MAX_WORKERS', 'value', string(parameters('slideImageMaxWorkers')))))]"
                     }
                   ],
                   "scale": {
@@ -3914,7 +3976,11 @@
     },
     "SLIDE_IMAGE_DEPLOYMENT": {
       "type": "string",
-      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'foundry'), '2025-04-01').outputs.gptDeploymentName.value]"
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'foundry'), '2025-04-01').outputs.lunaDeploymentName.value]"
+    },
+    "SLIDE_IMAGE_MODEL": {
+      "type": "string",
+      "value": "gpt-5.6-luna"
     },
     "CONTENTUNDERSTANDING_EMBEDDING_DEPLOYMENT": {
       "type": "string",

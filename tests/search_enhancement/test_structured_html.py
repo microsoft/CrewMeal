@@ -16,6 +16,7 @@ from crewmeal.search_enhancement.html_renderer import (
     render_presentation_html,
 )
 from crewmeal.search_enhancement.structured_analysis import (
+    StructuredSlideAnalysisError,
     StructuredSlideAnalysisService,
 )
 
@@ -114,15 +115,21 @@ class FakeResponse:
 
 
 class FakeCompletions:
-    def __init__(self, *, invalid_first: bool = False) -> None:
+    def __init__(
+        self,
+        *,
+        invalid_first: bool = False,
+        invalid_always: bool = False,
+    ) -> None:
         self.requests: list[dict[str, Any]] = []
         self.invalid_first = invalid_first
+        self.invalid_always = invalid_always
 
     def create(self, **kwargs: Any) -> FakeResponse:
         self.requests.append(kwargs)
         text = kwargs["messages"][1]["content"][0]["text"]
         slide_number = int(re.search(r"Slide number: (\d+)", text).group(1))
-        if self.invalid_first and len(self.requests) == 1:
+        if self.invalid_always or (self.invalid_first and len(self.requests) == 1):
             return FakeResponse('{"slideNumber": 1}', slide_number)
         return FakeResponse(
             json.dumps(_slide_payload(slide_number), ensure_ascii=False),
@@ -166,8 +173,9 @@ def test_structured_analysis_uses_strict_schema_and_retries_invalid_json() -> No
 
     assert len(completions.requests) == 2
     assert result.slides[0].title == "분기 실적"
-    assert result.usage["tokens"]["gpt-5.2-input"] == 100
-    assert result.raw_result["model"] == "gpt-5.2"
+    assert result.usage["tokens"]["gpt-5.6-luna-input"] == 200
+    assert result.usage["tokens"]["gpt-5.6-luna-output"] == 100
+    assert result.raw_result["model"] == "gpt-5.6-luna"
     request = completions.requests[-1]
     assert request["response_format"]["type"] == "json_schema"
     assert request["response_format"]["json_schema"]["strict"] is True
@@ -176,6 +184,27 @@ def test_structured_analysis_uses_strict_schema_and_retries_invalid_json() -> No
     assert "minItems" not in json.dumps(response_schema)
     assert "정확한 원문 1" in request["messages"][1]["content"][0]["text"]
     assert request["messages"][1]["content"][1]["image_url"]["detail"] == "high"
+    assert "Opaque hyphenated labels are searchable content" in (
+        request["messages"][0]["content"]
+    )
+
+
+def test_structured_analysis_reports_usage_when_validation_fails() -> None:
+    completions = FakeCompletions(invalid_always=True)
+    with StructuredSlideAnalysisService(
+        _config(),
+        completions=completions,
+        validation_attempts=2,
+    ) as service:
+        with pytest.raises(StructuredSlideAnalysisError) as raised:
+            service.analyze(
+                {1: b"png", 2: b"png"},
+                source_manifest=_manifest(slides=2),
+                source_name="benchmark.pptx",
+            )
+
+    assert raised.value.input_tokens == 400
+    assert raised.value.output_tokens == 200
 
 
 class TagCollector(HTMLParser):

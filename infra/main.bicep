@@ -95,7 +95,7 @@ param tags object = {
 }
 
 var locationAbbreviation = 'eus2'
-var resourceGroupName = 'rg-crewmeal-${environmentName}-${locationAbbreviation}'
+var resourceGroupName = 'rg-crewmeal-ppt-${environmentName}-${locationAbbreviation}'
 var resourceToken = uniqueString(subscription().id, environmentName, location)
 var foundryAccountName = toLower('aif-crewmeal-${environmentName}-${resourceToken}')
 
@@ -147,7 +147,8 @@ module platform 'modules/platform.bicep' = {
     foundryAccountName: foundry.outputs.name
     contentUnderstandingEndpoint: foundry.outputs.endpoint
     contentUnderstandingGptDeployment: foundry.outputs.gptDeploymentName
-    slideImageDeployment: foundry.outputs.gptDeploymentName
+    slideImageDeployment: foundry.outputs.lunaDeploymentName
+    slideImageModel: 'gpt-5.6-luna'
     contentUnderstandingEmbeddingDeployment: foundry.outputs.embeddingDeploymentName
   }
 }
@@ -170,7 +171,8 @@ output CONTENTUNDERSTANDING_ENDPOINT string = foundry.outputs.endpoint
 output CONTENTUNDERSTANDING_ANALYZER_ID string = 'prebuilt-documentSearch'
 output CONTENTUNDERSTANDING_API_VERSION string = '2025-11-01'
 output CONTENTUNDERSTANDING_GPT_DEPLOYMENT string = foundry.outputs.gptDeploymentName
-output SLIDE_IMAGE_DEPLOYMENT string = foundry.outputs.gptDeploymentName
+output SLIDE_IMAGE_DEPLOYMENT string = foundry.outputs.lunaDeploymentName
+output SLIDE_IMAGE_MODEL string = 'gpt-5.6-luna'
 output CONTENTUNDERSTANDING_EMBEDDING_DEPLOYMENT string = foundry.outputs.embeddingDeploymentName
 output AZURE_CONTAINER_REGISTRY_ENDPOINT string = platform.outputs.acrLoginServer
 output AZURE_CONTAINER_REGISTRY_NAME string = platform.outputs.acrName

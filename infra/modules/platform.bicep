@@ -83,13 +83,25 @@ param contentUnderstandingGptDeployment string
 @description('Slide-image deployment name from Foundry.')
 param slideImageDeployment string
 
+@description('Model label recorded for slide-image token usage.')
+param slideImageModel string = 'gpt-5.6-luna'
+
+@description('Model label shown with token-cost estimates.')
+param priceModelLabel string = 'gpt-5.6-luna'
+
+@description('Estimated input-token price in USD per million tokens.')
+param priceInputUsdPerMillion string = '1'
+
+@description('Estimated output-token price in USD per million tokens.')
+param priceOutputUsdPerMillion string = '6'
+
 @description('Embedding deployment name from Foundry.')
 param contentUnderstandingEmbeddingDeployment string
 
-@description('Number of slides analyzed concurrently per enhancement job (per-job GPT parallelism). Bounded by the gpt-5.2 deployment TPM capacity.')
+@description('Number of slides analyzed concurrently per enhancement job (per-job GPT parallelism). Bounded by the active slide-image deployment TPM capacity.')
 param slideImageMaxWorkers int = 4
 
-@description('Maximum worker replicas for cross-job parallelism. KEDA scales out toward this ceiling based on enhancement job queue depth. Keep aligned with the gpt-5.2 deployment TPM capacity.')
+@description('Maximum worker replicas for cross-job parallelism. KEDA scales out toward this ceiling based on enhancement job queue depth. Keep aligned with the active slide-image deployment TPM capacity.')
 @minValue(1)
 @maxValue(10)
 param workerMaxReplicas int = 3
@@ -390,6 +402,26 @@ var commonEnv = [
     name: 'CREWMEAL_M365_CONNECTION_ID'
     value: m365ConnectionId
   }
+  {
+    name: 'SLIDE_IMAGE_MODEL'
+    value: slideImageModel
+  }
+  {
+    name: 'SLIDE_IMAGE_DEPLOYMENT'
+    value: slideImageDeployment
+  }
+  {
+    name: 'CREWMEAL_PRICE_MODEL_LABEL'
+    value: priceModelLabel
+  }
+  {
+    name: 'CREWMEAL_PRICE_INPUT_USD_PER_M'
+    value: priceInputUsdPerMillion
+  }
+  {
+    name: 'CREWMEAL_PRICE_OUTPUT_USD_PER_M'
+    value: priceOutputUsdPerMillion
+  }
 ]
 
 resource webApp 'Microsoft.App/containerApps@2024-03-01' = {
@@ -546,10 +578,6 @@ resource workerApp 'Microsoft.App/containerApps@2024-03-01' = {
             {
               name: 'CONTENTUNDERSTANDING_GPT_DEPLOYMENT'
               value: contentUnderstandingGptDeployment
-            }
-            {
-              name: 'SLIDE_IMAGE_DEPLOYMENT'
-              value: slideImageDeployment
             }
             {
               name: 'CONTENTUNDERSTANDING_EMBEDDING_DEPLOYMENT'
