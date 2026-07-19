@@ -39,6 +39,17 @@ def test_require_endpoint_reports_missing_configuration() -> None:
         config.require_endpoint()
 
 
+def test_slide_image_defaults_use_luna() -> None:
+    config = AppConfig(
+        endpoint="https://example.services.ai.azure.com",
+        max_upload_bytes=1,
+        soffice_path=None,
+    )
+
+    assert config.slide_image_model == "gpt-5.6-luna"
+    assert config.slide_image_deployment == "gpt-5-6-luna-test"
+
+
 def test_slide_image_integer_settings_are_validated(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -55,3 +66,11 @@ def test_slide_image_model_is_validated(
 
     with pytest.raises(ConfigurationError, match="SLIDE_IMAGE_MODEL"):
         AppConfig.from_environment()
+
+
+def test_luna_slide_image_model_is_supported(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("SLIDE_IMAGE_MODEL", "gpt-5.6-luna")
+
+    assert AppConfig.from_environment().slide_image_model == "gpt-5.6-luna"

@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CrewMeal — Copilot을 위한 멀티포맷 콘텐츠 강화 플랫폼</title>
-  <meta name="description" content="CrewMeal은 PPTX·PDF·HWP 등 사내 문서를 구조화된 검색 메타데이터로 강화해 Microsoft Copilot 검색 품질을 높이는 멀티포맷 콘텐츠 강화 플랫폼입니다." />
+  <meta name="description" content="CrewMeal은 GPT-5.6 Luna로 PPTX·PDF·HWP 등 사내 문서를 구조화된 검색 메타데이터로 강화해 Microsoft Copilot 검색 품질을 높이는 멀티포맷 콘텐츠 강화 플랫폼입니다." />
   <meta property="og:title" content="CrewMeal — Copilot을 위한 멀티포맷 콘텐츠 강화 플랫폼" />
-  <meta property="og:description" content="CrewMeal은 PPTX·PDF·HWP 등 사내 문서를 구조화된 검색 메타데이터로 강화해 Microsoft Copilot 검색 품질을 높이는 멀티포맷 콘텐츠 강화 플랫폼입니다." />
+  <meta property="og:description" content="CrewMeal은 GPT-5.6 Luna로 PPTX·PDF·HWP 등 사내 문서를 구조화된 검색 메타데이터로 강화해 Microsoft Copilot 검색 품질을 높이는 멀티포맷 콘텐츠 강화 플랫폼입니다." />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="CrewMeal" />
   <meta property="og:url" content="https://microsoft.github.io/CrewMeal/" />
@@ -17,7 +17,7 @@
   <meta property="og:image:alt" content="CrewMeal — multi-format documents plated as high-quality content for Copilot" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="CrewMeal — Copilot을 위한 멀티포맷 콘텐츠 강화 플랫폼" />
-  <meta name="twitter:description" content="CrewMeal은 PPTX·PDF·HWP 등 사내 문서를 구조화된 검색 메타데이터로 강화해 Microsoft Copilot 검색 품질을 높입니다." />
+  <meta name="twitter:description" content="CrewMeal은 GPT-5.6 Luna로 PPTX·PDF·HWP 등 사내 문서를 구조화된 검색 메타데이터로 강화해 Microsoft Copilot 검색 품질을 높입니다." />
   <meta name="twitter:image" content="https://microsoft.github.io/CrewMeal/assets/brand/og-image.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23ff8a5c'/%3E%3Ctext y='74' x='50' font-size='62' text-anchor='middle'%3E%F0%9F%8D%B1%3C/text%3E%3C/svg%3E" />
@@ -34,6 +34,7 @@
       </div>
       <nav class="nav-links" aria-label="sections">
         <a href="#grounding" data-ko="그라운딩" data-en="Grounding">그라운딩</a>
+        <a href="#model" data-ko="운영 모델" data-en="Production model">운영 모델</a>
         <a href="#enhance" data-ko="강화하기" data-en="Enhance">강화하기</a>
         <a href="#results" data-ko="결과" data-en="Results">결과</a>
         <a href="#features" data-ko="기능" data-en="Features">기능</a>
@@ -58,7 +59,7 @@
       </div>
       <span class="badge"><span class="dot"></span><span data-ko="Microsoft · 오픈소스 PoC" data-en="Microsoft · Open-source PoC">Microsoft · 오픈소스 PoC</span></span>
       <h1 data-ko="Copilot을 위한 멀티포맷 콘텐츠를 &#10;더 맛있게 차려냅니다." data-en="Serving richer multi-format content&#10;for Microsoft Copilot.">Copilot을 위한 멀티포맷 콘텐츠를 더 맛있게 차려냅니다.</h1>
-      <p class="lead" data-ko="CrewMeal은 SharePoint의 PPTX·PDF·HWP 문서를 페이지 이미지로 렌더링하고 비전 LLM으로 분석해, 구조화된 검색 메타데이터로 강화합니다. 원본은 그대로 두고 Copilot 커넥터에 추가 색인만 얹어 검색 품질을 끌어올립니다." data-en="CrewMeal renders your SharePoint PPTX, PDF and HWP documents to page images, analyzes them with a vision LLM, and enriches them into structured search metadata — indexed as extra items in your Copilot connector without touching the originals.">CrewMeal은 SharePoint의 PPTX·PDF·HWP 문서를 페이지 이미지로 렌더링하고 비전 LLM으로 분석해, 구조화된 검색 메타데이터로 강화합니다. 원본은 그대로 두고 Copilot 커넥터에 추가 색인만 얹어 검색 품질을 끌어올립니다.</p>
+      <p class="lead" data-ko="CrewMeal은 SharePoint의 PPTX·PDF·HWP 문서를 페이지 이미지로 렌더링하고 GPT-5.6 Luna로 분석해, 구조화된 검색 메타데이터로 강화합니다. 원본은 그대로 두고 Copilot 커넥터에 추가 색인만 얹어 검색 품질을 끌어올립니다." data-en="CrewMeal renders your SharePoint PPTX, PDF and HWP documents to page images, analyzes them with GPT-5.6 Luna, and enriches them into structured search metadata — indexed as extra items in your Copilot connector without touching the originals.">CrewMeal은 SharePoint의 PPTX·PDF·HWP 문서를 페이지 이미지로 렌더링하고 GPT-5.6 Luna로 분석해, 구조화된 검색 메타데이터로 강화합니다. 원본은 그대로 두고 Copilot 커넥터에 추가 색인만 얹어 검색 품질을 끌어올립니다.</p>
 
       <div class="cta">
         <a class="btn primary" href="https://github.com/microsoft/CrewMeal" target="_blank" rel="noopener" data-ko="GitHub에서 보기" data-en="View on GitHub">GitHub에서 보기</a>
@@ -74,9 +75,9 @@
         </div>
         <div class="hl cost">
           <div class="hl-ic">📉</div>
-          <div class="hl-v" data-ko="비용 절감" data-en="Lower cost">비용 절감</div>
-          <div class="hl-t" data-ko="교체 가능 분석 모델" data-en="Swappable analysis model">교체 가능 분석 모델</div>
-          <div class="hl-d" data-ko="관리 포털에서 비전 LLM을 교체 — 자체·경량 모델로 토큰 비용을 대폭 절감" data-en="Swap the vision LLM in the admin portal — cut token cost with your own or a lightweight model">관리 포털에서 비전 LLM을 교체 — 자체·경량 모델로 토큰 비용을 대폭 절감</div>
+          <div class="hl-v" data-ko="-39.65%" data-en="-39.65%">-39.65%</div>
+          <div class="hl-t" data-ko="Luna 운영 비용" data-en="Luna operating cost">Luna 운영 비용</div>
+          <div class="hl-d" data-ko="동일 169장 기준 GPT-5.2 대비 추정 토큰 비용 절감" data-en="Estimated token-cost reduction versus GPT-5.2 across the same 169 slides">동일 169장 기준 GPT-5.2 대비 추정 토큰 비용 절감</div>
         </div>
         <div class="hl ctl">
           <div class="hl-ic">🎛️</div>
@@ -98,6 +99,33 @@
             <span><b>Crew Meal</b></span>
           </div>
           <p style="margin:8px 0 0;color:var(--muted);font-size:14px" data-ko="이름에 담긴 뜻: Copilot이 잘 일하도록 먹여주는 잘 차려진 한 끼." data-en="The name in a bite: a well-plated meal that keeps your Copilot flying well.">이름에 담긴 뜻: Copilot이 잘 일하도록 먹여주는 잘 차려진 한 끼.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODEL -->
+  <section id="model">
+    <div class="wrap">
+      <div class="eyebrow" data-ko="운영 비전 모델" data-en="Production vision model">운영 비전 모델</div>
+      <h2 class="sec" data-ko="실제 문서로 검증한 GPT-5.6 Luna" data-en="GPT-5.6 Luna, validated on real documents">실제 문서로 검증한 GPT-5.6 Luna</h2>
+      <p class="sec-lead" data-ko="대표 업무 프레젠테이션 10개, 총 227장을 동일한 프롬프트와 스키마로 비교했습니다. Luna는 전 문서를 완료했고, 품질 차이는 대부분 표현 방식이었으며 실제 의미 있는 차이 사례는 Luna가 더 정확했습니다." data-en="We compared 10 representative business presentations (227 slides) with the same prompt and schema. Luna completed every document; most measured quality gaps were phrasing differences, and the one materially different reviewed case favored Luna.">대표 업무 프레젠테이션 10개, 총 227장을 동일한 프롬프트와 스키마로 비교했습니다. Luna는 전 문서를 완료했고, 품질 차이는 대부분 표현 방식이었으며 실제 의미 있는 차이 사례는 Luna가 더 정확했습니다.</p>
+
+      <div class="grid tri">
+        <div class="card">
+          <div class="ic good">✓</div>
+          <h3 data-ko="10 / 10 완료" data-en="10 / 10 completed">10 / 10 완료</h3>
+          <p data-ko="Luna는 227장을 모두 처리했습니다. 같은 실행에서 GPT-5.2는 8개 문서를 완료하고 2개에서 장기 타임아웃이 발생했습니다." data-en="Luna processed all 227 slides. In the same run, GPT-5.2 completed eight documents and hit long-running timeouts on two.">Luna는 227장을 모두 처리했습니다. 같은 실행에서 GPT-5.2는 8개 문서를 완료하고 2개에서 장기 타임아웃이 발생했습니다.</p>
+        </div>
+        <div class="card">
+          <div class="ic star">↓</div>
+          <h3 data-ko="비용 39.65% 절감" data-en="39.65% lower cost">비용 39.65% 절감</h3>
+          <p data-ko="두 모델이 모두 완료한 169장에서 Luna 추정 비용은 $2.7805, GPT-5.2는 $4.6074였습니다. 실패 호출 비용은 제외된 보수적 비교입니다." data-en="Across the 169 slides both models completed, Luna's estimated cost was $2.7805 versus $4.6074 for GPT-5.2. This conservative comparison excludes failed-call spend.">두 모델이 모두 완료한 169장에서 Luna 추정 비용은 $2.7805, GPT-5.2는 $4.6074였습니다. 실패 호출 비용은 제외된 보수적 비교입니다.</p>
+        </div>
+        <div class="card">
+          <div class="ic">⚡</div>
+          <h3 data-ko="중앙 지연 76.92% 단축" data-en="76.92% lower median latency">중앙 지연 76.92% 단축</h3>
+          <p data-ko="요청 중앙값은 10.18초 대 44.08초, p95는 58.48초 대 174.48초였습니다. 비교 슬라이드의 98.82%에서 Luna가 더 빨랐습니다." data-en="Median request latency was 10.18s versus 44.08s, while p95 was 58.48s versus 174.48s. Luna was faster on 98.82% of compared slides.">요청 중앙값은 10.18초 대 44.08초, p95는 58.48초 대 174.48초였습니다. 비교 슬라이드의 98.82%에서 Luna가 더 빨랐습니다.</p>
         </div>
       </div>
     </div>
@@ -334,7 +362,7 @@
         <div class="step"><div class="n">01</div><h4 data-ko="감지 · 검증" data-en="Detect · validate">감지 · 검증</h4><p data-ko="확장자·매직·크기로 핸들러를 고릅니다." data-en="Pick a handler by extension, magic and size.">확장자·매직·크기로 핸들러를 고릅니다.</p></div>
         <div class="step"><div class="n">02</div><h4 data-ko="복호화 훅" data-en="Decrypt hook">복호화 훅</h4><p data-ko="활성화 시 암호화 문서를 복호화합니다." data-en="Decrypts encrypted docs when enabled.">활성화 시 암호화 문서를 복호화합니다.</p></div>
         <div class="step"><div class="n">03</div><h4 data-ko="렌더링" data-en="Render">렌더링</h4><p data-ko="페이지를 이미지로 변환합니다." data-en="Convert pages to images.">페이지를 이미지로 변환합니다.</p></div>
-        <div class="step"><div class="n">04</div><h4 data-ko="분석" data-en="Analyze">분석</h4><p data-ko="비전 LLM이 strict JSON으로 분석." data-en="Vision LLM analyzes to strict JSON.">비전 LLM이 strict JSON으로 분석.</p></div>
+        <div class="step"><div class="n">04</div><h4 data-ko="분석" data-en="Analyze">분석</h4><p data-ko="GPT-5.6 Luna가 strict JSON으로 분석." data-en="GPT-5.6 Luna analyzes to strict JSON.">GPT-5.6 Luna가 strict JSON으로 분석.</p></div>
         <div class="step"><div class="n">05</div><h4 data-ko="HTML 생성" data-en="Render HTML">HTML 생성</h4><p data-ko="허용 태그 HTML로 렌더링." data-en="Render to allow-listed HTML.">허용 태그 HTML로 렌더링.</p></div>
         <div class="step"><div class="n">06</div><h4 data-ko="색인" data-en="Index">색인</h4><p data-ko="Copilot 커넥터에 externalItem 게시." data-en="Publish externalItem to the connector.">Copilot 커넥터에 externalItem 게시.</p></div>
       </div>

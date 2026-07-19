@@ -57,7 +57,7 @@
     <span class="muted" style="font-size:.82rem;">
       · {{ cost.tokens_display }} 토큰 · ${{ cost.usd_display }}
     </span>
-    <br /><span class="muted" style="font-size:.76rem;">gpt-5.2 토큰 기준 추정 · {{ cost.assumptions_text }}</span>
+    <br /><span class="muted" style="font-size:.76rem;">{{ cost.model_label }} 토큰 기준 추정 · {{ cost.assumptions_text }}</span>
   </p>
   {% endif %}
 </div>

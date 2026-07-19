@@ -16,6 +16,9 @@ param accessPrincipalType string
 @description('The GPT model deployment name used by Content Understanding.')
 param gptDeploymentName string = 'gpt-5-2'
 
+@description('The GPT-5.6 Luna deployment used for production slide-image analysis.')
+param lunaDeploymentName string = 'gpt-5-6-luna-test'
+
 @description('The GPT-5-mini deployment name used for slide-image comparison.')
 param gptMiniDeploymentName string = 'gpt-5-mini'
 
@@ -23,7 +26,10 @@ param gptMiniDeploymentName string = 'gpt-5-mini'
 param embeddingDeploymentName string = 'text-embedding-3-large'
 
 @description('TPM capacity (GlobalStandard units, 1 unit = 1K TPM) for the primary GPT deployment.')
-param gptCapacity int = 100
+param gptCapacity int = 500
+
+@description('TPM capacity (GlobalStandard units, 1 unit = 1K TPM) for GPT-5.6 Luna.')
+param lunaCapacity int = 500
 
 @description('TPM capacity (GlobalStandard units, 1 unit = 1K TPM) for the embedding deployment.')
 param embeddingCapacity int = 50
@@ -75,6 +81,19 @@ module account 'br/public:avm/res/cognitive-services/account:0.15.0' = {
         versionUpgradeOption: 'NoAutoUpgrade'
       }
       {
+        name: lunaDeploymentName
+        model: {
+          format: 'OpenAI'
+          name: 'gpt-5.6-luna'
+          version: '2026-07-09'
+        }
+        sku: {
+          name: 'GlobalStandard'
+          capacity: lunaCapacity
+        }
+        versionUpgradeOption: 'NoAutoUpgrade'
+      }
+      {
         name: embeddingDeploymentName
         model: {
           format: 'OpenAI'
@@ -109,5 +128,6 @@ output name string = account.outputs.name
 output resourceId string = account.outputs.resourceId
 output endpoint string = account.outputs.endpoint
 output gptDeploymentName string = gptDeploymentName
+output lunaDeploymentName string = lunaDeploymentName
 output gptMiniDeploymentName string = gptMiniDeploymentName
 output embeddingDeploymentName string = embeddingDeploymentName

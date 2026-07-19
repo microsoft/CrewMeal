@@ -19,7 +19,7 @@
   {% if total_cost and total_cost.has_usage %}
   <p class="muted" style="margin:.75rem 0 0; font-size:.82rem;">
     누적 GPT 토큰 {{ total_cost.tokens_display }}개 · ${{ total_cost.usd_display }} ·
-    gpt-5.2 토큰 기준 추정 ({{ total_cost.assumptions_text }})
+    {{ total_cost.model_label }} 토큰 기준 추정 ({{ total_cost.assumptions_text }})
   </p>
   {% endif %}
 </div>

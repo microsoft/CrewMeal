@@ -6,6 +6,7 @@ import time
 from collections.abc import Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+from threading import Lock
 from typing import Any, Protocol
 
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
@@ -43,6 +44,9 @@ Security and fidelity rules:
 - Fix OCR against meaning: when the image and source-text evidence show the same object, prefer the evidence spelling. When there is no evidence and a legible token is an implausible non-word that differs by one stroke from a standard Korean/English domain term that fits the context, prefer the standard term (e.g. 계좌간이체 for inter-account transfer, not 계좌가이체) and record the correction in warnings.
 - Never include speaker notes, alt text, hidden objects, or evidence not visible in the image.
 - Preserve Korean and English wording, numbers, dates, units, and symbols when legible.
+- Preserve every visible identifier, code, acronym, label, and proper noun verbatim \
+in the structured field that owns it. Opaque hyphenated labels are searchable \
+content, not noise; if no structured field owns one, include it exactly once in facts.
 - Do not invent facts. Put genuinely unreadable or ambiguous details in warnings.
 
 Structure rules (do NOT flatten spatial meaning into unrelated lists):
@@ -78,6 +82,17 @@ search retrieves for such standalone questions, so be explicit and complete.
 
 class StructuredSlideAnalysisError(RuntimeError):
     """Raised when schema-constrained slide analysis cannot produce valid data."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        input_tokens: int = 0,
+        output_tokens: int = 0,
+    ) -> None:
+        super().__init__(message)
+        self.input_tokens = input_tokens
+        self.output_tokens = output_tokens
 
 
 class CompletionEndpoint(Protocol):
@@ -117,6 +132,9 @@ class StructuredSlideAnalysisService:
         self._credential: DefaultAzureCredential | None = None
         self._client: OpenAI | None = None
         self._owns_client = completions is None
+        self._usage_lock = Lock()
+        self._input_tokens = 0
+        self._output_tokens = 0
 
         if completions is not None:
             self._completions = completions
@@ -170,35 +188,39 @@ class StructuredSlideAnalysisService:
         total = len(page_images)
         completed = 0
         worker_count = min(self._config.slide_image_max_workers, len(page_images))
-        with ThreadPoolExecutor(max_workers=worker_count) as executor:
-            futures = {
-                executor.submit(
-                    self._analyze_slide,
-                    slide_number,
-                    image,
-                    source_manifest.texts_by_slide.get(slide_number, ()),
-                    (geometry_by_slide or {}).get(slide_number),
-                    corrections,
-                ): slide_number
-                for slide_number, image in sorted(page_images.items())
-            }
-            for future in as_completed(futures):
-                slide_number = futures[future]
-                results[slide_number] = future.result()
-                completed += 1
-                reporter.stage(
-                    Stage.ANALYZING,
-                    detail={
-                        "completed": completed,
-                        "total": total,
-                        "slide": slide_number,
-                    },
-                )
+        usage_start = self._usage_snapshot()
+        try:
+            with ThreadPoolExecutor(max_workers=worker_count) as executor:
+                futures = {
+                    executor.submit(
+                        self._analyze_slide,
+                        slide_number,
+                        image,
+                        source_manifest.texts_by_slide.get(slide_number, ()),
+                        (geometry_by_slide or {}).get(slide_number),
+                        corrections,
+                    ): slide_number
+                    for slide_number, image in sorted(page_images.items())
+                }
+                for future in as_completed(futures):
+                    slide_number = futures[future]
+                    results[slide_number] = future.result()
+                    completed += 1
+                    reporter.stage(
+                        Stage.ANALYZING,
+                        detail={
+                            "completed": completed,
+                            "total": total,
+                            "slide": slide_number,
+                        },
+                    )
+        except StructuredSlideAnalysisError as exc:
+            exc.input_tokens, exc.output_tokens = self._usage_since(usage_start)
+            raise
 
         ordered = [results[number] for number in sorted(results)]
         slides = tuple(result[0] for result in ordered)
-        input_tokens = sum(result[2] for result in ordered)
-        output_tokens = sum(result[3] for result in ordered)
+        input_tokens, output_tokens = self._usage_since(usage_start)
         warnings = tuple(
             {
                 "slideNumber": slide.slide_number,
@@ -287,6 +309,8 @@ class StructuredSlideAnalysisService:
                     "</human-corrections>"
                 )
         last_error: Exception | None = None
+        input_tokens = 0
+        output_tokens = 0
 
         for attempt in range(1, self._validation_attempts + 1):
             prompt = base_prompt
@@ -335,6 +359,16 @@ class StructuredSlideAnalysisService:
                     f"({type(exc).__name__})."
                 ) from exc
             elapsed = time.perf_counter() - started
+            usage = getattr(response, "usage", None)
+            attempt_input_tokens = int(
+                getattr(usage, "prompt_tokens", 0) or 0
+            )
+            attempt_output_tokens = int(
+                getattr(usage, "completion_tokens", 0) or 0
+            )
+            input_tokens += attempt_input_tokens
+            output_tokens += attempt_output_tokens
+            self._record_usage(attempt_input_tokens, attempt_output_tokens)
 
             try:
                 slide = self._parse_response(response, slide_number)
@@ -342,7 +376,6 @@ class StructuredSlideAnalysisService:
                 last_error = exc
                 continue
 
-            usage = getattr(response, "usage", None)
             model_dump = getattr(response, "model_dump", None)
             raw_response = (
                 model_dump(mode="json")
@@ -356,8 +389,8 @@ class StructuredSlideAnalysisService:
             return (
                 slide,
                 raw_response,
-                int(getattr(usage, "prompt_tokens", 0) or 0),
-                int(getattr(usage, "completion_tokens", 0) or 0),
+                input_tokens,
+                output_tokens,
                 elapsed,
             )
 
@@ -366,6 +399,19 @@ class StructuredSlideAnalysisService:
             f"Slide {slide_number} failed structured validation after "
             f"{self._validation_attempts} attempts ({detail})."
         ) from last_error
+
+    def _record_usage(self, input_tokens: int, output_tokens: int) -> None:
+        with self._usage_lock:
+            self._input_tokens += input_tokens
+            self._output_tokens += output_tokens
+
+    def _usage_snapshot(self) -> tuple[int, int]:
+        with self._usage_lock:
+            return self._input_tokens, self._output_tokens
+
+    def _usage_since(self, start: tuple[int, int]) -> tuple[int, int]:
+        current_input, current_output = self._usage_snapshot()
+        return current_input - start[0], current_output - start[1]
 
     def _parse_response(self, response: Any, slide_number: int) -> SlideContent:
         choices = getattr(response, "choices", None)

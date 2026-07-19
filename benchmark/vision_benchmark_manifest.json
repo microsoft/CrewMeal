@@ -1,0 +1,138 @@
+{
+  "schemaVersion": "1.0",
+  "document": {
+    "fileName": "complex-benchmark.pptx",
+    "slideCount": 6,
+    "purpose": "Vision-model structured extraction quality comparison"
+  },
+  "slides": [
+    {
+      "slideNumber": 1,
+      "title": "읽기 순서와 다단 레이아웃",
+      "sentinels": [
+        "READING-A",
+        "READING-B",
+        "READING-C",
+        "ORDER-SENTINEL-A-B-C"
+      ],
+      "readingOrder": [
+        "READING-A",
+        "READING-B",
+        "READING-C"
+      ]
+    },
+    {
+      "slideNumber": 2,
+      "title": "병합 셀과 다단 헤더 표",
+      "sentinels": [
+        "TABLE-REGION",
+        "TABLE-CELL-LAX-9330"
+      ],
+      "table": {
+        "rowCount": 4,
+        "columnCount": 5,
+        "expectedValues": [
+          "ICN",
+          "12,480",
+          "LAX",
+          "9,330",
+          "CDG",
+          "Δ +10.8%"
+        ]
+      }
+    },
+    {
+      "slideNumber": 3,
+      "title": "네이티브 차트와 데이터 레이블",
+      "sentinels": [
+        "CHART-SENTINEL",
+        "TREND-CONCEPT"
+      ],
+      "chart": {
+        "categories": [
+          "ICN",
+          "LAX",
+          "CDG",
+          "SIN"
+        ],
+        "series": {
+          "Crew meals": [
+            86,
+            72,
+            64,
+            91
+          ],
+          "Special meals": [
+            14,
+            28,
+            36,
+            9
+          ]
+        },
+        "concepts": [
+          "SIN has the highest Crew meals share",
+          "CDG has the lowest Crew meals share"
+        ]
+      }
+    },
+    {
+      "slideNumber": 4,
+      "title": "도형·연결선 기반 프로세스",
+      "sentinels": [
+        "FLOW-01",
+        "FLOW-02",
+        "FLOW-03",
+        "FLOW-04",
+        "FLOW-05",
+        "PROCESS-CONCEPT"
+      ],
+      "processOrder": [
+        "Collect",
+        "Classify",
+        "Optimize",
+        "Approve",
+        "Serve"
+      ]
+    },
+    {
+      "slideNumber": 5,
+      "title": "이미지 OCR, alt text, 외부 링크",
+      "sentinels": [
+        "IMAGE-OCR-한글-742",
+        "LINK-SENTINEL"
+      ],
+      "imageOcr": [
+        "IMAGE-OCR-한글-742",
+        "승무원 식사 만족도 +18.5%"
+      ],
+      "altText": [
+        "ALT-SENTINEL: 상승 곡선과 18.5% 만족도 개선을 보여주는 대시보드"
+      ]
+    },
+    {
+      "slideNumber": 6,
+      "title": "혼합 언어, 특수기호, 중복 요소, 발표자 노트",
+      "sentinels": [
+        "DUPLICATE-ALPHA",
+        "DUPLICATE-ALPHA-2",
+        "DUPLICATE-BETA",
+        "MIXED-UNICODE",
+        "NOTES-ARE-SOURCE-ONLY"
+      ],
+      "mixedText": [
+        "한글",
+        "English",
+        "日本語",
+        "±",
+        "∑",
+        "→",
+        "€",
+        "₩",
+        "2026-07-15"
+      ],
+      "notes": [
+        "SPEAKER-NOTE-SENTINEL-906"
+      ]
+    }
+  ]
+}

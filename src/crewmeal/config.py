@@ -6,14 +6,16 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
-DEFAULT_SLIDE_IMAGE_DEPLOYMENT = "gpt-5-2"
+DEFAULT_SLIDE_IMAGE_DEPLOYMENT = "gpt-5-6-luna-test"
 DEFAULT_MAX_UPLOAD_BYTES = 200 * 1024 * 1024
 DEFAULT_SLIDE_IMAGE_RENDER_DPI = 144
 DEFAULT_SLIDE_IMAGE_MAX_WORKERS = 2
 DEFAULT_SLIDE_IMAGE_MAX_COMPLETION_TOKENS = 40_000
 DEFAULT_SLIDE_IMAGE_REQUEST_TIMEOUT = 900
-DEFAULT_SLIDE_IMAGE_MODEL = "gpt-5.2"
-SUPPORTED_SLIDE_IMAGE_MODELS = frozenset({"gpt-5-mini", "gpt-5.2"})
+DEFAULT_SLIDE_IMAGE_MODEL = "gpt-5.6-luna"
+SUPPORTED_SLIDE_IMAGE_MODELS = frozenset(
+    {"gpt-5-mini", "gpt-5.2", "gpt-5.6-luna"}
+)
 
 
 class ConfigurationError(RuntimeError):
