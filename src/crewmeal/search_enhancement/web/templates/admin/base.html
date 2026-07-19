@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block head_extra %}
+<style>
+  main { max-width: 1120px; }
+  header.app-bar nav.admin-nav { margin-left: auto; display: flex; gap: 1rem; flex-wrap: wrap; }
+  header.app-bar nav.admin-nav a { font-size: 0.95rem; opacity: 0.92; }
+  header.app-bar nav.admin-nav a:hover { opacity: 1; text-decoration: underline; }
+  table.grid { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+  table.grid th, table.grid td { text-align: left; padding: 0.5rem 0.6rem; border-bottom: 1px solid #e2e3e8; vertical-align: top; }
+  table.grid th { color: #6b6c73; font-weight: 600; white-space: nowrap; }
+  @media (prefers-color-scheme: dark) { table.grid th, table.grid td { border-color: #33343a; } }
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.85rem; }
+  .stat { background: #eef3fa; border-radius: 10px; padding: 0.9rem 1rem; }
+  @media (prefers-color-scheme: dark) { .stat { background: #1d2733; } }
+  .stat .n { font-size: 1.6rem; font-weight: 700; }
+  .stat .l { color: #6b6c73; font-size: 0.85rem; }
+  .badge { display: inline-block; padding: 0.1rem 0.55rem; border-radius: 999px; font-size: 0.78rem; background: #e6e7ec; color: #333; }
+  .badge.ok { background: #d7f0dd; color: #12602a; }
+  .badge.err { background: #f6d9d7; color: #8b1a13; }
+  .badge.run { background: #dfe8fb; color: #123a7a; }
+  form.inline { display: inline; }
+  .toolbar { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; margin-bottom: 1rem; }
+  code.path { font-size: 0.82rem; word-break: break-all; }
+  input[type=text], input[type=password], input[type=file], textarea, select {
+    font: inherit; padding: 0.45rem 0.55rem; border: 1px solid #c4c6cf;
+    border-radius: 7px; background: #fff; color: inherit; width: 100%;
+  }
+  @media (prefers-color-scheme: dark) {
+    input[type=text], input[type=password], input[type=file], textarea, select { background: #2a2b31; border-color: #44454c; }
+  }
+  label { display: block; font-size: 0.85rem; color: #6b6c73; margin: 0.7rem 0 0.2rem; }
+</style>
+{% block admin_head %}{% endblock %}
+{% endblock %}
+
+{% block app_bar_extra %}
+<nav class="admin-nav">
+  <a href="/admin">대시보드</a>
+  <a href="/admin/documents">문서</a>
+  <a href="/admin/feedback">피드백</a>
+  <a href="/admin/settings">설정</a>
+  <a href="/admin/tryout">시연 업로드</a>
+  <a href="/admin/logout">로그아웃</a>
+</nav>
+{% endblock %}
+
+{% block content %}{% block admin_content %}{% endblock %}{% endblock %}

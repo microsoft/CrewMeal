@@ -1,0 +1,110 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ document.file_name }} · Crewmeal 관리자{% endblock %}
+
+{% block admin_content %}
+<div class="card">
+  <div style="display:flex; align-items:baseline; gap:0.75rem; flex-wrap:wrap;">
+    <h1 style="margin:0;">{{ document.file_name }}</h1>
+    {% set cls = 'ok' if document.status == 'Ready' else ('err' if document.status == 'Failed' else ('run' if document.status == 'Processing' else '')) %}
+    <span class="badge {{ cls }}">{{ document.status }}</span>
+    <span class="muted">v{{ document.enhancement_version }} · {{ document.source_kind }}</span>
+  </div>
+
+  <div class="toolbar" style="margin-top: 1rem;">
+    <a class="btn secondary" href="/s/{{ token }}" target="_blank" rel="noopener">사용자 상태 페이지</a>
+    {% if has_html %}<a class="btn secondary" href="/s/{{ token }}/html" target="_blank" rel="noopener">추출 HTML 보기</a>{% endif %}
+    <form class="inline" method="post" action="/admin/documents/{{ token }}/rerun">
+      <button class="btn" type="submit">재작업</button>
+    </form>
+    {% if job and job.status == 'failed' %}
+    <form class="inline" method="post" action="/admin/jobs/{{ job.job_id }}/retry">
+      <button class="btn" type="submit">잡 재시도</button>
+    </form>
+    {% endif %}
+    {% if can_remove %}
+    <form class="inline" method="post" action="/admin/documents/{{ token }}/remove" onsubmit="return confirm('인덱스에서 제거하시겠습니까?');">
+      <button class="btn danger" type="submit">인덱스 제거</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <h2 style="margin-top:0;">내부 정보</h2>
+  <table class="grid">
+    <tbody>
+      <tr><th>request_id</th><td><code class="path">{{ document.request_id }}</code></td></tr>
+      <tr><th>external_item_id</th><td><code class="path">{{ document.external_item_id or '—' }}</code></td></tr>
+      <tr><th>web_url</th><td><code class="path">{{ document.web_url or '—' }}</code></td></tr>
+      <tr><th>updated_at</th><td class="muted">{{ document.updated_at or '—' }}</td></tr>
+      <tr><th>processed_at</th><td class="muted">{{ document.processed_at or '—' }}</td></tr>
+      {% if cost and cost.has_usage %}
+      <tr><th>강화 비용(추정)</th><td>약 ₩{{ cost.krw_display }}
+        <span class="muted">· {{ cost.tokens_display }} 토큰 · ${{ cost.usd_display }}
+        · gpt-5.2 토큰 기준 추정 ({{ cost.assumptions_text }})</span></td></tr>
+      {% endif %}
+      {% if document.last_error_code %}
+      <tr><th>오류</th><td><span class="badge err">{{ document.last_error_code }}</span> {{ document.last_error_message or '' }}</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h2 style="margin-top:0;">진행 단계</h2>
+  {% if timeline %}
+  <table class="grid">
+    <thead><tr><th>단계</th><th>메시지</th><th>시각</th></tr></thead>
+    <tbody>
+      {% for step in timeline %}
+      <tr>
+        <td><span class="badge {{ 'err' if step.failed else ('ok' if step.terminal else '') }}">{{ step.label }}</span></td>
+        <td>{{ step.message or '' }}</td>
+        <td class="muted">{{ step.created_at }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">아직 진행 이벤트가 없습니다.</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2 style="margin-top:0;">산출물</h2>
+  {% if artifacts %}
+  <table class="grid">
+    <thead><tr><th>종류</th><th>타입</th><th>크기</th><th>버전</th><th>경로</th><th>생성</th></tr></thead>
+    <tbody>
+      {% for art in artifacts %}
+      <tr>
+        <td>{{ art.kind }}</td>
+        <td class="muted">{{ art.content_type or '—' }}</td>
+        <td>{{ art.byte_count or '—' }}</td>
+        <td>{{ art.enhancement_version if art.enhancement_version is not none else '—' }}</td>
+        <td><code class="path">{{ art.blob_path }}</code></td>
+        <td class="muted">{{ art.created_at }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">저장된 산출물이 없습니다.</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2 style="margin-top:0;">교정 코멘트</h2>
+  {% if notes %}
+  <ul>
+    {% for note in notes %}
+    <li><strong>{{ note.author or '익명' }}</strong>
+      <span class="muted">{{ note.createdAt or '' }}</span><br />{{ note.text }}</li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">등록된 코멘트가 없습니다.</p>
+  {% endif %}
+</div>
+{% endblock %}

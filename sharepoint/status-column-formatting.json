@@ -1,0 +1,26 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/sp/v2/column-formatting.schema.json",
+  "elmType": "div",
+  "attributes": {
+    "class": "=if(@currentField == 'Ready', 'sp-field-severity--good', if(@currentField == 'Failed', 'sp-field-severity--severeWarning', if(@currentField == 'Stale', 'sp-field-severity--warning', if(@currentField == 'Processing' || @currentField == 'Queued' || @currentField == 'Removing', 'sp-field-severity--low', 'sp-field-severity--blocked'))))"
+  },
+  "style": {
+    "display": "inline-flex",
+    "align-items": "center",
+    "gap": "6px",
+    "padding": "2px 8px",
+    "border-radius": "12px"
+  },
+  "children": [
+    {
+      "elmType": "span",
+      "attributes": {
+        "iconName": "=if(@currentField == 'Ready', 'CompletedSolid', if(@currentField == 'Failed', 'ErrorBadge', if(@currentField == 'Stale', 'Warning', if(@currentField == 'Processing' || @currentField == 'Queued' || @currentField == 'Removing', 'Sync', 'CirclePlus'))))"
+      }
+    },
+    {
+      "elmType": "span",
+      "txtContent": "=if(@currentField == 'Ready', '검색강화 완료', if(@currentField == 'Failed', '처리 실패', if(@currentField == 'Stale', '갱신 필요', if(@currentField == 'Processing', '처리 중', if(@currentField == 'Queued', '대기 중', if(@currentField == 'Removing', '삭제 중', '미등록'))))))"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+# Keep the build context small and the image clean.
+.git
+.gitignore
+.venv
+**/__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+tests/
+docs/
+sharepoint/
+infra/
+.azure/
+*.db
+*.sqlite
+*.sqlite3
+.env
+.env.*
+*.log
+work/
+tmp/

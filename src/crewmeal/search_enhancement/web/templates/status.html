@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}{{ document.file_name }} · 검색 강화 상태{% endblock %}
+
+{% block head_extra %}
+<style>
+  .status-badge { padding: .15rem .55rem; border-radius: 999px; font-size: .8rem; font-weight: 600; }
+  .status-Ready { background:#e6f4ea; color:#1e7e34; }
+  .status-Queued, .status-Processing { background:#fdf2e0; color:#9a6400; }
+  .status-Failed { background:#fdecea; color:#b3261e; }
+  .status-Removed, .status-Disabled { background:#ececed; color:#5f6368; }
+  .kv { display:flex; flex-wrap:wrap; gap:.35rem 1.5rem; margin:.5rem 0 0; padding:0; list-style:none; }
+  .kv li { font-size:.9rem; }
+  .kv .muted { margin-right:.35rem; }
+  .badge { padding:.1rem .5rem; border-radius:999px; font-size:.78rem; font-weight:600; }
+  .badge-ok { background:#e6f4ea; color:#1e7e34; }
+  .badge-run { background:#e8f0fe; color:#0b5cab; }
+  .badge-fail { background:#fdecea; color:#b3261e; }
+  .progress-head { display:flex; align-items:center; gap:.6rem; margin-bottom:.5rem; }
+  .progress-track { height:.55rem; background:#e7e8ec; border-radius:999px; overflow:hidden; }
+  .progress-fill { height:100%; background:#0b5cab; transition:width .4s ease; }
+  .progress-fill.is-fail { background:#b3261e; }
+  .timeline { list-style:none; margin:1rem 0 0; padding:0; }
+  .timeline-item { display:flex; gap:.7rem; padding:.3rem 0; }
+  .timeline-dot { width:.7rem; height:.7rem; border-radius:50%; background:#0b5cab; margin-top:.4rem; flex:none; }
+  .timeline-item.is-fail .timeline-dot { background:#b3261e; }
+  .timeline-body { display:flex; flex-direction:column; flex:1; min-width:0; }
+  .timeline-row { display:flex; align-items:baseline; gap:.5rem; flex-wrap:wrap; }
+  .timeline-label { font-weight:600; }
+  .timeline-count { font-size:.8rem; color:#0b5cab; font-weight:600; }
+  .timeline-dur { font-size:.78rem; color:#6b6c73; margin-left:auto; }
+  .timeline-message { font-size:.85rem; }
+  .preview-frame { width:100%; height:460px; border:1px solid #e2e3e8; border-radius:8px; background:#fff; }
+  .actions { display:flex; flex-wrap:wrap; gap:.75rem; }
+  .actions form { margin:0; }
+  textarea { width:100%; min-height:90px; border:1px solid #cdced4; border-radius:8px; padding:.6rem; font:inherit; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h1>{{ document.file_name }}</h1>
+  <span class="status-badge status-{{ document.status }}">{{ document.status }}</span>
+  <ul class="kv">
+    <li><span class="muted">강화 버전</span>v{{ document.enhancement_version }}</li>
+    <li><span class="muted">유형</span>{{ '업로드(시연)' if document.source_kind == 'upload' else 'SharePoint' }}</li>
+    {% if slide_total %}
+      <li><span class="muted">슬라이드</span>{{ slide_total }}쪽</li>
+    {% endif %}
+    {% if document.web_url %}
+      <li><a href="{{ document.web_url }}" target="_blank" rel="noopener noreferrer">원본 문서 열기 ↗</a></li>
+    {% endif %}
+  </ul>
+  {% if cost and cost.has_usage %}
+  <p class="cost" style="margin:.6rem 0 0;">
+    <span class="muted">강화 비용(추정)</span>
+    <strong>약 ₩{{ cost.krw_display }}</strong>
+    <span class="muted" style="font-size:.82rem;">
+      · {{ cost.tokens_display }} 토큰 · ${{ cost.usd_display }}
+    </span>
+    <br /><span class="muted" style="font-size:.76rem;">gpt-5.2 토큰 기준 추정 · {{ cost.assumptions_text }}</span>
+  </p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2 style="font-size:1.1rem;margin-top:0;">진행 상황</h2>
+  <div id="timeline">{% include "_timeline.html" %}</div>
+</div>
+
+<div class="card">
+  <h2 style="font-size:1.1rem;margin-top:0;">추출된 HTML 미리보기</h2>
+  {% if show_html %}
+    <iframe class="preview-frame" src="/s/{{ token }}/html"
+            sandbox="" referrerpolicy="no-referrer" title="추출된 HTML"></iframe>
+    <p style="margin:.5rem 0 0;">
+      <a class="btn secondary" href="/s/{{ token }}/html" target="_blank"
+         rel="noopener noreferrer">새 창에서 열기 ↗</a>
+    </p>
+  {% elif is_reprocessing %}
+    {% if has_html %}
+    <p class="muted">재작업이 진행 중입니다. 완료되면 갱신된 미리보기가 표시됩니다.</p>
+    {% else %}
+    <p class="muted">작업이 진행 중입니다. 완료되면 이곳에 표시됩니다.</p>
+    {% endif %}
+  {% else %}
+    <p class="muted">아직 추출된 HTML이 없습니다. 작업이 완료되면 이곳에 표시됩니다.</p>
+  {% endif %}
+</div>
+
+{% if notes %}
+<div class="card">
+  <h2 style="font-size:1.1rem;margin-top:0;">튜닝 의견 기록</h2>
+  <ul>
+    {% for note in notes %}
+      <li>
+        <strong>{{ note.get('author') or 'user' }}</strong>
+        <span class="muted">· {{ note.get('createdAt', '') }}</span><br />
+        {{ note.get('text', '') }}
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<div class="card">
+  <h2 style="font-size:1.1rem;margin-top:0;">작업 다시 요청</h2>
+  <div class="actions">
+    <form method="post" action="/s/{{ token }}/rerun">
+      <button class="btn" type="submit">문서가 업데이트됨 · 다시 강화</button>
+    </form>
+    {% if can_remove %}
+    <form method="post" action="/s/{{ token }}/remove"
+          onsubmit="return confirm('검색 인덱스에서 이 문서를 제거할까요?');">
+      <button class="btn danger" type="submit">인덱스에서 제거</button>
+    </form>
+    {% endif %}
+  </div>
+  <form method="post" action="/s/{{ token }}/comment" style="margin-top:1rem;">
+    <label for="comment" style="font-weight:600;">
+      추출 결과에 대한 의견 (프롬프트에 반영하여 재작업)
+    </label>
+    <textarea id="comment" name="comment" placeholder="예: 왼쪽 열의 항목들을 하나의 계층으로 묶어주세요."></textarea>
+    <div style="margin-top:.5rem;">
+      <button class="btn" type="submit">의견 반영하여 다시 강화</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    var token = {{ token | tojson }};
+    var container = document.getElementById("timeline");
+    function terminal() {
+      var inner = container.querySelector("#timeline-inner");
+      return inner && inner.getAttribute("data-terminal") === "true";
+    }
+    function poll() {
+      if (terminal()) return;
+      fetch("/s/" + encodeURIComponent(token) + "/progress", {
+        headers: { "Accept": "text/html" }, cache: "no-store"
+      })
+        .then(function (r) { return r.ok ? r.text() : null; })
+        .then(function (html) {
+          if (html) { container.innerHTML = html; }
+          if (!terminal()) { setTimeout(poll, 3000); }
+        })
+        .catch(function () { setTimeout(poll, 5000); });
+    }
+    if (!terminal()) { setTimeout(poll, 3000); }
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/spfx-serve.schema.json",
+  "port": 4321,
+  "https": true,
+  "serveConfigurations": {
+    "default": {
+      "pageUrl": "https://absx04287555.sharepoint.com/sites/crewmeal-ppt-search-poc/Shared%20Documents/Forms/AllItems.aspx",
+      "customActions": {
+        "935af355-a1d9-42f1-82db-90644d193346": {
+          "location": "ClientSideExtension.ListViewCommandSet",
+          "properties": {}
+        }
+      }
+    },
+    "searchEnhancement": {
+      "pageUrl": "https://absx04287555.sharepoint.com/sites/crewmeal-ppt-search-poc/Shared%20Documents/Forms/AllItems.aspx",
+      "customActions": {
+        "935af355-a1d9-42f1-82db-90644d193346": {
+          "location": "ClientSideExtension.ListViewCommandSet",
+          "properties": {}
+        }
+      }
+    }
+  }
+}

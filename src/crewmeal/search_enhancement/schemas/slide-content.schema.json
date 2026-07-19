@@ -1,0 +1,373 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crewmeal.local/schemas/slide-content.schema.json",
+  "title": "Crewmeal PowerPoint slide content",
+  "description": "Faithful, search-ready extraction of one PowerPoint slide. Preserve the slide's spatial meaning: containment hierarchies, schedules, and process order must not be flattened into unrelated lists.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "slideNumber",
+    "title",
+    "summary",
+    "facts",
+    "sections",
+    "hierarchies",
+    "schedule",
+    "flows",
+    "tables",
+    "charts",
+    "relationships",
+    "images",
+    "warnings"
+  ],
+  "properties": {
+    "slideNumber": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "The 1-based slide number provided in the prompt. Echo it exactly."
+    },
+    "title": {
+      "type": "string",
+      "description": "The slide's visible title. Use an empty string only when the slide truly has no title."
+    },
+    "summary": {
+      "type": "string",
+      "description": "One to three sentences describing what this slide communicates."
+    },
+    "facts": {
+      "type": "array",
+      "description": "Self-contained sentences for standalone information that is NOT already represented as a flow, schedule, hierarchy, table, or chart. Each fact must be understandable on its own without seeing the slide, must restate the subject, and must be grounded only in visible slide content. Do NOT duplicate a flow's step order, a schedule's dates, or a hierarchy's parent-child paths as facts -- those belong to flows/schedule/hierarchies. Use facts for standalone statements, definitions, counts, rules, and notes that have no other structured home. Examples: '컨설턴트/개발자 조직은 총 6개 포지션으로 확정 4명과 미배정(TBD) 2명으로 구성된다.', '이관·환수 원칙에 따라 이관 후 2년 내 100% 환수한다.'",
+      "items": {
+        "type": "string"
+      }
+    },
+    "sections": {
+      "type": "array",
+      "description": "Free-form headings with paragraphs and bullets for narrative text that is not a hierarchy, schedule, flow, table, or chart. Do NOT use sections to flatten a hierarchy or a process; use hierarchies or flows instead.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "heading",
+          "paragraphs",
+          "bullets"
+        ],
+        "properties": {
+          "heading": {
+            "type": "string"
+          },
+          "paragraphs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "bullets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "hierarchies": {
+      "type": "array",
+      "description": "Containment / parent-child structures such as multi-column category tables, indented outlines, and organization charts. A wide box that vertically spans several rows on its right is the PARENT of those rows. Represent each leaf as one row whose 'path' lists every ancestor from the outermost group down to the leaf, repeating parent labels on every row. Use this for grouped category matrices and org charts instead of separate flat lists.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "title",
+          "levelLabels",
+          "rows"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Name of this hierarchy, e.g. '추진 범위-내용-상세' or '프로젝트 조직도'."
+          },
+          "levelLabels": {
+            "type": "array",
+            "description": "Column or level names from outermost to innermost, e.g. ['추진 범위','추진 내용','추진 상세 내용'].",
+            "items": {
+              "type": "string"
+            }
+          },
+          "rows": {
+            "type": "array",
+            "description": "One entry per leaf. Repeat parent labels so each row is a complete path.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "path",
+                "note"
+              ],
+              "properties": {
+                "path": {
+                  "type": "array",
+                  "description": "Ancestors from outermost group to the leaf value.",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "note": {
+                  "type": "string",
+                  "description": "Optional extra detail for the leaf (role, person, count). Empty string when none."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "schedule": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Timeline / Gantt content. Read the time axis from the column headers (months and weeks) and, for each task bar, report the exact start and end columns the bar spans. Leave arrays empty when the slide has no timeline.",
+      "required": [
+        "timeAxis",
+        "tasks",
+        "milestones"
+      ],
+      "properties": {
+        "timeAxis": {
+          "type": "array",
+          "description": "Ordered time-axis labels exactly as shown, e.g. ['1월 W1','1월 W2', ... ,'4월 W12'].",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tasks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "taskPath",
+              "start",
+              "end"
+            ],
+            "properties": {
+              "taskPath": {
+                "type": "array",
+                "description": "Task name including its group, e.g. ['테스트/이관','사용자 교육 실시'].",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "start": {
+                "type": "string",
+                "description": "First time-axis label the task bar covers, e.g. '3월 W9'."
+              },
+              "end": {
+                "type": "string",
+                "description": "Last time-axis label the task bar covers, e.g. '3월 W9'."
+              }
+            }
+          }
+        },
+        "milestones": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "when"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Milestone marker label, e.g. 'Kick-Off', 'To-Be 확정', 'OPEN', '완료보고'."
+              },
+              "when": {
+                "type": "string",
+                "description": "Time-axis label where the milestone marker sits."
+              }
+            }
+          }
+        }
+      }
+    },
+    "flows": {
+      "type": "array",
+      "description": "Ordered process / sequence diagrams where arrows connect steps. Preserve the exact left-to-right or top-to-bottom order of every step so the step AFTER any given step is unambiguous. For swimlane diagrams, emit one flow per lane and set 'lane'. Cross-lane arrows may additionally be recorded in relationships.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "title",
+          "lane",
+          "steps"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Name of the flow, e.g. '자금팀 지급이체 처리 흐름'."
+          },
+          "lane": {
+            "type": "string",
+            "description": "Swimlane / actor this flow belongs to, e.g. '자금팀(외화펌뱅킹 시스템)'. Empty string when there are no lanes."
+          },
+          "steps": {
+            "type": "array",
+            "description": "Steps in strict execution order.",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "tables": {
+      "type": "array",
+      "description": "Genuine grid tables. Do NOT use a table for a Gantt chart (use schedule) or a grouped category matrix (use hierarchies).",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "title",
+          "headers",
+          "rows",
+          "keyFacts"
+        ],
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "headers": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "keyFacts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "charts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "title",
+          "dataPoints",
+          "insights"
+        ],
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "dataPoints": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "series",
+                "label",
+                "value"
+              ],
+              "properties": {
+                "series": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "insights": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "relationships": {
+      "type": "array",
+      "description": "Supplementary directed relationships that are not already captured as an ordered flow, such as cross-lane arrows or advisory links. Do not duplicate a flow's sequential steps here.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source",
+          "relation",
+          "target",
+          "description"
+        ],
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "relation": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "images": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "description",
+          "role",
+          "visibleText"
+        ],
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "visibleText": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "description": "Genuinely unreadable or ambiguous details only. Do not add a warning for content you transcribed confidently.",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}관리자 로그인 · Crewmeal 검색 강화{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 420px; margin: 2rem auto;">
+  <h1>관리자 로그인</h1>
+  <p class="muted">관리자 키를 입력하세요.</p>
+  {% if error %}
+  <p class="badge err" style="display:block; padding:0.5rem 0.7rem;">{{ error }}</p>
+  {% endif %}
+  <form method="post" action="/admin/login">
+    <label for="key">관리자 키</label>
+    <input type="password" id="key" name="key" autocomplete="current-password" autofocus required />
+    <div style="margin-top: 1rem;">
+      <button class="btn" type="submit">로그인</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

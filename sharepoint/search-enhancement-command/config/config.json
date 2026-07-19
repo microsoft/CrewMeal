@@ -1,0 +1,18 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/config.2.0.schema.json",
+  "version": "2.0",
+  "bundles": {
+    "search-enhancement-command-set": {
+      "components": [
+        {
+          "entrypoint": "./lib/extensions/searchEnhancement/SearchEnhancementCommandSet.js",
+          "manifest": "./src/extensions/searchEnhancement/SearchEnhancementCommandSet.manifest.json"
+        }
+      ]
+    }
+  },
+  "externals": {},
+  "localizedResources": {
+    "SearchEnhancementCommandSetStrings": "lib/extensions/searchEnhancement/loc/{locale}.js"
+  }
+}

@@ -1,0 +1,70 @@
+{% extends "admin/base.html" %}
+
+{% block title %}대시보드 · Crewmeal 관리자{% endblock %}
+
+{% block admin_content %}
+<div class="card">
+  <h1>대시보드</h1>
+  <p class="muted">큐 상태와 최근 작업을 한눈에 확인합니다.</p>
+  <div class="stat-grid" style="margin-top: 1rem;">
+    <div class="stat"><div class="n">{{ document_total }}</div><div class="l">전체 문서</div></div>
+    <div class="stat"><div class="n">{{ feedback_count }}</div><div class="l">피드백 레코드</div></div>
+    {% if total_cost and total_cost.has_usage %}
+    <div class="stat"><div class="n">₩{{ total_cost.krw_display }}</div><div class="l">누적 비용(추정)</div></div>
+    {% endif %}
+    {% for status, count in job_counts.items() %}
+    <div class="stat"><div class="n">{{ count }}</div><div class="l">잡 · {{ status }}</div></div>
+    {% endfor %}
+  </div>
+  {% if total_cost and total_cost.has_usage %}
+  <p class="muted" style="margin:.75rem 0 0; font-size:.82rem;">
+    누적 GPT 토큰 {{ total_cost.tokens_display }}개 · ${{ total_cost.usd_display }} ·
+    gpt-5.2 토큰 기준 추정 ({{ total_cost.assumptions_text }})
+  </p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2 style="margin-top:0;">문서 상태</h2>
+  {% if document_counts %}
+  <div class="stat-grid">
+    {% for status, count in document_counts.items() %}
+    <div class="stat"><div class="n">{{ count }}</div><div class="l">{{ status }}</div></div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="muted">아직 문서가 없습니다.</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2 style="margin-top:0;">최근 작업</h2>
+  {% if recent_jobs %}
+  <table class="grid">
+    <thead>
+      <tr>
+        <th>파일</th><th>유형</th><th>상태</th><th>시도</th><th>트리거</th><th>큐 등록</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for job in recent_jobs %}
+      {% set cls = 'ok' if job.status == 'completed' else ('err' if job.status == 'failed' else ('run' if job.status == 'processing' else '')) %}
+      <tr>
+        <td>{{ job.file_name or '—' }}</td>
+        <td>{{ job.job_type }}</td>
+        <td><span class="badge {{ cls }}">{{ job.status }}</span></td>
+        <td>{{ job.attempts }}</td>
+        <td>{{ job.trigger or '—' }}</td>
+        <td class="muted">{{ job.queued_at or '' }}</td>
+        <td>
+          {% if job.status_token %}<a class="btn secondary" href="/admin/documents/{{ job.status_token }}">상세</a>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">최근 작업이 없습니다.</p>
+  {% endif %}
+</div>
+{% endblock %}

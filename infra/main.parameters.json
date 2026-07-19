@@ -1,0 +1,69 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environmentName": {
+      "value": "${AZURE_ENV_NAME}"
+    },
+    "location": {
+      "value": "${AZURE_LOCATION=eastus2}"
+    },
+    "principalId": {
+      "value": "${AZURE_PRINCIPAL_ID}"
+    },
+    "postgresAdminLogin": {
+      "value": "${POSTGRES_ADMIN_LOGIN=crewmealadmin}"
+    },
+    "postgresLocation": {
+      "value": "${POSTGRES_LOCATION=centralus}"
+    },
+    "postgresAdminPassword": {
+      "value": "${POSTGRES_ADMIN_PASSWORD}"
+    },
+    "adminKey": {
+      "value": "${CREWMEAL_ADMIN_KEY}"
+    },
+    "sessionSecret": {
+      "value": "${CREWMEAL_WEB_SESSION_SECRET}"
+    },
+    "m365ClientSecret": {
+      "value": "${CREWMEAL_M365_CLIENT_SECRET}"
+    },
+    "m365TenantId": {
+      "value": "${CREWMEAL_M365_TENANT_ID}"
+    },
+    "m365ClientId": {
+      "value": "${CREWMEAL_M365_CLIENT_ID}"
+    },
+    "m365SiteId": {
+      "value": "${CREWMEAL_M365_SITE_ID}"
+    },
+    "m365DriveId": {
+      "value": "${CREWMEAL_M365_DRIVE_ID}"
+    },
+    "m365ListId": {
+      "value": "${CREWMEAL_M365_LIST_ID}"
+    },
+    "m365SiteUrl": {
+      "value": "${CREWMEAL_M365_SITE_URL}"
+    },
+    "m365ConnectionId": {
+      "value": "${CREWMEAL_M365_CONNECTION_ID}"
+    },
+    "ingestAudience": {
+      "value": "${CREWMEAL_INGEST_AUDIENCE}"
+    },
+    "ingestAllowedAppIds": {
+      "value": "${CREWMEAL_INGEST_ALLOWED_APP_IDS=}"
+    },
+    "ingestAllowedOrigins": {
+      "value": "${CREWMEAL_INGEST_ALLOWED_ORIGINS=}"
+    },
+    "ingestRequireAuth": {
+      "value": "${CREWMEAL_INGEST_REQUIRE_AUTH=true}"
+    },
+    "containerImage": {
+      "value": "${SERVICE_WEB_IMAGE_NAME=mcr.microsoft.com/k8se/quickstart:latest}"
+    }
+  }
+}

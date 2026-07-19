@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Elements xmlns="http://schemas.microsoft.com/sharepoint/">
+    <!-- Replace apiBaseUrl and apiResource placeholders during deployment. -->
+    <CustomAction
+        Title="SearchEnhancement"
+        RegistrationId="101"
+        RegistrationType="List"
+        Location="ClientSideExtension.ListViewCommandSet"
+        ClientSideComponentId="935af355-a1d9-42f1-82db-90644d193346"
+        ClientSideComponentProperties="{&quot;apiBaseUrl&quot;:&quot;https://ca-web-poc-gdfqpz5zn7qyu.proudground-628f0fb5.eastus2.azurecontainerapps.io&quot;,&quot;apiResource&quot;:&quot;api://crewmeal-ingest-poc&quot;}">
+    </CustomAction>
+</Elements>

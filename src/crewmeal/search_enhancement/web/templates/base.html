@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <title>{% block title %}Crewmeal 검색 강화{% endblock %}</title>
+    <style>
+      :root { color-scheme: light dark; }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+        line-height: 1.5;
+        background: #f4f5f7;
+        color: #1b1b1f;
+      }
+      @media (prefers-color-scheme: dark) {
+        body { background: #17181c; color: #e7e7ea; }
+        .card { background: #23242a !important; border-color: #33343a !important; }
+      }
+      header.app-bar {
+        background: #0b5cab;
+        color: #fff;
+        padding: 0.85rem 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      header.app-bar a { color: #fff; text-decoration: none; }
+      main { max-width: 960px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+      .card {
+        background: #fff;
+        border: 1px solid #e2e3e8;
+        border-radius: 12px;
+        padding: 1.25rem 1.4rem;
+        margin-bottom: 1.25rem;
+      }
+      h1 { font-size: 1.4rem; margin: 0 0 0.25rem; }
+      .muted { color: #6b6c73; }
+      .btn {
+        display: inline-block;
+        border: 1px solid #0b5cab;
+        background: #0b5cab;
+        color: #fff;
+        border-radius: 8px;
+        padding: 0.5rem 0.9rem;
+        cursor: pointer;
+        font: inherit;
+        text-decoration: none;
+      }
+      .btn.secondary { background: transparent; color: #0b5cab; }
+      .btn.danger { background: #b3261e; border-color: #b3261e; }
+    </style>
+    {% block head_extra %}{% endblock %}
+  </head>
+  <body>
+    <header class="app-bar">
+      <strong>Crewmeal</strong>
+      <span class="muted" style="color:#cfe0f2;">검색 강화 서비스</span>
+      {% block app_bar_extra %}{% endblock %}
+    </header>
+    <main>{% block content %}{% endblock %}</main>
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

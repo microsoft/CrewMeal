@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CrewMeal — Copilot을 위한 멀티포맷 콘텐츠 강화 플랫폼</title>
+  <meta name="description" content="CrewMeal은 PPTX·PDF·HWP 등 사내 문서를 구조화된 검색 메타데이터로 강화해 Microsoft Copilot 검색 품질을 높이는 멀티포맷 콘텐츠 강화 플랫폼입니다." />
+  <meta property="og:title" content="CrewMeal" />
+  <meta property="og:description" content="Copilot에게 제공하는 양질의 기내식(Crew Meal). 멀티포맷 문서 → 구조화 검색 콘텐츠." />
+  <meta property="og:type" content="website" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23ff8a5c'/%3E%3Ctext y='74' x='50' font-size='62' text-anchor='middle'%3E%F0%9F%8D%B1%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <!-- NAV -->
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <div class="brand">
+        <span class="logo">🍱</span>
+        <div>CrewMeal <small data-ko="검색 콘텐츠 강화" data-en="Search Content Enrichment">검색 콘텐츠 강화</small></div>
+      </div>
+      <nav class="nav-links">
+        <a href="#features" data-ko="기능" data-en="Features">기능</a>
+        <a href="#formats" data-ko="지원 포맷" data-en="Formats">지원 포맷</a>
+        <a href="#screens" data-ko="화면" data-en="Screens">화면</a>
+        <a href="#pipeline" data-ko="파이프라인" data-en="Pipeline">파이프라인</a>
+        <div class="lang" role="group" aria-label="language">
+          <button data-lang="ko" class="active">KO</button>
+          <button data-lang="en">EN</button>
+        </div>
+        <a class="ghost" href="https://github.com/microsoft/CrewMeal" target="_blank" rel="noopener">GitHub ↗</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap">
+      <span class="badge"><span class="dot"></span><span data-ko="Microsoft · 오픈소스 PoC" data-en="Microsoft · Open-source PoC">Microsoft · 오픈소스 PoC</span></span>
+      <h1 data-ko="Copilot을 위한 멀티포맷 콘텐츠를 &#10;더 맛있게 차려냅니다." data-en="Serving richer multi-format content&#10;for Microsoft Copilot.">Copilot을 위한 멀티포맷 콘텐츠를 더 맛있게 차려냅니다.</h1>
+      <p class="lead" data-ko="CrewMeal은 SharePoint의 PPTX·PDF·HWP 문서를 페이지 이미지로 렌더링하고 비전 LLM으로 분석해, 구조화된 검색 메타데이터로 강화합니다. 원본은 그대로 두고 Copilot 커넥터에 추가 색인만 얹어 검색 품질을 끌어올립니다." data-en="CrewMeal renders your SharePoint PPTX, PDF and HWP documents to page images, analyzes them with a vision LLM, and enriches them into structured search metadata — indexed as extra items in your Copilot connector without touching the originals.">CrewMeal은 SharePoint의 PPTX·PDF·HWP 문서를 페이지 이미지로 렌더링하고 비전 LLM으로 분석해, 구조화된 검색 메타데이터로 강화합니다. 원본은 그대로 두고 Copilot 커넥터에 추가 색인만 얹어 검색 품질을 끌어올립니다.</p>
+
+      <div class="cta">
+        <a class="btn primary" href="https://github.com/microsoft/CrewMeal" target="_blank" rel="noopener" data-ko="GitHub에서 보기" data-en="View on GitHub">GitHub에서 보기</a>
+        <a class="btn secondary" href="#screens" data-ko="실제 화면 보기" data-en="See it in action">실제 화면 보기</a>
+      </div>
+
+      <div class="hero-note">
+        <div><b>4+</b> <span data-ko="지원 문서 포맷" data-en="document formats">지원 문서 포맷</span></div>
+        <div><b data-ko="교체 가능" data-en="Swappable">교체 가능</b> <span data-ko="분석 모델 (비용 절감)" data-en="analysis model (cost control)">분석 모델 (비용 절감)</span></div>
+        <div><b data-ko="관리자 토글" data-en="Admin toggles">관리자 토글</b> <span data-ko="포맷·복호화 on/off" data-en="format & decryption on/off">포맷·복호화 on/off</span></div>
+      </div>
+
+      <!-- naming story -->
+      <div class="story">
+        <div class="emoji">✈️🍱</div>
+        <div>
+          <div class="chain">
+            <span data-ko="Copilot에 주는 양질의 콘텐츠" data-en="Quality content for Copilot">Copilot에 주는 양질의 콘텐츠</span>
+            <span class="arrow">→</span>
+            <span data-ko="부조종사(co-pilot)의 기내식" data-en="the meal a co-pilot eats in-flight">부조종사(co-pilot)의 기내식</span>
+            <span class="arrow">→</span>
+            <span><b>Crew Meal</b></span>
+          </div>
+          <p style="margin:8px 0 0;color:var(--muted);font-size:14px" data-ko="이름에 담긴 뜻: Copilot이 잘 일하도록 먹여주는 잘 차려진 한 끼." data-en="The name in a bite: a well-plated meal that keeps your Copilot flying well.">이름에 담긴 뜻: Copilot이 잘 일하도록 먹여주는 잘 차려진 한 끼.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features">
+    <div class="wrap">
+      <div class="eyebrow" data-ko="핵심 기능" data-en="Capabilities">핵심 기능</div>
+      <h2 class="sec" data-ko="한 번의 파이프라인, 여러 포맷" data-en="One pipeline, many formats">한 번의 파이프라인, 여러 포맷</h2>
+      <p class="sec-lead" data-ko="모든 포맷은 동일한 SharePoint 인제스트 경로로 흐릅니다. 새 포맷을 켜면 인제스트·재조정·시연에 자동 편입됩니다." data-en="Every format flows through the same SharePoint ingest path. Turn a format on and it is automatically picked up by ingest, reconcile, and the tryout playground.">모든 포맷은 동일한 SharePoint 인제스트 경로로 흐릅니다. 새 포맷을 켜면 인제스트·재조정·시연에 자동 편입됩니다.</p>
+
+      <div class="grid cards">
+        <div class="card">
+          <div class="ic">🗂️</div>
+          <h3 data-ko="멀티포맷 문서 지원" data-en="Multi-format documents">멀티포맷 문서 지원</h3>
+          <p data-ko="PPTX·PDF·HWP를 페이지 이미지로 렌더링해 동일한 분석 스키마로 처리합니다. DOCX·XLSX는 구조가 준비되어 있습니다." data-en="PPTX, PDF and HWP are rendered to page images and processed with one shared analysis schema. DOCX and XLSX are scaffolded and ready.">PPTX·PDF·HWP를 페이지 이미지로 렌더링해 동일한 분석 스키마로 처리합니다. DOCX·XLSX는 구조가 준비되어 있습니다.</p>
+          <span class="pill ready" data-ko="PPTX · PDF · HWP 구현" data-en="PPTX · PDF · HWP live">PPTX · PDF · HWP 구현</span>
+        </div>
+        <div class="card">
+          <div class="ic">🔁</div>
+          <h3 data-ko="교체 가능한 분석 모델" data-en="Swappable analysis model">교체 가능한 분석 모델</h3>
+          <p data-ko="프리미엄 비전 모델은 30페이지 발표자료 한 건에 토큰 비용만 1만 원이 넘습니다. 관리 포털에서 provider·배포·엔드포인트를 교체해 자사/오픈 호환 모델로 비용을 낮춥니다." data-en="A premium vision model can cost over ₩10,000 in tokens for a single 30-page deck. Swap the provider, deployment and endpoint in the admin portal to move to a self-hosted or open-compatible model.">프리미엄 비전 모델은 30페이지 발표자료 한 건에 토큰 비용만 1만 원이 넘습니다. 관리 포털에서 provider·배포·엔드포인트를 교체해 자사/오픈 호환 모델로 비용을 낮춥니다.</p>
+          <span class="pill ready" data-ko="관리자 교체 UI" data-en="Admin swap UI">관리자 교체 UI</span>
+        </div>
+        <div class="card">
+          <div class="ic">🔐</div>
+          <h3 data-ko="암호화 문서 복호화" data-en="Encrypted-document decryption">암호화 문서 복호화</h3>
+          <p data-ko="MIP(Microsoft Purview) 및 기타 암호화 솔루션을 위한 복호화 파이프라인 훅. 관리자 토글로 on/off 하며, 활성화 후 실제 복호화 연동은 배포 환경에 맞춰 확장합니다." data-en="A decryption pipeline hook for MIP (Microsoft Purview) and other encryption solutions. Toggle it on/off in the admin portal; wire the real decryptor to your deployment when you enable it.">MIP(Microsoft Purview) 및 기타 암호화 솔루션을 위한 복호화 파이프라인 훅. 관리자 토글로 on/off 하며, 활성화 후 실제 복호화 연동은 배포 환경에 맞춰 확장합니다.</p>
+          <span class="pill soon" data-ko="구조 준비 · 토글 제공" data-en="Scaffolded · toggle ready">구조 준비 · 토글 제공</span>
+        </div>
+        <div class="card">
+          <div class="ic">📥</div>
+          <h3 data-ko="SharePoint 인제스트" data-en="SharePoint ingest">SharePoint 인제스트</h3>
+          <p data-ko="SPFx 명령이 강화·삭제 요청을 큐에 적재하면 워커가 claim/lease로 자동 처리합니다. 원본 문서는 수정하지 않습니다." data-en="SPFx commands enqueue enrich/remove requests; the worker claims and leases them automatically. Original documents are never modified.">SPFx 명령이 강화·삭제 요청을 큐에 적재하면 워커가 claim/lease로 자동 처리합니다. 원본 문서는 수정하지 않습니다.</p>
+          <span class="pill ready" data-ko="opt-in 워크플로" data-en="opt-in workflow">opt-in 워크플로</span>
+        </div>
+        <div class="card">
+          <div class="ic">🎛️</div>
+          <h3 data-ko="관리자 포털" data-en="Admin portal">관리자 포털</h3>
+          <p data-ko="대시보드·문서 상태·포맷 토글·모델 교체·복호화 설정·시연 업로드를 한 곳에서. 누적 토큰 비용도 실시간 추정합니다." data-en="Dashboard, document status, format toggles, model swap, decryption settings and a tryout uploader — all in one place, with live token-cost estimates.">대시보드·문서 상태·포맷 토글·모델 교체·복호화 설정·시연 업로드를 한 곳에서. 누적 토큰 비용도 실시간 추정합니다.</p>
+          <span class="pill ready" data-ko="비용 가시성" data-en="Cost visibility">비용 가시성</span>
+        </div>
+        <div class="card">
+          <div class="ic">💬</div>
+          <h3 data-ko="피드백 루프" data-en="Feedback loop">피드백 루프</h3>
+          <p data-ko="상태 페이지의 튜닝 코멘트가 프롬프트에 주입되어 재작업되고, 피드백 코퍼스로 축적되어 JSONL로 내보낼 수 있습니다." data-en="Tuning comments from the status page are injected into the prompt for a re-run and accumulate as a feedback corpus you can export as JSONL.">상태 페이지의 튜닝 코멘트가 프롬프트에 주입되어 재작업되고, 피드백 코퍼스로 축적되어 JSONL로 내보낼 수 있습니다.</p>
+          <span class="pill ready" data-ko="JSONL 내보내기" data-en="JSONL export">JSONL 내보내기</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FORMATS -->
+  <section id="formats">
+    <div class="wrap">
+      <div class="eyebrow" data-ko="지원 포맷" data-en="Formats">지원 포맷</div>
+      <h2 class="sec" data-ko="포맷별 지원 현황" data-en="Format support matrix">포맷별 지원 현황</h2>
+      <p class="sec-lead" data-ko="각 포맷은 관리 포털에서 개별로 켜고 끌 수 있습니다. 구현된 포맷은 기본 활성, 스켈레톤 포맷은 잠금 상태입니다." data-en="Each format can be toggled independently in the admin portal. Implemented formats are on by default; scaffolded formats stay locked until built.">각 포맷은 관리 포털에서 개별로 켜고 끌 수 있습니다. 구현된 포맷은 기본 활성, 스켈레톤 포맷은 잠금 상태입니다.</p>
+
+      <div class="formats">
+        <table>
+          <thead>
+            <tr>
+              <th data-ko="포맷" data-en="Format">포맷</th>
+              <th data-ko="확장자" data-en="Extensions">확장자</th>
+              <th data-ko="처리 방식" data-en="Processing">처리 방식</th>
+              <th data-ko="상태" data-en="Status">상태</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>PowerPoint</td>
+              <td class="ext">.pptx</td>
+              <td data-ko="LibreOffice → PDF → 렌더 · 간트 geometry 근거" data-en="LibreOffice → PDF → render · Gantt geometry facts">LibreOffice → PDF → 렌더 · 간트 geometry 근거</td>
+              <td><span class="tag ok" data-ko="구현됨" data-en="Live">구현됨</span></td>
+            </tr>
+            <tr>
+              <td>PDF</td>
+              <td class="ext">.pdf</td>
+              <td data-ko="PyMuPDF 직접 렌더 · 페이지 텍스트 근거" data-en="PyMuPDF direct render · page-text evidence">PyMuPDF 직접 렌더 · 페이지 텍스트 근거</td>
+              <td><span class="tag ok" data-ko="구현됨" data-en="Live">구현됨</span></td>
+            </tr>
+            <tr>
+              <td data-ko="한글 (HWP)" data-en="Hangul (HWP)">한글 (HWP)</td>
+              <td class="ext">.hwp · .hwpx</td>
+              <td data-ko="LibreOffice Writer 필터 → PDF → 렌더" data-en="LibreOffice Writer filter → PDF → render">LibreOffice Writer 필터 → PDF → 렌더</td>
+              <td><span class="tag ok" data-ko="구현됨" data-en="Live">구현됨</span></td>
+            </tr>
+            <tr>
+              <td>Word</td>
+              <td class="ext">.docx</td>
+              <td data-ko="핸들러 등록 · 추출 로직 예정" data-en="Handler registered · extraction planned">핸들러 등록 · 추출 로직 예정</td>
+              <td><span class="tag plan" data-ko="구현 예정" data-en="Planned">구현 예정</span></td>
+            </tr>
+            <tr>
+              <td>Excel</td>
+              <td class="ext">.xlsx</td>
+              <td data-ko="핸들러 등록 · 셀/표 추출 예정" data-en="Handler registered · cell/table extraction planned">핸들러 등록 · 셀/표 추출 예정</td>
+              <td><span class="tag plan" data-ko="구현 예정" data-en="Planned">구현 예정</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCREENSHOTS -->
+  <section id="screens">
+    <div class="wrap">
+      <div class="eyebrow" data-ko="실제 화면" data-en="Live screens">실제 화면</div>
+      <h2 class="sec" data-ko="구동 화면 캡처" data-en="Captured from the running app">구동 화면 캡처</h2>
+      <p class="sec-lead" data-ko="아래는 실제로 앱을 구동해 캡처한 화면입니다. 이미지를 클릭하면 크게 볼 수 있습니다." data-en="These are captured from the actual running app. Click any image to enlarge.">아래는 실제로 앱을 구동해 캡처한 화면입니다. 이미지를 클릭하면 크게 볼 수 있습니다.</p>
+
+      <div class="shots">
+        <div class="shot wide">
+          <div class="cap"><div class="dots"><i></i><i></i><i></i></div><span>/admin/settings</span></div>
+          <img src="./assets/screenshots/admin-settings.png" alt="Admin settings: format toggles, vision model swap, decryption" loading="lazy" />
+          <div class="desc"><b data-ko="설정: 포맷 토글 · 모델 교체 · 복호화" data-en="Settings: format toggles · model swap · decryption">설정: 포맷 토글 · 모델 교체 · 복호화</b><span data-ko="포맷별 on/off, 비전 모델 provider/배포/엔드포인트 교체, MIP·기타 복호화 토글을 한 화면에서 관리합니다." data-en="Per-format on/off, vision-model provider/deployment/endpoint swap, and MIP/other decryption toggles in one screen.">포맷별 on/off, 비전 모델 provider/배포/엔드포인트 교체, MIP·기타 복호화 토글을 한 화면에서 관리합니다.</span></div>
+        </div>
+
+        <div class="shot">
+          <div class="cap"><div class="dots"><i></i><i></i><i></i></div><span>/admin</span></div>
+          <img src="./assets/screenshots/admin-dashboard.png" alt="Admin dashboard with cost and status counts" loading="lazy" />
+          <div class="desc"><b data-ko="관리자 대시보드" data-en="Admin dashboard">관리자 대시보드</b><span data-ko="문서 상태 집계, 최근 작업, 누적 토큰 비용(추정)을 한눈에." data-en="Document status counts, recent jobs and estimated cumulative token cost at a glance.">문서 상태 집계, 최근 작업, 누적 토큰 비용(추정)을 한눈에.</span></div>
+        </div>
+
+        <div class="shot">
+          <div class="cap"><div class="dots"><i></i><i></i><i></i></div><span>/admin/documents</span></div>
+          <img src="./assets/screenshots/admin-documents.png" alt="Document list across formats and statuses" loading="lazy" />
+          <div class="desc"><b data-ko="문서 목록" data-en="Document list">문서 목록</b><span data-ko="PPTX·PDF·HWP가 SharePoint·업로드 소스로 섞여 상태별로 나열됩니다." data-en="PPTX, PDF and HWP from SharePoint and upload sources, listed by status.">PPTX·PDF·HWP가 SharePoint·업로드 소스로 섞여 상태별로 나열됩니다.</span></div>
+        </div>
+
+        <div class="shot">
+          <div class="cap"><div class="dots"><i></i><i></i><i></i></div><span>/s/{token}</span></div>
+          <img src="./assets/screenshots/status-ready.png" alt="User status page with progress timeline and cost" loading="lazy" />
+          <div class="desc"><b data-ko="상태 페이지 (완료)" data-en="Status page (ready)">상태 페이지 (완료)</b><span data-ko="단계별 타임라인, 소요 시간, 강화 비용(추정), 추출 HTML 미리보기를 사용자에게 제공합니다." data-en="A stage-by-stage timeline, durations, estimated cost and an extracted-HTML preview for the end user.">단계별 타임라인, 소요 시간, 강화 비용(추정), 추출 HTML 미리보기를 사용자에게 제공합니다.</span></div>
+        </div>
+
+        <div class="shot">
+          <div class="cap"><div class="dots"><i></i><i></i><i></i></div><span>/s/{token}</span></div>
+          <img src="./assets/screenshots/status-processing.png" alt="In-flight progress with per-slide sub-progress" loading="lazy" />
+          <div class="desc"><b data-ko="상태 페이지 (진행 중)" data-en="Status page (in flight)">상태 페이지 (진행 중)</b><span data-ko="HWP 문서가 분석되는 동안 18/30쪽 같은 슬라이드 단위 진행률을 실시간으로 보여줍니다." data-en="While an HWP document is analyzed, per-slide sub-progress like 18/30 updates in real time.">HWP 문서가 분석되는 동안 18/30쪽 같은 슬라이드 단위 진행률을 실시간으로 보여줍니다.</span></div>
+        </div>
+
+        <div class="shot">
+          <div class="cap"><div class="dots"><i></i><i></i><i></i></div><span>/s/{token}/html</span></div>
+          <img src="./assets/screenshots/enhanced-html.png" alt="Structured enhanced HTML output" loading="lazy" />
+          <div class="desc"><b data-ko="강화된 구조화 HTML" data-en="Enhanced structured HTML">강화된 구조화 HTML</b><span data-ko="원본 페이지의 시각 콘텐츠가 제목·문단·표·목록의 허용 태그 HTML로 구조화됩니다." data-en="The visual content of each page becomes structured allow-listed HTML — headings, paragraphs, tables and lists.">원본 페이지의 시각 콘텐츠가 제목·문단·표·목록의 허용 태그 HTML로 구조화됩니다.</span></div>
+        </div>
+
+        <div class="shot">
+          <div class="cap"><div class="dots"><i></i><i></i><i></i></div><span>/admin/tryout</span></div>
+          <img src="./assets/screenshots/admin-tryout.png" alt="Tryout uploader supporting multiple formats" loading="lazy" />
+          <div class="desc"><b data-ko="시연 업로드" data-en="Tryout uploader">시연 업로드</b><span data-ko="문서를 직접 올려 동일 파이프라인을 시험합니다. 지원 형식이 활성 포맷에 따라 자동으로 표시됩니다." data-en="Upload a document to try the same pipeline. Accepted formats reflect the enabled formats automatically.">문서를 직접 올려 동일 파이프라인을 시험합니다. 지원 형식이 활성 포맷에 따라 자동으로 표시됩니다.</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PIPELINE -->
+  <section id="pipeline">
+    <div class="wrap">
+      <div class="eyebrow" data-ko="파이프라인" data-en="Pipeline">파이프라인</div>
+      <h2 class="sec" data-ko="문서 한 건이 강화되기까지" data-en="How one document gets enriched">문서 한 건이 강화되기까지</h2>
+      <p class="sec-lead" data-ko="포맷 감지부터 색인까지, 모든 포맷이 같은 단계를 통과합니다." data-en="From format detection to indexing, every format walks the same stages.">포맷 감지부터 색인까지, 모든 포맷이 같은 단계를 통과합니다.</p>
+
+      <div class="flow">
+        <div class="step"><div class="n">01</div><h4 data-ko="감지 · 검증" data-en="Detect · validate">감지 · 검증</h4><p data-ko="확장자·매직·크기로 핸들러를 고릅니다." data-en="Pick a handler by extension, magic and size.">확장자·매직·크기로 핸들러를 고릅니다.</p></div>
+        <div class="step"><div class="n">02</div><h4 data-ko="복호화 훅" data-en="Decrypt hook">복호화 훅</h4><p data-ko="활성화 시 암호화 문서를 복호화합니다." data-en="Decrypts encrypted docs when enabled.">활성화 시 암호화 문서를 복호화합니다.</p></div>
+        <div class="step"><div class="n">03</div><h4 data-ko="렌더링" data-en="Render">렌더링</h4><p data-ko="페이지를 이미지로 변환합니다." data-en="Convert pages to images.">페이지를 이미지로 변환합니다.</p></div>
+        <div class="step"><div class="n">04</div><h4 data-ko="분석" data-en="Analyze">분석</h4><p data-ko="비전 LLM이 strict JSON으로 분석." data-en="Vision LLM analyzes to strict JSON.">비전 LLM이 strict JSON으로 분석.</p></div>
+        <div class="step"><div class="n">05</div><h4 data-ko="HTML 생성" data-en="Render HTML">HTML 생성</h4><p data-ko="허용 태그 HTML로 렌더링." data-en="Render to allow-listed HTML.">허용 태그 HTML로 렌더링.</p></div>
+        <div class="step"><div class="n">06</div><h4 data-ko="색인" data-en="Index">색인</h4><p data-ko="Copilot 커넥터에 externalItem 게시." data-en="Publish externalItem to the connector.">Copilot 커넥터에 externalItem 게시.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="wrap foot-inner">
+      <div>
+        <div class="brand" style="margin-bottom:10px"><span class="logo">🍱</span><div>CrewMeal</div></div>
+        <p class="disclaimer" data-ko="이 프로젝트는 개념 증명(PoC)이며 공개 엔드포인트를 사용할 수 있으므로 민감 문서를 입력하지 마세요. MIT 라이선스로 배포됩니다." data-en="This project is a proof-of-concept and may use public endpoints — do not feed it sensitive documents. Released under the MIT License.">이 프로젝트는 개념 증명(PoC)이며 공개 엔드포인트를 사용할 수 있으므로 민감 문서를 입력하지 마세요. MIT 라이선스로 배포됩니다.</p>
+      </div>
+      <div>
+        <p>© <span id="year">2026</span> Microsoft Corporation · MIT License</p>
+        <p>
+          <a href="https://github.com/microsoft/CrewMeal" target="_blank" rel="noopener">GitHub</a> ·
+          <a href="https://github.com/microsoft/CrewMeal/blob/main/SECURITY.md" target="_blank" rel="noopener">Security</a> ·
+          <a href="https://github.com/microsoft/CrewMeal/blob/main/CODE_OF_CONDUCT.md" target="_blank" rel="noopener">Code of Conduct</a>
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <div class="lightbox" id="lightbox"><img src="" alt="" /></div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx/command-set-extension-manifest.schema.json",
+
+  "id": "935af355-a1d9-42f1-82db-90644d193346",
+  "alias": "SearchEnhancementCommandSet",
+  "componentType": "Extension",
+  "extensionType": "ListViewCommandSet",
+
+  // The "*" signifies that the version should be taken from the package.json
+  "version": "*",
+  "manifestVersion": 2,
+
+  // If true, the component can only be installed on sites where Custom Script is allowed.
+  // Components that allow authors to embed arbitrary script code should set this to true.
+  // https://support.office.com/en-us/article/Turn-scripting-capabilities-on-or-off-1f2c515f-5d7e-448a-9fd7-835da935584f
+  "requiresCustomScript": false,
+
+  // Replace these placeholders during deployment with the ingest API base URL and API App ID URI/audience.
+  "properties": {
+    "apiBaseUrl": "https://ca-web-poc-gdfqpz5zn7qyu.proudground-628f0fb5.eastus2.azurecontainerapps.io",
+    "apiResource": "api://crewmeal-ingest-poc"
+  },
+
+  "items": {
+    "ENHANCE": {
+      "title": {
+        "default": "Enhance search for Copilot",
+        "ko-kr": "코파일럿을 위해 검색강화"
+      },
+      "type": "command"
+    },
+    "REMOVE": {
+      "title": {
+        "default": "Remove search enhancement",
+        "ko-kr": "검색강화 삭제"
+      },
+      "type": "command"
+    }
+  }
+}

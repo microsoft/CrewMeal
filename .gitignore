@@ -1,0 +1,15 @@
+.azure/*
+!.azure/deployment-plan.md
+.env
+.pytest_cache/
+.playwright-mcp/
+.venv/
+.crewmeal/
+__pycache__/
+*.egg-info/
+*.py[cod]
+coverage.xml
+htmlcov/
+node_modules/
+result/
+tmp/

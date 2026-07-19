@@ -1,0 +1,24 @@
+{
+  "@microsoft/generator-sharepoint": {
+    "whichFolder": "subdir",
+    "solutionName": "search-enhancement-command",
+    "environment": "spo",
+    "packageManager": "npm",
+    "useGulp": false,
+    "componentType": "extension",
+    "extensionType": "ListViewCommandSet",
+    "template": "none",
+    "componentName": "SearchEnhancement",
+    "componentDescription": "Opt-in Copilot search enhancement for PowerPoint files",
+    "plusBeta": false,
+    "isCreatingSolution": true,
+    "nodeVersion": "22.14.0",
+    "sdksVersions": {},
+    "version": "1.23.2",
+    "libraryName": "search-enhancement-command",
+    "libraryId": "349ff702-74e8-46af-b2e7-5dc0ebaf8f40",
+    "solutionShortDescription": "search-enhancement-command description",
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false
+  }
+}

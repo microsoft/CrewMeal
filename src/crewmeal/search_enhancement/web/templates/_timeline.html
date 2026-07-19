@@ -1,0 +1,49 @@
+{# Progress timeline partial — re-fetched by the status page poller. #}
+<div id="timeline-inner" data-terminal="{{ 'true' if is_terminal else 'false' }}">
+  <div class="progress-head">
+    <strong>{{ current_label }}</strong>
+    {% if failed %}
+      <span class="badge badge-fail">실패</span>
+    {% elif is_terminal %}
+      <span class="badge badge-ok">완료</span>
+    {% elif analyzing_active and slide_total %}
+      <span class="badge badge-run">슬라이드 {{ slide_completed or 0 }}/{{ slide_total }}</span>
+    {% else %}
+      <span class="badge badge-run">진행 중 · {{ percent }}%</span>
+    {% endif %}
+    {% if slide_total %}
+      <span class="muted" style="font-size:.8rem;">총 {{ slide_total }}쪽</span>
+    {% endif %}
+  </div>
+  <div class="progress-track" role="progressbar"
+       aria-valuenow="{{ percent }}" aria-valuemin="0" aria-valuemax="100">
+    <div class="progress-fill{{ ' is-fail' if failed else '' }}"
+         style="width: {{ percent }}%"></div>
+  </div>
+
+  {% if stages %}
+    <ol class="timeline">
+      {% for step in stages %}
+        <li class="timeline-item{{ ' is-fail' if step.failed else '' }}">
+          <span class="timeline-dot"></span>
+          <div class="timeline-body">
+            <div class="timeline-row">
+              <span class="timeline-label">{{ step.label }}</span>
+              {% if step.stage == 'ANALYZING' and step.slide_total %}
+                <span class="timeline-count">{{ step.slide_completed or 0 }}/{{ step.slide_total }}쪽</span>
+              {% endif %}
+              {% if step.duration_label %}
+                <span class="timeline-dur">{{ step.duration_label }}</span>
+              {% endif %}
+            </div>
+            {% if step.message %}
+              <span class="timeline-message muted">{{ step.message }}</span>
+            {% endif %}
+          </div>
+        </li>
+      {% endfor %}
+    </ol>
+  {% else %}
+    <p class="muted">아직 진행 이벤트가 없습니다. 작업이 곧 시작됩니다.</p>
+  {% endif %}
+</div>

@@ -1,0 +1,54 @@
+{% extends "admin/base.html" %}
+
+{% block title %}문서 · Crewmeal 관리자{% endblock %}
+
+{% block admin_content %}
+<div class="card">
+  <h1>문서</h1>
+  <form class="toolbar" method="get" action="/admin/documents">
+    <select name="source_kind" onchange="this.form.submit()">
+      <option value="" {% if not source_kind %}selected{% endif %}>모든 소스</option>
+      <option value="sharepoint" {% if source_kind == 'sharepoint' %}selected{% endif %}>SharePoint</option>
+      <option value="upload" {% if source_kind == 'upload' %}selected{% endif %}>업로드</option>
+    </select>
+    <input type="text" name="status_filter" value="{{ status_filter }}" placeholder="상태 (예: Ready)" style="max-width: 200px;" />
+    <button class="btn secondary" type="submit">필터</button>
+    <span class="muted">총 {{ total }}건</span>
+  </form>
+
+  {% if documents %}
+  <table class="grid">
+    <thead>
+      <tr><th>파일</th><th>소스</th><th>상태</th><th>버전</th><th>수정</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for doc in documents %}
+      {% set cls = 'ok' if doc.status == 'Ready' else ('err' if doc.status == 'Failed' else ('run' if doc.status == 'Processing' else '')) %}
+      <tr>
+        <td>{{ doc.file_name }}</td>
+        <td>{{ doc.source_kind }}</td>
+        <td><span class="badge {{ cls }}">{{ doc.status }}</span></td>
+        <td>{{ doc.enhancement_version }}</td>
+        <td class="muted">{{ doc.updated_at or '' }}</td>
+        <td>
+          {% if doc.status_token %}<a class="btn secondary" href="/admin/documents/{{ doc.status_token }}">상세</a>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="toolbar" style="margin-top: 1rem;">
+    {% if page > 1 %}
+    <a class="btn secondary" href="/admin/documents?source_kind={{ source_kind }}&status_filter={{ status_filter }}&page={{ page - 1 }}">이전</a>
+    {% endif %}
+    <span class="muted">{{ page }} 페이지</span>
+    {% if has_next %}
+    <a class="btn secondary" href="/admin/documents?source_kind={{ source_kind }}&status_filter={{ status_filter }}&page={{ page + 1 }}">다음</a>
+    {% endif %}
+  </div>
+  {% else %}
+  <p class="muted">조건에 맞는 문서가 없습니다.</p>
+  {% endif %}
+</div>
+{% endblock %}

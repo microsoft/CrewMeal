@@ -1,0 +1,38 @@
+{% extends "admin/base.html" %}
+
+{% block title %}피드백 코퍼스 · Crewmeal 관리자{% endblock %}
+
+{% block admin_content %}
+<div class="card">
+  <div class="toolbar">
+    <h1 style="margin:0;">피드백 코퍼스</h1>
+    <span class="muted">총 {{ total }}건</span>
+    <a class="btn secondary" href="/admin/feedback/export.jsonl">JSONL 내보내기</a>
+  </div>
+  <p class="muted">교정 코멘트와 전/후 산출물을 append-only로 축적합니다. 엔진 개선(평가셋·프롬프트·파인튜닝)에 활용됩니다.</p>
+
+  {% if records %}
+  <table class="grid">
+    <thead>
+      <tr><th>#</th><th>문서(item)</th><th>버전</th><th>분류</th><th>태그</th><th>코멘트</th><th>모델</th><th>작성</th></tr>
+    </thead>
+    <tbody>
+      {% for rec in records %}
+      <tr>
+        <td>{{ rec.id }}</td>
+        <td><code class="path">{{ rec.document_key.item_id }}</code></td>
+        <td>{{ rec.enhancement_version if rec.enhancement_version is not none else '—' }}</td>
+        <td>{{ rec.category or '—' }}</td>
+        <td>{{ rec.tags | join(', ') if rec.tags else '—' }}</td>
+        <td>{{ rec.correction_text }}</td>
+        <td class="muted">{{ rec.model or '—' }}</td>
+        <td class="muted">{{ rec.created_at }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">아직 피드백 레코드가 없습니다.</p>
+  {% endif %}
+</div>
+{% endblock %}
