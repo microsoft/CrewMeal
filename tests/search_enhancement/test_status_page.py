@@ -180,9 +180,43 @@ def test_status_page_shows_cost(tmp_path: Path) -> None:
     response = client.get(f"/s/{document.status_token}")
 
     assert response.status_code == 200
-    assert "강화 비용(추정)" in response.text
+    assert "이번 강화 비용(추정)" in response.text
     expected = estimate_cost([usage])
     assert f"약 ₩{expected.krw_display}" in response.text
+
+
+def test_status_page_cost_only_uses_latest_run(tmp_path: Path) -> None:
+    app, repository, store = _build(tmp_path)
+    document = _seed_ready_document(repository, store)
+    first_job = repository.get_latest_job(document.key)
+    assert first_job is not None
+    repository.complete_job(
+        first_job.job_id,
+        usage={
+            "tokens": {
+                "gpt-5.2-input": 1_000_000,
+                "gpt-5.2-output": 500_000,
+            }
+        },
+    )
+    _, latest_job_id = repository.queue_refresh(document.key, trigger="user")
+    latest_usage = {
+        "tokens": {
+            "gpt-5.6-luna-input": 100_000,
+            "gpt-5.6-luna-output": 50_000,
+        }
+    }
+    repository.complete_job(latest_job_id, usage=latest_usage)
+    repository.add_job_event(latest_job_id, stage="READY", detail={"version": 2})
+    client = TestClient(app)
+
+    response = client.get(f"/s/{document.status_token}")
+
+    assert response.status_code == 200
+    expected = estimate_cost([latest_usage])
+    assert f"약 ₩{expected.krw_display}" in response.text
+    assert "gpt-5.6-luna 토큰 기준 추정" in response.text
+    assert "gpt-5.2 + gpt-5.6-luna" not in response.text
 
 
 def test_rerun_action_enqueues_job(tmp_path: Path) -> None:

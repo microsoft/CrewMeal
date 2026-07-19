@@ -40,7 +40,7 @@
       <tr><th>updated_at</th><td class="muted">{{ document.updated_at or '—' }}</td></tr>
       <tr><th>processed_at</th><td class="muted">{{ document.processed_at or '—' }}</td></tr>
       {% if cost and cost.has_usage %}
-      <tr><th>강화 비용(추정)</th><td>약 ₩{{ cost.krw_display }}
+      <tr><th>이번 강화 비용(추정)</th><td>약 ₩{{ cost.krw_display }}
         <span class="muted">· {{ cost.tokens_display }} 토큰 · ${{ cost.usd_display }}
         · {{ cost.model_label }} 토큰 기준 추정 ({{ cost.assumptions_text }})</span></td></tr>
       {% endif %}

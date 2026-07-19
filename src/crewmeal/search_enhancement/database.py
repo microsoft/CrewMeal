@@ -568,6 +568,16 @@ class SearchEnhancementRepository:
                 usages.append(parsed)
         return tuple(usages)
 
+    def job_usage(self, job_id: str) -> dict[str, Any] | None:
+        """Return parsed token usage for one job, if it has completed."""
+
+        with self._engine.connect() as conn:
+            raw = conn.execute(
+                select(jobs.c.usage_json).where(jobs.c.job_id == job_id)
+            ).scalar_one_or_none()
+        parsed = _json_loads_or_none(raw)
+        return parsed if isinstance(parsed, dict) else None
+
     def complete_job(
         self,
         job_id: str,

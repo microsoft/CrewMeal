@@ -183,7 +183,7 @@ def build_status_view(
     # A previously rendered preview is stale while a new run is in flight, so
     # only surface it once the current job has finished (or when idle).
     show_html = has_html and not is_reprocessing
-    cost = estimate_cost(repository.job_usages(key))
+    cost = estimate_cost([repository.job_usage(job.job_id) if job else None])
     return {
         "document": document,
         "job": job,

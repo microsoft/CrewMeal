@@ -180,6 +180,19 @@ No new Azure resources or model quota are requested. The rollout updates existin
 
 Validation also corrected the Bicep resource-group name to the existing `rg-crewmeal-ppt-poc-eus2`; before the fix, what-if incorrectly targeted a new resource group.
 
+### Cost-display hotfix revalidation — 2026-07-19T21:36:31+09:00
+
+| Check | Command or review | Result |
+|-------|-------------------|--------|
+| Azure CLI and authentication | `az version`, `az account show`, `az account set` | Azure CLI 2.83.0; authenticated to `ME-ABSx04287555-jechoi-1` (`1004da59-37b1-4a22-80e1-019cc29ce8f1`) |
+| Bicep compilation | `az bicep build --file infra/main.bicep --outfile infra/main.json` | Succeeded with Bicep 0.42.1 |
+| Provider template validation | `az deployment sub validate ...` | `Succeeded` |
+| What-if | `az deployment sub what-if ... --result-format ResourceIdOnly` | 32 `Deploy`, 1 `Ignore`, 0 `Create`, 0 `Delete` |
+| Container build | `docker build --quiet --tag crewmeal:cost-hotfix-validation .` | Succeeded; local image `sha256:7345dc1d279da59e3898111b51457c34483622a7c2cd945587a34f58d1089207` |
+| Python verification | `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest -q` | 167 passed |
+| Azure Policy | `az policy assignment list` | Three Defender assignments only; no conflict with an in-place Container Apps revision update |
+| Static RBAC | Review of unchanged `infra/modules/foundry.bicep`, `platform.bicep`, and `pg-autostart.bicep` | Resource-scoped ACR Pull, Storage Blob Data Contributor, Key Vault Secrets User, Cognitive Services OpenAI User, and PostgreSQL start permissions remain correctly assigned |
+
 ---
 
 ## 9. Deployment Proof
@@ -198,6 +211,20 @@ Validation also corrected the Bicep resource-group name to the existing `rg-crew
 | Live RBAC | ACR Pull, Storage Blob Data Contributor, Key Vault Secrets User, Cognitive Services OpenAI User, and PostgreSQL Contributor assignments are present at the intended resource scopes |
 | GitHub delivery | Rollout merged to `main` at `279df2773c06122f77fb301b54b6aaa28290bdd1`; Python 3.11/3.12 CI passed |
 | Public site | GitHub Pages deployment succeeded and `https://microsoft.github.io/CrewMeal/` returns HTTP 200 with the Luna, 10/10, and 39.65% benchmark content |
+
+### Cost-display hotfix deployment — 2026-07-19T21:42:00+09:00
+
+| Check | Result |
+|-------|--------|
+| Immutable image | `acrcrewmealpocgdfqpz5zn7qyu.azurecr.io/crewmeal-ppt/runtime-poc:costfix-20260719-123631z` |
+| Image digest | `sha256:0dd6dcae1d1b73be7834a8a7f7c343de635a7f31124a1fa0592a6bb941dc1091` |
+| Web revision | `ca-web-poc-gdfqpz5zn7qyu--costfix-1242` — active, healthy, running |
+| Worker revision | `ca-worker-poc-gdfqpz5zn7qyu--costfix-1242` — active, healthy, running at max scale |
+| Runtime environment | Both apps use the same immutable image with model `gpt-5.6-luna` and deployment `gpt-5-6-luna-test` |
+| Web health | `/healthz`, `/readyz`, and `/` returned HTTP 200 |
+| Affected document | Status page now shows `이번 강화 비용(추정)`, 105,595 latest-run Luna tokens, `$0.38`, and approximately `₩569`; the historical 447,740-token mixed-model total is absent |
+| Cumulative dashboard | Fleet-wide admin dashboard still shows the intended cumulative mixed GPT-5.2/Luna estimate |
+| Live RBAC | Resource-scoped ACR Pull, Storage Blob Data Contributor, Key Vault Secrets User, Cognitive Services OpenAI User, and PostgreSQL Contributor checks all passed |
 
 ---
 
