@@ -1,6 +1,6 @@
 # Azure Deployment Plan
 
-> **Status:** Application Deployed
+> **Status:** Deployed
 
 Generated: 2026-07-19T20:20:00+09:00
 
@@ -157,9 +157,9 @@ No new Azure resources or model quota are requested. The rollout updates existin
 - [x] Invoke azure-deploy
 - [x] Build and deploy immutable image to web and worker
 - [x] Verify live health, readiness, model settings, revisions, RBAC, and an actual two-slide analysis
-- [ ] Commit and push
-- [ ] Deploy and verify GitHub Pages
-- [ ] Update status to `Deployed`
+- [x] Commit and push
+- [x] Deploy and verify GitHub Pages
+- [x] Update status to `Deployed`
 
 ---
 
@@ -196,6 +196,8 @@ Validation also corrected the Bicep resource-group name to the existing `rg-crew
 | Production smoke | A two-slide PPTX upload reached `Ready`; stored analysis metadata reports model `gpt-5.6-luna`, deployment `gpt-5-6-luna-test`, and two analyzed slides |
 | Mixed-model history | Live dashboard applies GPT-5.2 `$1.75/$14` and Luna `$1/$6` rates separately instead of repricing history at the current-model rate |
 | Live RBAC | ACR Pull, Storage Blob Data Contributor, Key Vault Secrets User, Cognitive Services OpenAI User, and PostgreSQL Contributor assignments are present at the intended resource scopes |
+| GitHub delivery | Rollout merged to `main` at `279df2773c06122f77fb301b54b6aaa28290bdd1`; Python 3.11/3.12 CI passed |
+| Public site | GitHub Pages deployment succeeded and `https://microsoft.github.io/CrewMeal/` returns HTTP 200 with the Luna, 10/10, and 39.65% benchmark content |
 
 ---
 
@@ -203,7 +205,7 @@ Validation also corrected the Bicep resource-group name to the existing `rg-crew
 
 | File or Area | Purpose | Status |
 |--------------|---------|--------|
-| `.azure/deployment-plan.md` | Deployment source of truth | Application deployed; publication pending |
+| `.azure/deployment-plan.md` | Deployment source of truth | Complete |
 | `src/crewmeal/config.py` | Luna application defaults | Complete |
 | `src/crewmeal/search_enhancement/pricing.py` | Luna pricing and model label | Complete |
 | `src/crewmeal/search_enhancement/web/templates/` | Dynamic Luna cost labels | Complete |
@@ -218,7 +220,6 @@ Validation also corrected the Bicep resource-group name to the existing `rg-crew
 
 ## 11. Next Steps
 
-> Current: Application deployed and verified
+> Current: Complete
 
-1. Commit and push the rollout.
-2. Publish and verify the introduction site.
+The Luna production rollout, repository publication, and public introduction-site deployment are complete.
