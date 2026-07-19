@@ -29,7 +29,7 @@
   var box = document.getElementById("lightbox");
   var boxImg = box ? box.querySelector("img") : null;
 
-  document.querySelectorAll(".shot img, .zoom img").forEach(function (img) {
+  document.querySelectorAll(".zoom img").forEach(function (img) {
     img.addEventListener("click", function () {
       if (!box || !boxImg) return;
       boxImg.src = img.src;

@@ -27,7 +27,6 @@
         <a href="#results" data-ko="결과" data-en="Results">결과</a>
         <a href="#features" data-ko="기능" data-en="Features">기능</a>
         <a href="#formats" data-ko="포맷" data-en="Formats">포맷</a>
-        <a href="#screens" data-ko="화면" data-en="Screens">화면</a>
         <a href="#pipeline" data-ko="흐름" data-en="Pipeline">흐름</a>
       </nav>
       <div class="nav-ctl">
@@ -43,6 +42,9 @@
   <!-- HERO -->
   <section class="hero">
     <div class="wrap">
+      <div class="hero-banner">
+        <img src="./assets/brand/crewmeal-banner.png" width="1536" height="512" alt="CrewMeal plates PPTX, PDF and XLSX documents like a crew meal for an AI co-pilot, served back as Executive Summary, Key Insights and Structured Data" />
+      </div>
       <span class="badge"><span class="dot"></span><span data-ko="Microsoft · 오픈소스 PoC" data-en="Microsoft · Open-source PoC">Microsoft · 오픈소스 PoC</span></span>
       <h1 data-ko="Copilot을 위한 멀티포맷 콘텐츠를 &#10;더 맛있게 차려냅니다." data-en="Serving richer multi-format content&#10;for Microsoft Copilot.">Copilot을 위한 멀티포맷 콘텐츠를 더 맛있게 차려냅니다.</h1>
       <p class="lead" data-ko="CrewMeal은 SharePoint의 PPTX·PDF·HWP 문서를 페이지 이미지로 렌더링하고 비전 LLM으로 분석해, 구조화된 검색 메타데이터로 강화합니다. 원본은 그대로 두고 Copilot 커넥터에 추가 색인만 얹어 검색 품질을 끌어올립니다." data-en="CrewMeal renders your SharePoint PPTX, PDF and HWP documents to page images, analyzes them with a vision LLM, and enriches them into structured search metadata — indexed as extra items in your Copilot connector without touching the originals.">CrewMeal은 SharePoint의 PPTX·PDF·HWP 문서를 페이지 이미지로 렌더링하고 비전 LLM으로 분석해, 구조화된 검색 메타데이터로 강화합니다. 원본은 그대로 두고 Copilot 커넥터에 추가 색인만 얹어 검색 품질을 끌어올립니다.</p>
@@ -52,10 +54,25 @@
         <a class="btn secondary" href="#results" data-ko="강화 전후 결과 보기" data-en="See before vs after">강화 전후 결과 보기</a>
       </div>
 
-      <div class="hero-note">
-        <div><b>4+</b> <span data-ko="지원 문서 포맷" data-en="document formats">지원 문서 포맷</span></div>
-        <div><b data-ko="교체 가능" data-en="Swappable">교체 가능</b> <span data-ko="분석 모델 (비용 절감)" data-en="analysis model (cost control)">분석 모델 (비용 절감)</span></div>
-        <div><b data-ko="관리자 토글" data-en="Admin toggles">관리자 토글</b> <span data-ko="포맷·복호화 on/off" data-en="format & decryption on/off">포맷·복호화 on/off</span></div>
+      <div class="highlights">
+        <div class="hl fmt">
+          <div class="hl-ic">🗂️</div>
+          <div class="hl-v" data-ko="4+" data-en="4+">4+</div>
+          <div class="hl-t" data-ko="지원 문서 포맷" data-en="Document formats">지원 문서 포맷</div>
+          <div class="hl-d" data-ko="PPTX · PDF · HWP 지원 · DOCX · XLSX 확장 예정" data-en="PPTX, PDF &amp; HWP today · DOCX &amp; XLSX next">PPTX · PDF · HWP 지원 · DOCX · XLSX 확장 예정</div>
+        </div>
+        <div class="hl cost">
+          <div class="hl-ic">📉</div>
+          <div class="hl-v" data-ko="비용 절감" data-en="Lower cost">비용 절감</div>
+          <div class="hl-t" data-ko="교체 가능 분석 모델" data-en="Swappable analysis model">교체 가능 분석 모델</div>
+          <div class="hl-d" data-ko="관리 포털에서 비전 LLM을 교체 — 자체·경량 모델로 토큰 비용을 대폭 절감" data-en="Swap the vision LLM in the admin portal — cut token cost with your own or a lightweight model">관리 포털에서 비전 LLM을 교체 — 자체·경량 모델로 토큰 비용을 대폭 절감</div>
+        </div>
+        <div class="hl ctl">
+          <div class="hl-ic">🎛️</div>
+          <div class="hl-v" data-ko="On · Off" data-en="On · Off">On · Off</div>
+          <div class="hl-t" data-ko="관리자 토글" data-en="Admin toggles">관리자 토글</div>
+          <div class="hl-d" data-ko="포맷별 기능과 복호화(MIP 등)를 관리 포털에서 즉시 켜고 끄기" data-en="Flip each format and decryption (MIP, etc.) on or off from the admin portal">포맷별 기능과 복호화(MIP 등)를 관리 포털에서 즉시 켜고 끄기</div>
+        </div>
       </div>
 
       <!-- naming story -->
@@ -100,7 +117,7 @@
     <div class="wrap">
       <div class="eyebrow" data-ko="사용 방법" data-en="How it works">사용 방법</div>
       <h2 class="sec" data-ko="사용자는 이렇게 인덱스를 강화합니다" data-en="This is how a user enriches the index">사용자는 이렇게 인덱스를 강화합니다</h2>
-      <p class="sec-lead" data-ko="운영자가 SharePoint에서 문서를 고르고 명령 한 번으로 강화를 시작합니다. 나머지는 워커가 비동기로 처리합니다. 아래는 실제 고객 제안 POC 화면입니다." data-en="An operator picks a document in SharePoint and starts enrichment with a single command; the worker handles the rest asynchronously. Below are real customer-proposal PoC screens.">운영자가 SharePoint에서 문서를 고르고 명령 한 번으로 강화를 시작합니다. 나머지는 워커가 비동기로 처리합니다. 아래는 실제 고객 제안 POC 화면입니다.</p>
+      <p class="sec-lead" data-ko="운영자가 SharePoint에서 문서를 고르고 명령 한 번으로 강화를 시작합니다. 나머지는 워커가 비동기로 처리합니다. 아래는 실제 구동 화면입니다." data-en="An operator picks a document in SharePoint and starts enrichment with a single command; the worker handles the rest asynchronously. Below are real product screens.">운영자가 SharePoint에서 문서를 고르고 명령 한 번으로 강화를 시작합니다. 나머지는 워커가 비동기로 처리합니다. 아래는 실제 구동 화면입니다.</p>
 
       <div class="steps">
         <figure class="estep zoom">
@@ -117,14 +134,14 @@
 
         <figure class="estep zoom">
           <span class="badge-step" data-ko="2단계" data-en="Step 2">2단계</span>
-          <img src="./assets/deck/flow-2-queued.png" width="1439" height="646" alt="The request is registered as an async job" loading="lazy" />
-          <figcaption><b data-ko="비동기 작업 등록" data-en="Async job queued">비동기 작업 등록</b><span data-ko="강화 요청이 서버에 비동기 작업으로 등록되고, 상태 페이지 링크로 진행 상황을 추적합니다." data-en="The request is registered as an async job on the server; a status-page link tracks its progress.">강화 요청이 서버에 비동기 작업으로 등록되고, 상태 페이지 링크로 진행 상황을 추적합니다.</span></figcaption>
+          <img src="./assets/deck/flow-2-queued.png" width="1439" height="646" alt="SharePoint library shows the enhancement status in the document's column" loading="lazy" />
+          <figcaption><b data-ko="SharePoint 컬럼에 상태 · 링크 표시" data-en="Status &amp; link in the SharePoint column">SharePoint 컬럼에 상태 · 링크 표시</b><span data-ko="명령을 실행하면 문서 행의 검색강화 컬럼에 진행 상태가 표시되고, 상태 링크를 통해 진행 상황 페이지로 들어갑니다." data-en="Running the command surfaces the progress status in the document’s enhancement column, with a status link into the progress page.">명령을 실행하면 문서 행의 검색강화 컬럼에 진행 상태가 표시되고, 상태 링크를 통해 진행 상황 페이지로 들어갑니다.</span></figcaption>
         </figure>
 
         <figure class="estep zoom">
           <span class="badge-step" data-ko="3단계" data-en="Step 3">3단계</span>
-          <img src="./assets/deck/flow-3-processing.png" width="1379" height="648" alt="Processing takes minutes depending on size and complexity" loading="lazy" />
-          <figcaption><b data-ko="처리 · 수분~십수분" data-en="Processing · minutes">처리 · 수분~십수분</b><span data-ko="문서의 크기와 복잡도에 따라 렌더·분석·게시가 수분에서 십수분가량 진행됩니다. 완료되면 외부 인덱스에 강화 사본이 게시됩니다." data-en="Rendering, analysis and publishing take a few to a dozen-plus minutes depending on size and complexity. On completion, the enriched copy is published to the external index.">문서의 크기와 복잡도에 따라 렌더·분석·게시가 수분에서 십수분가량 진행됩니다. 완료되면 외부 인덱스에 강화 사본이 게시됩니다.</span></figcaption>
+          <img src="./assets/deck/flow-3-manage.png" width="1165" height="1444" alt="Status page: stage-by-stage progress timeline with re-run and remove actions" loading="lazy" />
+          <figcaption><b data-ko="링크 클릭 → 진행 확인 · 재실행 · 삭제" data-en="Open the link → track, re-run, delete">링크 클릭 → 진행 확인 · 재실행 · 삭제</b><span data-ko="링크를 클릭하면 단계별 진행 상황을 실시간으로 확인하고, 필요하면 강화를 다시 실행하거나 결과를 삭제할 수 있습니다." data-en="Click the link to watch stage-by-stage progress in real time, and re-run the enrichment or delete the result whenever you need.">링크를 클릭하면 단계별 진행 상황을 실시간으로 확인하고, 필요하면 강화를 다시 실행하거나 결과를 삭제할 수 있습니다.</span></figcaption>
         </figure>
       </div>
     </div>
@@ -152,12 +169,12 @@
           <div class="ba">
             <figure class="ba-card before zoom">
               <div class="ba-tag" data-ko="강화 전" data-en="Before">강화 전</div>
-              <img src="./assets/deck/case-gantt-before.png" width="1440" height="914" alt="Before: Copilot cannot determine the week range" loading="lazy" />
+              <img src="./assets/deck/case-gantt-before.png" width="734" height="650" alt="Before: Copilot cannot determine the week range" loading="lazy" />
               <figcaption><b class="fail" data-ko="답변 실패" data-en="Cannot answer">답변 실패</b><span data-ko="“통합 테스트는 언제인가?” — 작업이 있다는 것은 알지만 막대가 텍스트로 추출되지 않아 정확한 주차(W)를 확인할 수 없다고 답합니다." data-en="“When is the integration test?” — it knows the task exists but says it can't determine the exact week (W), because the bars aren't extracted as text.">“통합 테스트는 언제인가?” — 작업이 있다는 것은 알지만 막대가 텍스트로 추출되지 않아 정확한 주차(W)를 확인할 수 없다고 답합니다.</span></figcaption>
             </figure>
             <figure class="ba-card after zoom">
               <div class="ba-tag" data-ko="강화 후" data-en="After">강화 후</div>
-              <img src="./assets/deck/case-gantt-after.png" width="1305" height="602" alt="After: Copilot answers the exact W12 / end-of-April timing" loading="lazy" />
+              <img src="./assets/deck/case-gantt-after.png" width="735" height="488" alt="After: Copilot answers the exact W12 / end-of-April timing" loading="lazy" />
               <figcaption><b class="ok" data-ko="정확 답변" data-en="Answered">정확 답변</b><span data-ko="“완료보고 시점은?” — W12 종료 시점(4월 말, 안정화·인수인계 완료 후)까지 근거·출처와 함께 정확히 답합니다." data-en="“When is the completion report?” — it answers precisely: the W12 end point (late April, after stabilization/handover), with evidence and a source.">“완료보고 시점은?” — W12 종료 시점(4월 말, 안정화·인수인계 완료 후)까지 근거·출처와 함께 정확히 답합니다.</span></figcaption>
             </figure>
           </div>
@@ -179,12 +196,12 @@
           <div class="ba">
             <figure class="ba-card before zoom">
               <div class="ba-tag" data-ko="강화 전" data-en="Before">강화 전</div>
-              <img src="./assets/deck/case-org-before.png" width="1440" height="914" alt="Before: Copilot cannot answer the org relationships" loading="lazy" />
+              <img src="./assets/deck/case-org-before.png" width="739" height="580" alt="Before: Copilot cannot answer the org relationships" loading="lazy" />
               <figcaption><b class="fail" data-ko="답변 실패" data-en="Cannot answer">답변 실패</b><span data-ko="도형의 연결 관계가 텍스트로 남지 않아 역할·보고 라인을 제대로 답변하지 못합니다." data-en="Because the shape connections aren't preserved as text, it can't properly answer roles and reporting lines.">도형의 연결 관계가 텍스트로 남지 않아 역할·보고 라인을 제대로 답변하지 못합니다.</span></figcaption>
             </figure>
             <figure class="ba-card after zoom">
               <div class="ba-tag" data-ko="강화 후" data-en="After">강화 후</div>
-              <img src="./assets/deck/case-org-after.png" width="1388" height="747" alt="After: Copilot answers roles and reporting lines" loading="lazy" />
+              <img src="./assets/deck/case-org-after.png" width="734" height="547" alt="After: Copilot answers roles and reporting lines" loading="lazy" />
               <figcaption><b class="ok" data-ko="정확 답변" data-en="Answered">정확 답변</b><span data-ko="좌표 기반으로 복원된 구조 덕분에 담당자·팀·보고 라인을 정확히 답변합니다." data-en="Thanks to the geometry-restored structure, it answers the people, teams and reporting lines accurately.">좌표 기반으로 복원된 구조 덕분에 담당자·팀·보고 라인을 정확히 답변합니다.</span></figcaption>
             </figure>
           </div>
@@ -206,12 +223,12 @@
           <div class="ba">
             <figure class="ba-card before zoom">
               <div class="ba-tag" data-ko="강화 전" data-en="Before">강화 전</div>
-              <img src="./assets/deck/case-process-before.png" width="1440" height="914" alt="Before: Copilot cannot read the image-only process" loading="lazy" />
+              <img src="./assets/deck/case-process-before.png" width="733" height="608" alt="Before: Copilot cannot read the image-only process" loading="lazy" />
               <figcaption><b class="fail" data-ko="답변 실패" data-en="Cannot answer">답변 실패</b><span data-ko="이미지 안의 텍스트와 흐름이 인덱스에 없어 프로세스 단계를 답변하지 못합니다." data-en="With the in-image text and flow absent from the index, it can't answer the process steps.">이미지 안의 텍스트와 흐름이 인덱스에 없어 프로세스 단계를 답변하지 못합니다.</span></figcaption>
             </figure>
             <figure class="ba-card after zoom">
               <div class="ba-tag" data-ko="강화 후" data-en="After">강화 후</div>
-              <img src="./assets/deck/case-process-after.png" width="1398" height="728" alt="After: Copilot answers the process flow" loading="lazy" />
+              <img src="./assets/deck/case-process-after.png" width="723" height="537" alt="After: Copilot answers the process flow" loading="lazy" />
               <figcaption><b class="ok" data-ko="정확 답변" data-en="Answered">정확 답변</b><span data-ko="비전 분석으로 이미지 속 레인·단계를 복원해 프로세스 흐름을 정확히 답변합니다." data-en="Vision analysis restores the lanes and steps inside the image, so it answers the process flow accurately.">비전 분석으로 이미지 속 레인·단계를 복원해 프로세스 흐름을 정확히 답변합니다.</span></figcaption>
             </figure>
           </div>
@@ -318,59 +335,6 @@
             </tr>
           </tbody>
         </table>
-      </div>
-    </div>
-  </section>
-
-  <!-- SCREENSHOTS -->
-  <section id="screens">
-    <div class="wrap">
-      <div class="eyebrow" data-ko="실제 화면" data-en="Live screens">실제 화면</div>
-      <h2 class="sec" data-ko="구동 화면 캡처" data-en="Captured from the running app">구동 화면 캡처</h2>
-      <p class="sec-lead" data-ko="아래는 실제로 앱을 구동해 캡처한 화면입니다. 이미지를 클릭하면 크게 볼 수 있습니다." data-en="These are captured from the actual running app. Click any image to enlarge.">아래는 실제로 앱을 구동해 캡처한 화면입니다. 이미지를 클릭하면 크게 볼 수 있습니다.</p>
-
-      <div class="shots">
-        <div class="shot wide">
-          <div class="cap"><div class="dots"><i></i><i></i><i></i></div><span>/admin/settings</span></div>
-          <img src="./assets/screenshots/admin-settings.png" width="1425" height="2510" alt="Admin settings: format toggles, vision model swap, decryption" loading="lazy" />
-          <div class="desc"><b data-ko="설정: 포맷 토글 · 모델 교체 · 복호화" data-en="Settings: format toggles · model swap · decryption">설정: 포맷 토글 · 모델 교체 · 복호화</b><span data-ko="포맷별 on/off, 비전 모델 provider/배포/엔드포인트 교체, MIP·기타 복호화 토글을 한 화면에서 관리합니다." data-en="Per-format on/off, vision-model provider/deployment/endpoint swap, and MIP/other decryption toggles in one screen.">포맷별 on/off, 비전 모델 provider/배포/엔드포인트 교체, MIP·기타 복호화 토글을 한 화면에서 관리합니다.</span></div>
-        </div>
-
-        <div class="shot">
-          <div class="cap"><div class="dots"><i></i><i></i><i></i></div><span>/admin</span></div>
-          <img src="./assets/screenshots/admin-dashboard.png" width="1425" height="1099" alt="Admin dashboard with cost and status counts" loading="lazy" />
-          <div class="desc"><b data-ko="관리자 대시보드" data-en="Admin dashboard">관리자 대시보드</b><span data-ko="문서 상태 집계, 최근 작업, 누적 토큰 비용(추정)을 한눈에." data-en="Document status counts, recent jobs and estimated cumulative token cost at a glance.">문서 상태 집계, 최근 작업, 누적 토큰 비용(추정)을 한눈에.</span></div>
-        </div>
-
-        <div class="shot">
-          <div class="cap"><div class="dots"><i></i><i></i><i></i></div><span>/admin/documents</span></div>
-          <img src="./assets/screenshots/admin-documents.png" width="1440" height="900" alt="Document list across formats and statuses" loading="lazy" />
-          <div class="desc"><b data-ko="문서 목록" data-en="Document list">문서 목록</b><span data-ko="PPTX·PDF·HWP가 SharePoint·업로드 소스로 섞여 상태별로 나열됩니다." data-en="PPTX, PDF and HWP from SharePoint and upload sources, listed by status.">PPTX·PDF·HWP가 SharePoint·업로드 소스로 섞여 상태별로 나열됩니다.</span></div>
-        </div>
-
-        <div class="shot">
-          <div class="cap"><div class="dots"><i></i><i></i><i></i></div><span>/s/{token}</span></div>
-          <img src="./assets/screenshots/status-ready.png" width="1425" height="2092" alt="User status page with progress timeline and cost" loading="lazy" />
-          <div class="desc"><b data-ko="상태 페이지 (완료)" data-en="Status page (ready)">상태 페이지 (완료)</b><span data-ko="단계별 타임라인, 소요 시간, 강화 비용(추정), 추출 HTML 미리보기를 사용자에게 제공합니다." data-en="A stage-by-stage timeline, durations, estimated cost and an extracted-HTML preview for the end user.">단계별 타임라인, 소요 시간, 강화 비용(추정), 추출 HTML 미리보기를 사용자에게 제공합니다.</span></div>
-        </div>
-
-        <div class="shot">
-          <div class="cap"><div class="dots"><i></i><i></i><i></i></div><span>/s/{token}</span></div>
-          <img src="./assets/screenshots/status-processing.png" width="1425" height="1201" alt="In-flight progress with per-slide sub-progress" loading="lazy" />
-          <div class="desc"><b data-ko="상태 페이지 (진행 중)" data-en="Status page (in flight)">상태 페이지 (진행 중)</b><span data-ko="HWP 문서가 분석되는 동안 18/30쪽 같은 슬라이드 단위 진행률을 실시간으로 보여줍니다." data-en="While an HWP document is analyzed, per-slide sub-progress like 18/30 updates in real time.">HWP 문서가 분석되는 동안 18/30쪽 같은 슬라이드 단위 진행률을 실시간으로 보여줍니다.</span></div>
-        </div>
-
-        <div class="shot">
-          <div class="cap"><div class="dots"><i></i><i></i><i></i></div><span>/s/{token}/html</span></div>
-          <img src="./assets/screenshots/enhanced-html.png" width="1440" height="900" alt="Structured enhanced HTML output" loading="lazy" />
-          <div class="desc"><b data-ko="강화된 구조화 HTML" data-en="Enhanced structured HTML">강화된 구조화 HTML</b><span data-ko="원본 페이지의 시각 콘텐츠가 제목·문단·표·목록의 허용 태그 HTML로 구조화됩니다." data-en="The visual content of each page becomes structured allow-listed HTML — headings, paragraphs, tables and lists.">원본 페이지의 시각 콘텐츠가 제목·문단·표·목록의 허용 태그 HTML로 구조화됩니다.</span></div>
-        </div>
-
-        <div class="shot">
-          <div class="cap"><div class="dots"><i></i><i></i><i></i></div><span>/admin/tryout</span></div>
-          <img src="./assets/screenshots/admin-tryout.png" width="1440" height="900" alt="Tryout uploader supporting multiple formats" loading="lazy" />
-          <div class="desc"><b data-ko="시연 업로드" data-en="Tryout uploader">시연 업로드</b><span data-ko="문서를 직접 올려 동일 파이프라인을 시험합니다. 지원 형식이 활성 포맷에 따라 자동으로 표시됩니다." data-en="Upload a document to try the same pipeline. Accepted formats reflect the enabled formats automatically.">문서를 직접 올려 동일 파이프라인을 시험합니다. 지원 형식이 활성 포맷에 따라 자동으로 표시됩니다.</span></div>
-        </div>
       </div>
     </div>
   </section>
