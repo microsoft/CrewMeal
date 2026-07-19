@@ -5,9 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CrewMeal — Copilot을 위한 멀티포맷 콘텐츠 강화 플랫폼</title>
   <meta name="description" content="CrewMeal은 PPTX·PDF·HWP 등 사내 문서를 구조화된 검색 메타데이터로 강화해 Microsoft Copilot 검색 품질을 높이는 멀티포맷 콘텐츠 강화 플랫폼입니다." />
-  <meta property="og:title" content="CrewMeal" />
-  <meta property="og:description" content="Copilot에게 제공하는 양질의 기내식(Crew Meal). 멀티포맷 문서 → 구조화 검색 콘텐츠." />
+  <meta property="og:title" content="CrewMeal — Copilot을 위한 멀티포맷 콘텐츠 강화 플랫폼" />
+  <meta property="og:description" content="CrewMeal은 PPTX·PDF·HWP 등 사내 문서를 구조화된 검색 메타데이터로 강화해 Microsoft Copilot 검색 품질을 높이는 멀티포맷 콘텐츠 강화 플랫폼입니다." />
   <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="CrewMeal" />
+  <meta property="og:url" content="https://microsoft.github.io/CrewMeal/" />
+  <meta property="og:image" content="https://microsoft.github.io/CrewMeal/assets/brand/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:alt" content="CrewMeal — multi-format documents plated as high-quality content for Copilot" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="CrewMeal — Copilot을 위한 멀티포맷 콘텐츠 강화 플랫폼" />
+  <meta name="twitter:description" content="CrewMeal은 PPTX·PDF·HWP 등 사내 문서를 구조화된 검색 메타데이터로 강화해 Microsoft Copilot 검색 품질을 높입니다." />
+  <meta name="twitter:image" content="https://microsoft.github.io/CrewMeal/assets/brand/og-image.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23ff8a5c'/%3E%3Ctext y='74' x='50' font-size='62' text-anchor='middle'%3E%F0%9F%8D%B1%3C/text%3E%3C/svg%3E" />
   <link rel="stylesheet" href="./styles.css" />
@@ -181,34 +192,7 @@
         </div>
       </article>
 
-      <!-- case 2: Org chart -->
-      <article class="demo">
-        <header class="demo-head">
-          <span class="kind" data-ko="도형 조직도" data-en="Shape org chart">도형 조직도</span>
-          <h3 data-ko="도형과 연결선으로 그린 조직도" data-en="An org chart of connected shapes">도형과 연결선으로 그린 조직도</h3>
-          <p data-ko="Project Manager · Advisor · 현업 · 컨설턴트/개발자 · 운영지원이 연결선으로 이어진 조직도. 관계가 곧 정보입니다." data-en="Project Manager · Advisor · business · consultants/developers · operations, tied together by connector lines. The relationships are the information.">Project Manager · Advisor · 현업 · 컨설턴트/개발자 · 운영지원이 연결선으로 이어진 조직도. 관계가 곧 정보입니다.</p>
-        </header>
-        <div class="demo-grid">
-          <figure class="demo-src zoom">
-            <img src="./assets/deck/case-org-source.png" width="1152" height="801" alt="Source org-chart slide built from connected shapes" loading="lazy" />
-            <figcaption data-ko="원본 슬라이드 「6. 프로젝트 조직」" data-en="Source slide “6. Project organization”">원본 슬라이드 「6. 프로젝트 조직」</figcaption>
-          </figure>
-          <div class="ba">
-            <figure class="ba-card before zoom">
-              <div class="ba-tag" data-ko="강화 전" data-en="Before">강화 전</div>
-              <img src="./assets/deck/case-org-before.png" width="739" height="580" alt="Before: Copilot cannot answer the org relationships" loading="lazy" />
-              <figcaption><b class="fail" data-ko="답변 실패" data-en="Cannot answer">답변 실패</b><span data-ko="도형의 연결 관계가 텍스트로 남지 않아 역할·보고 라인을 제대로 답변하지 못합니다." data-en="Because the shape connections aren't preserved as text, it can't properly answer roles and reporting lines.">도형의 연결 관계가 텍스트로 남지 않아 역할·보고 라인을 제대로 답변하지 못합니다.</span></figcaption>
-            </figure>
-            <figure class="ba-card after zoom">
-              <div class="ba-tag" data-ko="강화 후" data-en="After">강화 후</div>
-              <img src="./assets/deck/case-org-after.png" width="708" height="724" alt="After: Copilot answers roles and reporting lines" loading="lazy" />
-              <figcaption><b class="ok" data-ko="정확 답변" data-en="Answered">정확 답변</b><span data-ko="좌표 기반으로 복원된 구조 덕분에 담당자·팀·보고 라인을 정확히 답변합니다." data-en="Thanks to the geometry-restored structure, it answers the people, teams and reporting lines accurately.">좌표 기반으로 복원된 구조 덕분에 담당자·팀·보고 라인을 정확히 답변합니다.</span></figcaption>
-            </figure>
-          </div>
-        </div>
-      </article>
-
-      <!-- case 3: Process diagram -->
+      <!-- case 2: Process diagram -->
       <article class="demo">
         <header class="demo-head">
           <span class="kind" data-ko="이미지 프로세스도" data-en="Image-only process map">이미지 프로세스도</span>
