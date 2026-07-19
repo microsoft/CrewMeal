@@ -15,6 +15,7 @@ from crewmeal.search_enhancement.database import (
     DocumentRecord,
     SearchEnhancementRepository,
 )
+from crewmeal.search_enhancement.pricing import estimate_cost
 from crewmeal.search_enhancement.web import create_app
 from crewmeal.search_enhancement.web.config import WebConfig
 
@@ -152,10 +153,50 @@ def test_documents_list_and_detail(tmp_path: Path) -> None:
     detail = client.get(f"/admin/documents/{document.status_token}", headers=AUTH)
     assert detail.status_code == 200
     assert document.request_id in detail.text
+    assert "이번 강화 비용(추정)" not in detail.text
 
     assert (
         client.get("/admin/documents/nope", headers=AUTH).status_code == 404
     )
+
+
+def test_document_detail_uses_latest_cost_while_dashboard_stays_cumulative(
+    tmp_path: Path,
+) -> None:
+    app, repository, store = _build(tmp_path)
+    document = _seed_document(repository, store)
+    first_job = repository.get_latest_job(document.key)
+    assert first_job is not None
+    first_usage = {
+        "tokens": {
+            "gpt-5.2-input": 1_000_000,
+            "gpt-5.2-output": 500_000,
+        }
+    }
+    repository.complete_job(first_job.job_id, usage=first_usage)
+    _, latest_job_id = repository.queue_refresh(document.key, trigger="user")
+    latest_usage = {
+        "tokens": {
+            "gpt-5.6-luna-input": 100_000,
+            "gpt-5.6-luna-output": 50_000,
+        }
+    }
+    repository.complete_job(latest_job_id, usage=latest_usage)
+    repository.add_job_event(latest_job_id, stage="READY", detail={"version": 2})
+    client = TestClient(app)
+
+    detail = client.get(f"/admin/documents/{document.status_token}", headers=AUTH)
+    dashboard = client.get("/admin", headers=AUTH)
+
+    latest_cost = estimate_cost([latest_usage])
+    assert "이번 강화 비용(추정)" in detail.text
+    assert f"약 ₩{latest_cost.krw_display}" in detail.text
+    assert "gpt-5.2 + gpt-5.6-luna" not in detail.text
+
+    cumulative_cost = estimate_cost([first_usage, latest_usage])
+    assert "누적 비용(추정)" in dashboard.text
+    assert f"₩{cumulative_cost.krw_display}" in dashboard.text
+    assert "gpt-5.2 + gpt-5.6-luna" in dashboard.text
 
 
 def test_admin_rerun_enqueues_job(tmp_path: Path) -> None:
