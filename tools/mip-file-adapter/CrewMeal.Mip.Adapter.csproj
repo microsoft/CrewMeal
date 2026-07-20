@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>crewmeal-mip-adapter</AssemblyName>
+    <RootNamespace>CrewMeal.Mip.Adapter</RootNamespace>
+    <!-- Real-tenant decryption runs headless (app-only), so no WinForms/desktop
+         dependency is required; plain net8.0 works on both win-x64 and linux-x64. -->
+    <RuntimeIdentifiers>win-x64;linux-x64</RuntimeIdentifiers>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Official Microsoft Information Protection File SDK. Version pinned to the
+         current Azure-Samples/MipSDK-File-Dotnet-Quickstart reference. -->
+    <PackageReference Include="Microsoft.InformationProtection.File" Version="1.16.126" />
+    <!-- MSAL: the File SDK engine challenges for several resources (MIP Sync
+         Service for label policy, then Azure RMS for decryption). The adapter
+         mints an app-only token per requested resource using the service
+         principal's client credentials. -->
+    <PackageReference Include="Microsoft.Identity.Client" Version="4.61.3" />
+  </ItemGroup>
+
+</Project>
