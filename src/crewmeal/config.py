@@ -13,6 +13,7 @@ DEFAULT_SLIDE_IMAGE_MAX_WORKERS = 2
 DEFAULT_SLIDE_IMAGE_MAX_COMPLETION_TOKENS = 40_000
 DEFAULT_SLIDE_IMAGE_REQUEST_TIMEOUT = 900
 DEFAULT_SLIDE_IMAGE_MODEL = "gpt-5.6-luna"
+DEFAULT_RHWP_TIMEOUT_SECONDS = 300
 SUPPORTED_SLIDE_IMAGE_MODELS = frozenset(
     {"gpt-5-mini", "gpt-5.2", "gpt-5.6-luna"}
 )
@@ -55,6 +56,22 @@ def resolve_soffice_path() -> Path | None:
     return None
 
 
+def resolve_rhwp_path() -> Path | None:
+    configured = os.getenv("RHWP_PATH")
+    candidates: list[Path] = []
+    if configured:
+        candidates.append(Path(configured).expanduser())
+
+    command = shutil.which("rhwp")
+    if command:
+        candidates.append(Path(command))
+
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate.resolve()
+    return None
+
+
 @dataclass(frozen=True, slots=True)
 class AppConfig:
     endpoint: str | None
@@ -68,6 +85,8 @@ class AppConfig:
     )
     slide_image_request_timeout: int = DEFAULT_SLIDE_IMAGE_REQUEST_TIMEOUT
     slide_image_model: str = DEFAULT_SLIDE_IMAGE_MODEL
+    rhwp_path: Path | None = None
+    rhwp_timeout_seconds: int = DEFAULT_RHWP_TIMEOUT_SECONDS
 
     @classmethod
     def from_environment(cls) -> "AppConfig":
@@ -100,6 +119,11 @@ class AppConfig:
                 DEFAULT_SLIDE_IMAGE_REQUEST_TIMEOUT,
             ),
             slide_image_model=_slide_image_model_environment(),
+            rhwp_path=resolve_rhwp_path(),
+            rhwp_timeout_seconds=_positive_int_environment(
+                "RHWP_TIMEOUT_SECONDS",
+                DEFAULT_RHWP_TIMEOUT_SECONDS,
+            ),
         )
 
     def require_endpoint(self) -> str:
@@ -116,6 +140,13 @@ class AppConfig:
                 "LibreOffice was not found. Set SOFFICE_PATH to soffice.exe."
             )
         return self.soffice_path
+
+    def require_rhwp(self) -> Path:
+        if not self.rhwp_path:
+            raise ConfigurationError(
+                "rhwp was not found. Set RHWP_PATH to the pinned rhwp executable."
+            )
+        return self.rhwp_path
 
     def openai_base_url(self) -> str:
         return f"{self.require_endpoint()}/openai/v1/"

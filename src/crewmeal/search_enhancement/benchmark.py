@@ -15,6 +15,10 @@ from typing import Any
 from crewmeal.config import AppConfig
 from crewmeal.search_enhancement.formats import detect_handler
 from crewmeal.search_enhancement.progress import NullProgressReporter
+from crewmeal.search_enhancement.processor import (
+    merge_semantic_and_visual,
+    semantic_analysis_result,
+)
 from crewmeal.search_enhancement.structured_analysis import (
     StructuredSlideAnalysisError,
     StructuredSlideAnalysisService,
@@ -877,12 +881,35 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         analysis_started = time.perf_counter()
         try:
-            with StructuredSlideAnalysisService(config, model=model) as service:
-                analysis = service.analyze(
-                    prepared.renderer_manifest.page_images,
-                    source_manifest=prepared.source_manifest,
+            semantic_analysis = (
+                semantic_analysis_result(
                     source_name=args.input.name,
-                    geometry_by_slide=prepared.geometry_by_page,
+                    slides=prepared.semantic_slides,
+                )
+                if prepared.semantic_slides is not None
+                else None
+            )
+            if (
+                semantic_analysis is not None
+                and not prepared.renderer_manifest.page_images
+            ):
+                analysis = semantic_analysis
+            else:
+                with StructuredSlideAnalysisService(config, model=model) as service:
+                    visual_analysis = service.analyze(
+                        prepared.renderer_manifest.page_images,
+                        source_manifest=prepared.source_manifest,
+                        source_name=args.input.name,
+                        geometry_by_slide=prepared.geometry_by_page,
+                        allow_partial_pages=semantic_analysis is not None,
+                    )
+                analysis = (
+                    merge_semantic_and_visual(
+                        semantic_analysis,
+                        visual_analysis,
+                    )
+                    if semantic_analysis is not None
+                    else visual_analysis
                 )
         except StructuredSlideAnalysisError as exc:
             input_tokens = exc.input_tokens

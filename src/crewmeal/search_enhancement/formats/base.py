@@ -8,6 +8,7 @@ from typing import Protocol, runtime_checkable
 
 from crewmeal.config import AppConfig
 from crewmeal.models import RendererManifest, SourceManifest
+from crewmeal.search_enhancement.models import SlideContent
 from crewmeal.search_enhancement.progress import ProgressReporter
 
 
@@ -32,7 +33,10 @@ class PreparedDocument:
     """Format-neutral inputs the shared analysis pipeline consumes.
 
     ``source_manifest`` carries per-page text evidence (and speaker notes for
-    PowerPoint); ``renderer_manifest`` carries the rendered page images.
+    PowerPoint); ``renderer_manifest`` carries rendered page images. In
+    semantic-first mode, ``semantic_slides`` contains every page while
+    ``renderer_manifest.page_images`` contains only pages that need targeted
+    visual analysis.
     ``geometry_by_page`` holds optional deterministic layout facts (currently
     only PowerPoint Gantt/diagram coordinates); other formats leave it empty.
     """
@@ -41,6 +45,7 @@ class PreparedDocument:
     renderer_manifest: RendererManifest
     geometry_by_page: Mapping[int, str] = field(default_factory=dict)
     stage_timings: dict[str, float] = field(default_factory=dict)
+    semantic_slides: tuple[SlideContent, ...] | None = None
 
 
 @runtime_checkable

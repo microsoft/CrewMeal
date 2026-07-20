@@ -17,12 +17,14 @@ def test_environment_config_normalizes_endpoint(
         "deploy-test",
     )
     monkeypatch.setenv("SOFFICE_PATH", str(Path(__file__)))
+    monkeypatch.setenv("RHWP_PATH", str(Path(__file__)))
 
     config = AppConfig.from_environment()
 
     assert config.endpoint == "https://example.services.ai.azure.com"
     assert config.slide_image_deployment == "deploy-test"
     assert config.soffice_path == Path(__file__).resolve()
+    assert config.rhwp_path == Path(__file__).resolve()
     assert config.openai_base_url() == (
         "https://example.services.ai.azure.com/openai/v1/"
     )
@@ -37,6 +39,17 @@ def test_require_endpoint_reports_missing_configuration() -> None:
 
     with pytest.raises(ConfigurationError, match="CONTENTUNDERSTANDING_ENDPOINT"):
         config.require_endpoint()
+
+
+def test_require_rhwp_reports_missing_configuration() -> None:
+    config = AppConfig(
+        endpoint=None,
+        max_upload_bytes=1,
+        soffice_path=None,
+    )
+
+    with pytest.raises(ConfigurationError, match="RHWP_PATH"):
+        config.require_rhwp()
 
 
 def test_slide_image_defaults_use_luna() -> None:

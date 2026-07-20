@@ -77,11 +77,14 @@ def render_presentation_html(
     slides: tuple[SlideContent, ...],
     notes_by_slide: Mapping[int, tuple[str, ...]] | None = None,
     max_bytes: int = CONTENT_HTML_LIMIT_BYTES,
+    unit_label: str = "슬라이드",
 ) -> RenderedHtml:
     if not slides:
         raise ValueError("At least one slide is required.")
     if max_bytes <= 0:
         raise ValueError("max_bytes must be positive.")
+    if not unit_label.strip():
+        raise ValueError("unit_label must not be empty.")
 
     ordered = tuple(sorted(slides, key=lambda slide: slide.slide_number))
     numbers = tuple(slide.slide_number for slide in ordered)
@@ -96,7 +99,13 @@ def render_presentation_html(
         "</header>",
     ]
     for slide in ordered:
-        parts.extend(_render_slide(slide, notes.get(slide.slide_number, ())))
+        parts.extend(
+            _render_slide(
+                slide,
+                notes.get(slide.slide_number, ()),
+                unit_label=unit_label,
+            )
+        )
     parts.append("</article>")
     content = "".join(parts)
 
@@ -112,7 +121,7 @@ def render_presentation_html(
         )
 
     titles = tuple(
-        slide.title or f"슬라이드 {slide.slide_number}" for slide in ordered
+        slide.title or f"{unit_label} {slide.slide_number}" for slide in ordered
     )
     return RenderedHtml(
         content=content,
@@ -123,11 +132,16 @@ def render_presentation_html(
     )
 
 
-def _render_slide(slide: SlideContent, notes: tuple[str, ...]) -> list[str]:
+def _render_slide(
+    slide: SlideContent,
+    notes: tuple[str, ...],
+    *,
+    unit_label: str,
+) -> list[str]:
     title = slide.title or "제목 없음"
     parts = [
         "<section>",
-        f"<h2>슬라이드 {slide.slide_number}: {_text(title)}</h2>",
+        f"<h2>{_text(unit_label)} {slide.slide_number}: {_text(title)}</h2>",
     ]
     if slide.summary:
         parts.append(f"<p><strong>요약:</strong> {_text(slide.summary)}</p>")
