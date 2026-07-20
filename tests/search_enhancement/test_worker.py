@@ -184,6 +184,11 @@ class FakeControl:
 
 
 class FakeProcessor:
+    def decrypt_source(
+        self, source_bytes: bytes, *, filename: str, content_type: Any = None
+    ) -> bytes:
+        return source_bytes
+
     def process(
         self,
         source_bytes: bytes,

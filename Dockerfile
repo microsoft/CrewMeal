@@ -74,6 +74,35 @@ COPY pyproject.toml ./
 COPY src ./src
 RUN pip install .
 
+# Optional: stage the Microsoft Information Protection (MIP) File SDK native
+# libraries used for decrypting MIP-protected documents. These are
+# Microsoft-licensed binaries and are NOT baked in by default. Provide a pinned
+# version + SHA-256 at build time to fetch them:
+#
+#   docker build --build-arg MIP_SDK_VERSION=1.14.107 \
+#                --build-arg MIP_SDK_SHA256=<hex-digest-of-nupkg> .
+#
+# The CLI entrypoint (CREWMEAL_MIP_SDK_CLI) is a deployment-provided thin wrapper
+# around the SDK and must be supplied separately; until it is set, MIP decryption
+# stays "not configured" and — if an admin enables it — fails loudly rather than
+# passing encrypted files through. For local/CI demos, point CREWMEAL_MIP_SDK_CLI
+# at the bundled reference tool: "python -m crewmeal.search_enhancement.mip_tool".
+ARG MIP_SDK_VERSION=""
+ARG MIP_SDK_SHA256=""
+ARG MIP_SDK_RUNTIME=linux-x64
+ENV CREWMEAL_MIP_SDK_LIB_DIR=/opt/mip/lib \
+    CREWMEAL_MIP_RMS_SCOPE=https://aadrm.com/.default
+COPY scripts/fetch_mip_sdk.py ./scripts/fetch_mip_sdk.py
+RUN if [ -n "$MIP_SDK_VERSION" ]; then \
+        python scripts/fetch_mip_sdk.py \
+            --version "$MIP_SDK_VERSION" \
+            --sha256 "$MIP_SDK_SHA256" \
+            --runtime "$MIP_SDK_RUNTIME" \
+            --dest "$CREWMEAL_MIP_SDK_LIB_DIR" ; \
+    else \
+        echo "MIP SDK not fetched (no MIP_SDK_VERSION build-arg); MIP decryption stays disabled until CREWMEAL_MIP_SDK_CLI is configured." ; \
+    fi
+
 # Role-branching entrypoint. Strip any CR characters so the script runs even if
 # it was checked out with Windows (CRLF) line endings.
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh

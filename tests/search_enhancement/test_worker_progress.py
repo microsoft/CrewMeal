@@ -114,6 +114,11 @@ class RecordingProcessor:
         self.corrections: Any = None
         self.progress_stages: list[str] = []
 
+    def decrypt_source(
+        self, source_bytes: bytes, *, filename: str, content_type: Any = None
+    ) -> bytes:
+        return source_bytes
+
     def process(
         self,
         source_bytes: bytes,

@@ -8,6 +8,7 @@ signed session cookie set after logging in once).
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
@@ -40,7 +41,11 @@ from crewmeal.search_enhancement.decryption import (
     all_providers as all_decryption_providers,
     decryption_setting_key,
     decryption_status,
+    is_decryption_enabled,
 )
+from crewmeal.search_enhancement.config import SearchEnhancementConfig
+from crewmeal.search_enhancement.mip_sdk import MipSdkConfig, probe_rms_health
+from crewmeal.search_enhancement.mip_setup import build_setup_guide
 from crewmeal.search_enhancement.database import (
     DocumentRecord,
     FeedbackRecord,
@@ -240,13 +245,85 @@ def admin_job_retry(
 # --------------------------------------------------------------------------- #
 # Settings
 # --------------------------------------------------------------------------- #
-@router.get("/settings", response_class=HTMLResponse)
-def admin_settings(
-    request: Request,
-    repository: SearchEnhancementRepository = Depends(get_repository),
-    templates: Jinja2Templates = Depends(get_templates),
-    saved: bool = False,
-) -> HTMLResponse:
+def _mip_live_health(
+    all_settings: Mapping[str, Any], *, force: bool = False
+) -> dict[str, dict[str, Any]]:
+    """Best-effort live RMS readiness for the settings page.
+
+    On normal page loads it only probes when MIP decryption is enabled *and* an
+    adapter is configured, so the common (off) case adds no latency or network
+    calls. The setup wizard's "re-check" action passes ``force=True`` so an
+    administrator can verify tenant readiness (token + super-user) *before*
+    enabling the toggle or wiring the adapter. Building the credential or probing
+    must never break the settings page, so every failure is swallowed and
+    reported as an unavailable-token health entry. This is what lets the UI
+    distinguish "SDK wired" (``configured``) from "tenant actually works"
+    (``health``).
+    """
+
+    mip_config = MipSdkConfig.from_environment()
+    if not force and not (
+        is_decryption_enabled("mip", all_settings) and mip_config.is_configured
+    ):
+        return {}
+    try:
+        from azure.identity import ClientSecretCredential
+
+        cfg = SearchEnhancementConfig.from_environment()
+        credential = ClientSecretCredential(
+            tenant_id=cfg.tenant_id,
+            client_id=cfg.client_id,
+            client_secret=cfg.client_secret,
+        )
+    except Exception as exc:  # noqa: BLE001 - never break the settings page
+        return {
+            "mip": {
+                "ok": False,
+                "super_user": False,
+                "decrypt_ready": False,
+                "object_id": None,
+                "detail": f"service-principal credential unavailable: {exc}",
+            }
+        }
+    try:
+        health = probe_rms_health(credential, mip_config.scope)
+    finally:
+        close = getattr(credential, "close", None)
+        if callable(close):
+            close()
+    return {
+        "mip": {
+            "ok": health.ok,
+            "super_user": health.super_user,
+            "decrypt_ready": health.decrypt_ready,
+            "object_id": health.object_id,
+            "detail": health.describe(),
+        }
+    }
+
+
+def _config_service_principal_ids() -> tuple[str | None, str | None]:
+    """Tenant id / client id from config for the setup wizard, or ``(None, None)``.
+
+    Reading config must never break the settings page (the M365 env vars may be
+    incomplete), so any failure degrades to unknown ids.
+    """
+
+    try:
+        cfg = SearchEnhancementConfig.from_environment()
+        return cfg.tenant_id, cfg.client_id
+    except Exception:  # noqa: BLE001 - degrade to unknown ids
+        return None, None
+
+
+def _build_settings_context(
+    repository: SearchEnhancementRepository,
+    *,
+    saved: bool,
+    force_mip_probe: bool,
+) -> dict[str, Any]:
+    """Shared settings-page context for the GET view and the re-check action."""
+
     all_settings = repository.get_all_settings()
     publication_transition = repository.get_publication_transition()
     publication_progress = (
@@ -257,13 +334,29 @@ def admin_settings(
         if publication_transition.desired_target is not PublicationTarget.UNSET
         else {"ready": 0, "failed": 0, "pending": 0, "truncated": 0}
     )
-    context = {
+    health = _mip_live_health(all_settings, force=force_mip_probe)
+    mip_configured = MipSdkConfig.from_environment().is_configured
+    tenant_id, client_id = _config_service_principal_ids()
+    mip_health = health.get("mip")
+    return {
         "settings": all_settings,
         "formats": format_status(all_settings),
         "vision_fields": vision_model_fields(
             AppConfig.from_environment(), all_settings
         ),
-        "decryption": decryption_status(all_settings),
+        "decryption": decryption_status(
+            all_settings,
+            configured={"mip": mip_configured},
+            health=health,
+        ),
+        "mip_setup": build_setup_guide(
+            tenant_id=tenant_id,
+            client_id=client_id,
+            sp_object_id=(mip_health or {}).get("object_id"),
+            adapter_configured=mip_configured,
+            health=mip_health,
+        ),
+        "mip_probed": force_mip_probe,
         "publication": publication_transition,
         "publication_progress": publication_progress,
         "publication_document_count": len(
@@ -276,6 +369,38 @@ def admin_settings(
         "publication_column_limit": SHAREPOINT_COLUMN_MAX_CHARACTERS,
         "saved": saved,
     }
+
+
+@router.get("/settings", response_class=HTMLResponse)
+def admin_settings(
+    request: Request,
+    repository: SearchEnhancementRepository = Depends(get_repository),
+    templates: Jinja2Templates = Depends(get_templates),
+    saved: bool = False,
+) -> HTMLResponse:
+    context = _build_settings_context(
+        repository, saved=saved, force_mip_probe=False
+    )
+    return templates.TemplateResponse(request, "admin/settings.html", context)
+
+
+@router.post("/settings/decryption/recheck", response_class=HTMLResponse)
+def admin_settings_decryption_recheck(
+    request: Request,
+    repository: SearchEnhancementRepository = Depends(get_repository),
+    templates: Jinja2Templates = Depends(get_templates),
+) -> HTMLResponse:
+    """Re-run the live RMS readiness probe on demand for the setup wizard.
+
+    Probes regardless of the enable toggle / adapter wiring so an administrator
+    can confirm tenant readiness while still preparing, then renders the
+    settings page with the refreshed checklist. Performs no privileged action --
+    it only reads back what the service principal's token already grants.
+    """
+
+    context = _build_settings_context(
+        repository, saved=False, force_mip_probe=True
+    )
     return templates.TemplateResponse(request, "admin/settings.html", context)
 
 

@@ -17,6 +17,7 @@ from crewmeal.search_enhancement.html_renderer import (
     RenderedHtml,
     render_presentation_html,
 )
+from crewmeal.search_enhancement.mip_sdk import MipSdkRunner
 from crewmeal.search_enhancement.models import (
     ContentSection,
     ContentTable,
@@ -62,6 +63,7 @@ class PresentationProcessor:
         analysis_service: StructuredSlideAnalysisService | None = None,
         vision_model: VisionModelSettings | None = None,
         decryption_settings: Mapping[str, Any] | None = None,
+        mip_runner: MipSdkRunner | None = None,
     ) -> None:
         self._config = config
         self._analysis_service = analysis_service
@@ -69,6 +71,41 @@ class PresentationProcessor:
         # Snapshot of admin decryption toggles (``decryption.<id>.enabled``),
         # read when the worker starts. Empty/None means every provider is off.
         self._decryption_settings = decryption_settings
+        # Runtime backend for MIP decryption (shells out to the MIP SDK CLI).
+        # ``None`` means MIP decryption, if enabled, fails loudly instead of
+        # silently passing an encrypted payload through.
+        self._mip_runner = mip_runner
+
+    def decrypt_source(
+        self,
+        source_bytes: bytes,
+        *,
+        filename: str,
+        content_type: str | None = None,
+    ) -> bytes:
+        """Decrypt an acquired source payload if a provider is enabled and matches.
+
+        This is the decryption *boundary* for the worker: it runs right after the
+        raw bytes are downloaded/loaded and **before** anything that assumes a
+        readable document (content fingerprinting, format detection). Encrypted
+        payloads are not valid Office/PDF containers, so fingerprinting them would
+        fail — and even if it didn't, a fingerprint over ciphertext (with random
+        per-encryption nonces) would defeat change detection. Decrypting here means
+        every downstream step, including the stored ``source_etag``, sees the real
+        plaintext content.
+
+        Returns the (possibly decrypted) bytes. When no provider is enabled, or
+        none recognizes the payload, the input is returned unchanged. Decryption is
+        idempotent for plaintext, so :meth:`process` re-running it is a safe no-op.
+        """
+
+        return maybe_decrypt(
+            source_bytes,
+            filename=filename,
+            content_type=content_type,
+            settings=self._decryption_settings,
+            mip_runner=self._mip_runner,
+        )
 
     def process(
         self,
@@ -81,11 +118,7 @@ class PresentationProcessor:
         reporter = progress or NullProgressReporter()
         reporter.stage(Stage.VALIDATING, message=source_name)
 
-        source_bytes = maybe_decrypt(
-            source_bytes,
-            filename=source_name,
-            settings=self._decryption_settings,
-        )
+        source_bytes = self.decrypt_source(source_bytes, filename=source_name)
 
         handler = detect_handler(source_name)
         handler.validate(

@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from uuid import uuid4
 
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -21,6 +22,8 @@ from crewmeal.search_enhancement.publication import (
 )
 from crewmeal.search_enhancement.web import create_app
 from crewmeal.search_enhancement.web.config import WebConfig
+from crewmeal.search_enhancement.web.routers import admin as admin_router
+from crewmeal.search_enhancement.decryption import decryption_setting_key
 
 ADMIN_KEY = "secret-admin-key"
 AUTH = {"X-Admin-Key": ADMIN_KEY}
@@ -538,7 +541,10 @@ def test_vision_model_settings_roundtrip(tmp_path: Path) -> None:
     assert settings["vision.reasoning_effort"] == "low"
 
 
-def test_settings_page_shows_decryption_card(tmp_path: Path) -> None:
+def test_settings_page_shows_decryption_card(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("CREWMEAL_MIP_SDK_CLI", raising=False)
     app, _, _ = _build(tmp_path)
     client = TestClient(app)
 
@@ -547,6 +553,23 @@ def test_settings_page_shows_decryption_card(tmp_path: Path) -> None:
     assert page.status_code == 200
     assert "암호화 문서 복호화" in page.text
     assert 'value="mip"' in page.text
+    # MIP is implemented but no SDK CLI is configured in this environment.
+    assert "SDK 미구성" in page.text
+
+
+def test_settings_page_shows_mip_available_when_configured(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv(
+        "CREWMEAL_MIP_SDK_CLI", "python -m crewmeal.search_enhancement.mip_tool"
+    )
+    app, _, _ = _build(tmp_path)
+    client = TestClient(app)
+
+    page = client.get("/admin/settings", headers=AUTH)
+
+    assert page.status_code == 200
+    assert "사용 가능" in page.text
 
 
 def test_decryption_toggle_roundtrip(tmp_path: Path) -> None:
@@ -564,3 +587,146 @@ def test_decryption_toggle_roundtrip(tmp_path: Path) -> None:
     settings = repository.get_all_settings()
     assert settings["decryption.mip.enabled"] is True
     assert settings["decryption.generic.enabled"] is False
+
+
+def test_mip_live_health_noop_when_disabled(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv(
+        "CREWMEAL_MIP_SDK_CLI", "python -m crewmeal.search_enhancement.mip_tool"
+    )
+    # MIP configured but not enabled -> no probe, no network, empty result.
+    assert admin_router._mip_live_health({}) == {}
+
+
+def test_mip_live_health_swallows_credential_errors(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Enabled + configured, but the service-principal env is incomplete: the
+    # settings page must still render, so the failure is reported as an
+    # unavailable-token health entry rather than raising.
+    monkeypatch.setenv(
+        "CREWMEAL_MIP_SDK_CLI", "python -m crewmeal.search_enhancement.mip_tool"
+    )
+    for var in (
+        "CREWMEAL_M365_TENANT_ID",
+        "CREWMEAL_M365_CLIENT_ID",
+        "CREWMEAL_M365_CLIENT_SECRET",
+        "CREWMEAL_M365_SITE_ID",
+        "CREWMEAL_M365_DRIVE_ID",
+        "CREWMEAL_M365_LIST_ID",
+        "CREWMEAL_M365_SITE_URL",
+    ):
+        monkeypatch.delenv(var, raising=False)
+
+    health = admin_router._mip_live_health({decryption_setting_key("mip"): True})
+
+    assert health["mip"]["decrypt_ready"] is False
+    assert "unavailable" in health["mip"]["detail"]
+
+
+def test_settings_page_renders_live_tenant_health(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        admin_router,
+        "_mip_live_health",
+        lambda _settings, force=False: {
+            "mip": {
+                "ok": True,
+                "super_user": True,
+                "decrypt_ready": True,
+                "detail": "RMS token acquired and super-user role present",
+            }
+        },
+    )
+    app, _, _ = _build(tmp_path)
+    page = TestClient(app).get("/admin/settings", headers=AUTH)
+
+    assert page.status_code == 200
+    assert "테넌트 준비됨" in page.text
+    assert "super-user role present" in page.text
+
+
+def test_settings_page_shows_setup_wizard(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # The wizard is visible on a normal page load (no probe yet): checklist rows
+    # plus the pre-filled admin-consent URL and grant commands.
+    monkeypatch.setattr(
+        admin_router,
+        "_config_service_principal_ids",
+        lambda: ("tenant-xyz", "client-abc"),
+    )
+    monkeypatch.setattr(
+        admin_router, "_mip_live_health", lambda _settings, force=False: {}
+    )
+    app, _, _ = _build(tmp_path)
+    page = TestClient(app).get("/admin/settings", headers=AUTH)
+
+    assert page.status_code == 200
+    assert "MIP 테넌트 준비 마법사" in page.text
+    assert "Content.SuperUser" in page.text
+    assert (
+        "https://login.microsoftonline.com/tenant-xyz/adminconsent"
+        "?client_id=client-abc" in page.text
+    )
+    assert "/admin/settings/decryption/recheck" in page.text
+
+
+def test_setup_wizard_recheck_forces_probe(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    seen: dict[str, bool] = {}
+
+    def _fake_health(_settings, force=False):
+        seen["force"] = force
+        return {
+            "mip": {
+                "ok": True,
+                "super_user": True,
+                "decrypt_ready": True,
+                "object_id": "sp-oid-123",
+                "detail": "RMS token acquired and super-user role present",
+            }
+        }
+
+    monkeypatch.setattr(admin_router, "_mip_live_health", _fake_health)
+    monkeypatch.setattr(
+        admin_router,
+        "_config_service_principal_ids",
+        lambda: ("tenant-xyz", "client-abc"),
+    )
+    app, _, _ = _build(tmp_path)
+
+    page = TestClient(app).post(
+        "/admin/settings/decryption/recheck", headers=AUTH
+    )
+
+    assert page.status_code == 200
+    assert seen["force"] is True
+    # The discovered service-principal object id is pre-filled into the commands.
+    assert "sp-oid-123" in page.text
+    assert "방금 실시간 점검" in page.text
+
+
+def test_mip_live_health_force_probes_when_disabled(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # force=True must probe even when the toggle is off and no adapter is wired,
+    # so an admin can verify tenant readiness before enabling. With no M365 env
+    # the credential build fails and is reported (never raises).
+    monkeypatch.delenv("CREWMEAL_MIP_SDK_CLI", raising=False)
+    for var in (
+        "CREWMEAL_M365_TENANT_ID",
+        "CREWMEAL_M365_CLIENT_ID",
+        "CREWMEAL_M365_CLIENT_SECRET",
+        "CREWMEAL_M365_SITE_ID",
+        "CREWMEAL_M365_DRIVE_ID",
+        "CREWMEAL_M365_LIST_ID",
+        "CREWMEAL_M365_SITE_URL",
+    ):
+        monkeypatch.delenv(var, raising=False)
+
+    health = admin_router._mip_live_health({}, force=True)
+
+    assert health["mip"]["decrypt_ready"] is False
+    assert "unavailable" in health["mip"]["detail"]
