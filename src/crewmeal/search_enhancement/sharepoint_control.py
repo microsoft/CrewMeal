@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+import re
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -31,6 +32,11 @@ VALID_STATUSES = frozenset(
         "Failed",
     }
 )
+_FIELD_NAME = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
+
+
+class SharePointColumnError(RuntimeError):
+    """Raised when a SharePoint content column violates the publication contract."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -143,6 +149,52 @@ class SharePointControlClient:
             next_link = page.get("@odata.nextLink")
             path = next_link if isinstance(next_link, str) else None
         return permissions
+
+    def get_search_content(
+        self,
+        list_item_id: str,
+        column_name: str,
+    ) -> str | None:
+        _validate_field_name(column_name)
+        fields = self._graph.get_json(
+            f"{self._items_path()}/{list_item_id}/fields",
+            params={"$select": column_name},
+        )
+        value = fields.get(column_name)
+        if value is None:
+            return None
+        if not isinstance(value, str):
+            raise SharePointColumnError(
+                f"CONTENT_COLUMN_VALUE_INVALID: {column_name} is not text."
+            )
+        return value
+
+    def set_search_content(
+        self,
+        list_item_id: str,
+        column_name: str,
+        content: str,
+    ) -> str:
+        _validate_field_name(column_name)
+        if not content:
+            raise SharePointColumnError(
+                "CONTENT_COLUMN_VALUE_INVALID: content must not be empty."
+            )
+        self._update_fields(list_item_id, {column_name: content})
+        stored = self.get_search_content(list_item_id, column_name)
+        if stored is None:
+            raise SharePointColumnError(
+                "CONTENT_COLUMN_WRITE_FAILED: SharePoint returned an empty value."
+            )
+        return stored
+
+    def clear_search_content(
+        self,
+        list_item_id: str,
+        column_name: str,
+    ) -> None:
+        _validate_field_name(column_name)
+        self._update_fields(list_item_id, {column_name: None})
 
     def set_processing(self, item: ControlItem) -> None:
         self._update_fields(
@@ -293,3 +345,8 @@ class SharePointControlClient:
 
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def _validate_field_name(value: str) -> None:
+    if not _FIELD_NAME.fullmatch(value):
+        raise ValueError(f"Invalid SharePoint field name: {value!r}.")

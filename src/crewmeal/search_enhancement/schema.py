@@ -198,6 +198,100 @@ settings = Table(
 )
 
 
+document_publications = Table(
+    "document_publications",
+    METADATA,
+    Column("tenant_id", String(200), primary_key=True),
+    Column("site_id", String(200), primary_key=True),
+    Column("drive_id", String(200), primary_key=True),
+    Column("item_id", String(200), primary_key=True),
+    Column("target", String(40), primary_key=True),
+    Column("generation", Integer, nullable=False),
+    Column("locator", Text),
+    Column("status", String(32), nullable=False),
+    Column("operation_id", String(200)),
+    Column("content_hash", Text),
+    Column("original_characters", Integer),
+    Column("stored_characters", Integer),
+    Column("stored_bytes", Integer),
+    Column("truncated", Integer, nullable=False, server_default="0"),
+    Column("error_code", Text),
+    Column("error_message", Text),
+    Column("published_at", Text),
+    Column("updated_at", Text, nullable=False),
+    ForeignKeyConstraint(
+        ["tenant_id", "site_id", "drive_id", "item_id"],
+        [
+            "documents.tenant_id",
+            "documents.site_id",
+            "documents.drive_id",
+            "documents.item_id",
+        ],
+        ondelete="CASCADE",
+        name="document_publications_document_fk",
+    ),
+    CheckConstraint(
+        "target IN ('sharepoint_column', 'copilot_connector')",
+        name="document_publications_target",
+    ),
+    CheckConstraint(
+        "status IN ('pending', 'ready', 'removing', 'failed')",
+        name="document_publications_status",
+    ),
+    CheckConstraint(
+        "truncated IN (0, 1)",
+        name="document_publications_truncated_bool",
+    ),
+    Index(
+        "document_publications_target_generation_idx",
+        "target",
+        "generation",
+        "status",
+    ),
+)
+
+
+publication_transitions = Table(
+    "publication_transitions",
+    METADATA,
+    Column("transition_id", String(40), primary_key=True),
+    Column("active_target", String(40), nullable=False),
+    Column("desired_target", String(40), nullable=False),
+    Column("generation", Integer, nullable=False),
+    Column("status", String(40), nullable=False),
+    Column("column_provisioned", Integer, nullable=False, server_default="0"),
+    Column("reindex_requested", Integer, nullable=False, server_default="0"),
+    Column("search_verified", Integer, nullable=False, server_default="0"),
+    Column("copilot_verified", Integer, nullable=False, server_default="0"),
+    Column("last_error_code", Text),
+    Column("last_error_message", Text),
+    Column("created_at", Text, nullable=False),
+    Column("updated_at", Text, nullable=False),
+    CheckConstraint(
+        "active_target IN ('unset', 'sharepoint_column', 'copilot_connector')",
+        name="publication_transitions_active_target",
+    ),
+    CheckConstraint(
+        "desired_target IN ('unset', 'sharepoint_column', 'copilot_connector')",
+        name="publication_transitions_desired_target",
+    ),
+    CheckConstraint(
+        "status IN ("
+        "'active', 'staging', 'awaiting_reindex', 'awaiting_search', "
+        "'awaiting_copilot', 'cleaning', 'failed'"
+        ")",
+        name="publication_transitions_status",
+    ),
+    CheckConstraint(
+        "column_provisioned IN (0, 1) AND "
+        "reindex_requested IN (0, 1) AND "
+        "search_verified IN (0, 1) AND "
+        "copilot_verified IN (0, 1)",
+        name="publication_transitions_bool_flags",
+    ),
+)
+
+
 # Raw artifact bytes (rendered HTML, structured JSON, uploaded decks). Used when
 # object storage is unavailable — e.g. an Azure Policy disables Storage public
 # network access — but the relational database is reachable by both the web and

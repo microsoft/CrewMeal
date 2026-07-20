@@ -10,7 +10,7 @@ CrewMeal은 HWP 5.x와 HWPX의 공식 처리 엔진으로
 - 라이선스: MIT
 - 통합 경계: Python에서 고정된 `rhwp` 실행 파일을 subprocess로 호출
 - 기본 입력: 페이지별 RenderTree JSON
-- 최종 출력: CrewMeal 허용 태그로 정규화한 semantic HTML
+- 최종 출력: Connector용 semantic HTML과 SharePoint 컬럼용 Markdown
 - Vision: semantic payload가 없는 시각 객체가 있는 페이지만 선택적으로 분석
 
 LibreOffice의 HWP/HWPX 가져오기 필터는 사용하지 않는다. LibreOffice는 PPTX 처리에
@@ -33,8 +33,8 @@ LibreOffice의 HWP/HWPX 가져오기 필터는 사용하지 않는다. LibreOffi
    기존 Vision 분석에 전달한다.
 7. Vision 결과의 차트·관계·이미지 설명만 semantic 결과에 추가한다. 본문, 표,
    머리말·꼬리말, 각주는 rhwp 결과를 유지한다.
-8. 병합된 구조를 기존 허용 목록 HTML renderer로 출력하고 Copilot Connector의
-   `externalItem`으로 게시한다.
+8. 병합된 구조를 Connector용 허용 목록 HTML 또는 SharePoint 컬럼용 구조 보존
+   Markdown으로 출력하고, 관리자가 선택한 publisher로 게시한다.
 
 semantic 정보가 충분한 문서는 PNG 생성과 Vision 호출을 모두 생략한다.
 

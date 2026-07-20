@@ -23,6 +23,92 @@
 </div>
 
 <div class="card">
+  <h2 style="margin-top:0;">검색 콘텐츠 게시 방식</h2>
+  <p class="muted">SharePoint 라이브러리 컬럼과 Copilot Connector 중 하나를 선택합니다. 변경 시 모든 활성 문서를 새 대상으로 다시 게시한 뒤 이전 대상의 값을 정리합니다.</p>
+
+  <p>
+    현재 대상: <strong>{{ publication.active_target.value }}</strong>
+    · 선택 대상: <strong>{{ publication.desired_target.value }}</strong>
+    · 상태: <span class="badge {% if publication.status == 'active' %}ok{% endif %}">{{ publication.status }}</span>
+  </p>
+  <p class="muted">
+    대상 문서 {{ publication_document_count }}개 · 완료 {{ publication_progress.ready }}개
+    · 실패 {{ publication_progress.failed }}개 · 절단 {{ publication_progress.truncated }}개
+  </p>
+  {% if publication.last_error_message %}
+  <p class="badge" style="display:block; padding:0.5rem 0.7rem;">{{ publication.last_error_code }} · {{ publication.last_error_message }}</p>
+  {% endif %}
+
+  <form method="post" action="/admin/settings/publication">
+    <label>
+      <input type="radio" name="target" value="sharepoint_column"
+             {% if publication.desired_target.value == 'sharepoint_column' %}checked{% endif %} required />
+      <strong>SharePoint 라이브러리 컬럼</strong>
+    </label>
+    <p class="muted" style="margin:0.2rem 0 0.8rem 1.5rem;">
+      원본 문서의 권한과 메타데이터를 그대로 사용합니다. 일반 텍스트 Markdown을 최대 {{ publication_column_limit }} UTF-16 단위까지 저장하며 초과분은 구조 단위로 생략합니다.
+    </p>
+    <label>
+      <input type="radio" name="target" value="copilot_connector"
+             {% if publication.desired_target.value == 'copilot_connector' %}checked{% endif %} required />
+      <strong>Copilot Connector 인덱스</strong>
+    </label>
+    <p class="muted" style="margin:0.2rem 0 0.8rem 1.5rem;">기존 externalItem 게시 경로를 사용하며, SharePoint 밖의 검색 인덱스와 ACL을 별도로 관리합니다.</p>
+
+    <label for="publication-column-name">컬럼 표시 이름</label>
+    <input id="publication-column-name" type="text" name="column_display_name_value"
+           value="{{ publication_column_display_name }}" maxlength="255" required />
+    <p class="muted" style="margin-top:0.2rem;">내부 이름 <code>{{ publication_column_internal_name }}</code>은 검색 속성 안정성을 위해 변경할 수 없습니다.</p>
+    <button class="btn" type="submit">게시 방식 저장</button>
+  </form>
+
+  {% if publication.desired_target.value == 'sharepoint_column' %}
+  <hr style="margin:1.2rem 0;" />
+  <h3>컬럼 검색 준비</h3>
+  <p class="muted">컬럼 생성만으로 검색 준비가 끝나지 않습니다. 값을 게시한 뒤 라이브러리를 수동 재인덱싱하고, 고유 canary로 Microsoft Search와 해당 라이브러리에 범위를 둔 Copilot을 각각 확인해야 합니다. 범위를 지정하지 않은 Copilot 질의와 Connector의 동등성은 보장하지 않습니다.</p>
+  <table class="grid">
+    <tbody>
+      <tr><th>사이트 컬럼 연결</th><td>{{ '완료' if publication.column_provisioned else '대기' }}</td></tr>
+      <tr><th>라이브러리 재인덱싱</th><td>{{ '요청 기록됨' if publication.reindex_requested else '관리자 작업 필요' }}</td></tr>
+      <tr><th>Microsoft Search</th><td>{{ '검증됨' if publication.search_verified else '크롤 대기/검증 필요' }}</td></tr>
+      <tr><th>범위 지정 Copilot</th><td>{{ '검증됨' if publication.copilot_verified else '검증 필요' }}</td></tr>
+    </tbody>
+  </table>
+  {% if not publication.column_provisioned %}
+  <form method="post" action="/admin/settings/publication/column-provisioned" style="margin-top:0.8rem;">
+    <input type="hidden" name="generation" value="{{ publication.generation }}" />
+    <input type="hidden" name="desired_target" value="{{ publication.desired_target.value }}" />
+    <button class="btn secondary" type="submit">프로비저닝 완료 기록</button>
+  </form>
+  {% elif publication.status == 'awaiting_reindex' and not publication.reindex_requested %}
+  <form method="post" action="/admin/settings/publication/reindex-requested" style="margin-top:0.8rem;">
+    <input type="hidden" name="generation" value="{{ publication.generation }}" />
+    <input type="hidden" name="desired_target" value="{{ publication.desired_target.value }}" />
+    <button class="btn secondary" type="submit">수동 재인덱싱 요청 완료 기록</button>
+  </form>
+  {% elif publication.status == 'awaiting_search' and not publication.search_verified %}
+  <form method="post" action="/admin/settings/publication/search-verified" style="margin-top:0.8rem;">
+    <input type="hidden" name="generation" value="{{ publication.generation }}" />
+    <input type="hidden" name="desired_target" value="{{ publication.desired_target.value }}" />
+    <label for="publication-canary">검색에서 확인한 고유 canary</label>
+    <input id="publication-canary" type="text" name="canary" required />
+    <label for="publication-source-url">반환된 원본 문서 URL</label>
+    <input id="publication-source-url" type="url" name="source_url" required />
+    <button class="btn secondary" type="submit">Microsoft Search 검증 기록</button>
+  </form>
+  {% elif publication.status == 'awaiting_copilot' and not publication.copilot_verified %}
+  <form method="post" action="/admin/settings/publication/copilot-verified" style="margin-top:0.8rem;">
+    <input type="hidden" name="generation" value="{{ publication.generation }}" />
+    <input type="hidden" name="desired_target" value="{{ publication.desired_target.value }}" />
+    <button class="btn secondary" type="submit">범위 지정 Copilot 검증 완료 기록</button>
+  </form>
+  {% elif publication.status == 'staging' %}
+  <p class="muted">활성 문서를 컬럼에 게시하고 있습니다. 완료 후 재인덱싱 단계가 열립니다.</p>
+  {% endif %}
+  {% endif %}
+</div>
+
+<div class="card">
   <h2 style="margin-top:0;">문서 형식 지원</h2>
   <p class="muted">확장자별로 검색강화 처리를 켜고 끕니다. 비활성화하면 SharePoint 인제스트와 tryout 업로드에서 제외됩니다.</p>
   <form method="post" action="/admin/settings/formats">

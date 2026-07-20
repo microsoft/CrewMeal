@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import time
@@ -12,7 +13,6 @@ from uuid import uuid4
 from crewmeal.libreoffice import LibreOfficeConversionError
 from crewmeal.search_enhancement.acl_mapper import (
     UnsupportedAclError,
-    acl_hash,
     map_drive_item_permissions,
 )
 from crewmeal.search_enhancement.artifact_store import (
@@ -24,13 +24,13 @@ from crewmeal.search_enhancement.config import SearchEnhancementConfig
 from crewmeal.search_enhancement.connector_client import (
     ConnectorClient,
     ExternalItemError,
-    external_item_id,
-    resolver_url,
 )
 from crewmeal.search_enhancement.database import (
     DocumentKey,
     DocumentRecord,
     JobRecord,
+    PublicationRecord,
+    PublicationTransition,
     SearchEnhancementRepository,
 )
 from crewmeal.search_enhancement.db_resilience import is_transient_db_error
@@ -45,6 +45,15 @@ from crewmeal.search_enhancement.formats import (
 )
 from crewmeal.search_enhancement.graph_client import GraphRequestError
 from crewmeal.search_enhancement.html_renderer import ContentTooLargeError
+from crewmeal.search_enhancement.html_renderer import ColumnContentTooLargeError
+from crewmeal.search_enhancement.publication import PublicationTarget
+from crewmeal.search_enhancement.publisher import (
+    CopilotConnectorPublisher,
+    PublicationError,
+    PublicationResult,
+    Publisher,
+    SharePointColumnPublisher,
+)
 from crewmeal.search_enhancement.processor import (
     PresentationProcessor,
     ProcessedPresentation,
@@ -57,6 +66,7 @@ from crewmeal.search_enhancement.progress import (
 )
 from crewmeal.search_enhancement.sharepoint_control import (
     ControlItem,
+    SharePointColumnError,
     SharePointControlClient,
 )
 from crewmeal.search_enhancement.structured_analysis import (
@@ -74,6 +84,7 @@ class StaleRequestError(RuntimeError):
 
 KNOWN_PROCESSING_ERRORS = (
     ContentTooLargeError,
+    ColumnContentTooLargeError,
     DecryptionError,
     ExternalItemError,
     GraphRequestError,
@@ -81,6 +92,8 @@ KNOWN_PROCESSING_ERRORS = (
     InvalidPresentationError,
     LibreOfficeConversionError,
     ProcessingFidelityError,
+    PublicationError,
+    SharePointColumnError,
     StructuredSlideAnalysisError,
     UnsupportedAclError,
     UnsupportedFormatError,
@@ -102,6 +115,7 @@ class SearchEnhancementWorker:
         control: SharePointControlClient,
         connector: ConnectorClient,
         processor: PresentationProcessor,
+        publishers: dict[PublicationTarget, Publisher] | None = None,
         artifact_store: ArtifactStore | None = None,
         worker_id: str | None = None,
     ) -> None:
@@ -109,6 +123,10 @@ class SearchEnhancementWorker:
         self._repository = repository
         self._control = control
         self._connector = connector
+        self._publishers = publishers or {
+            PublicationTarget.COPILOT_CONNECTOR: CopilotConnectorPublisher(connector),
+            PublicationTarget.SHAREPOINT_COLUMN: SharePointColumnPublisher(control),
+        }
         self._processor = processor
         self._artifacts = artifact_store
         self._worker_id = worker_id or f"local-{uuid4()}"
@@ -122,6 +140,7 @@ class SearchEnhancementWorker:
         ):
             self._process_job(job)
             jobs += 1
+        self._advance_publication_transition()
         return WorkerRun(commands_ingested=commands, jobs_processed=jobs)
 
     def run_forever(self, stop_event: Event | None = None) -> None:
@@ -162,13 +181,30 @@ class SearchEnhancementWorker:
             except GraphRequestError as exc:
                 if exc.status_code != 404:
                     raise
-                if document.external_item_id:
-                    self._connector.delete(document.external_item_id)
-                self._repository.record_removed(
+                for publication in self._repository.list_document_publications(
+                    document.key
+                ):
+                    with self._repository.publication_operation_lock(
+                        document.key,
+                        publication.target,
+                    ):
+                        self._claim_and_remove_publication(
+                            document=document,
+                            publication=publication,
+                            operation_id=f"source-missing:{uuid4()}",
+                            remove_remote=(
+                                publication.target
+                                is PublicationTarget.COPILOT_CONNECTOR
+                            ),
+                        )
+                if self._repository.list_document_publications(document.key):
+                    continue
+                removed = self._repository.record_removed(
                     document.key,
                     request_id=document.request_id,
                 )
-                changes += 1
+                if removed:
+                    changes += 1
                 continue
 
             source_bytes = self._control.download_content(document.key.item_id)
@@ -176,31 +212,75 @@ class SearchEnhancementWorker:
                 source_bytes, filename=document.file_name
             )
             if source_fingerprint != document.source_etag:
-                request_id = self._control.queue_refresh(
-                    document.list_item_id,
+                if self._queue_reconcile_refresh(
+                    document,
                     message="원본 PPT 변경 감지: 검색강화 갱신 대기",
-                )
-                self._repository.record_queued_refresh(
-                    document.key,
-                    request_id=request_id,
-                )
-                changes += 1
+                ):
+                    changes += 1
                 continue
 
-            permissions = self._control.list_permissions(document.key.item_id)
-            acl = map_drive_item_permissions(permissions)
-            digest = acl_hash(acl)
-            if digest != document.acl_hash:
-                if not document.external_item_id:
-                    raise ExternalItemError(
-                        "EXTERNAL_ITEM_ID_MISSING: cannot update ACL."
-                    )
-                self._connector.update_acl(document.external_item_id, acl)
-                self._repository.record_acl_update(
+            transition = self._repository.get_publication_transition()
+            targets = self._publication_targets(transition)
+            if not targets:
+                continue
+            for target in targets:
+                with self._repository.publication_operation_lock(
                     document.key,
-                    acl_digest=digest,
-                )
-                changes += 1
+                    target,
+                ):
+                    current_transition = (
+                        self._repository.get_publication_transition()
+                    )
+                    if target not in self._publication_targets(current_transition):
+                        continue
+                    publisher = self._publisher(target)
+                    publication = self._repository.get_publication(
+                        document.key,
+                        target,
+                    )
+                    requires_current_generation = (
+                        current_transition.status != "active"
+                        and target is current_transition.desired_target
+                    )
+                    if publication is None or (
+                        requires_current_generation
+                        and publication.generation
+                        != current_transition.generation
+                    ):
+                        queued = self._queue_reconcile_refresh(
+                            document,
+                            message="게시 대상 누락 감지: 검색강화 갱신 대기",
+                        )
+                        if queued:
+                            changes += 1
+                        break
+                    if publication.status != "ready":
+                        continue
+                    acl = self._publication_acl(
+                        publisher,
+                        document.key.item_id,
+                    )
+                    reconciled = publisher.reconcile(
+                        document=document,
+                        publication=publication,
+                        drive_item=drive_item,
+                        acl=acl,
+                        source_fingerprint=source_fingerprint,
+                    )
+                    if reconciled.needs_republish:
+                        queued = self._queue_reconcile_refresh(
+                            document,
+                            message="게시 콘텐츠 변경 감지: 검색강화 갱신 대기",
+                        )
+                        if queued:
+                            changes += 1
+                        break
+                    if reconciled.acl_digest is not None:
+                        self._repository.record_acl_update(
+                            document.key,
+                            acl_digest=reconciled.acl_digest,
+                        )
+                        changes += 1
 
             web_url = _required_string(drive_item, "webUrl")
             file_name = _required_string(drive_item, "name")
@@ -210,21 +290,6 @@ class SearchEnhancementWorker:
                 or file_name != document.file_name
                 or modified != document.last_modified_datetime
             ):
-                if not document.external_item_id:
-                    raise ExternalItemError(
-                        "EXTERNAL_ITEM_ID_MISSING: cannot update source metadata."
-                    )
-                self._connector.update_properties(
-                    document.external_item_id,
-                    {
-                        "title": file_name,
-                        "url": resolver_url(web_url, document.external_item_id),
-                        "fileName": file_name,
-                        "lastModifiedDateTime": modified,
-                        "lastModifiedBy": _modified_by(drive_item),
-                        "sourceETag": source_fingerprint,
-                    },
-                )
                 self._repository.record_source_metadata(
                     document.key,
                     web_url=web_url,
@@ -236,6 +301,8 @@ class SearchEnhancementWorker:
 
     def _ingest_commands(self) -> int:
         count = 0
+        if self._repository.publication_target_for_jobs() is PublicationTarget.UNSET:
+            return 0
         enabled_exts = enabled_extensions(self._repository.get_all_settings())
         for item in self._control.list_commands():
             if Path(item.file_name).suffix.lower() not in enabled_exts:
@@ -247,7 +314,7 @@ class SearchEnhancementWorker:
                 drive_id=self._config.drive_id,
                 item_id=item.drive_item_id,
             )
-            self._repository.upsert_document(
+            self._repository.upsert_document_and_enqueue(
                 key=key,
                 list_id=self._config.list_id,
                 list_item_id=item.list_item_id,
@@ -257,11 +324,8 @@ class SearchEnhancementWorker:
                 desired_enabled=desired_enabled,
                 status=item.status,
                 request_id=item.request_id,
-            )
-            self._repository.enqueue_job(
-                key=key,
-                request_id=item.request_id,
                 job_type="upsert" if desired_enabled else "delete",
+                trigger="sharepoint-command",
             )
             count += 1
         return count
@@ -277,28 +341,111 @@ class SearchEnhancementWorker:
             detail={"attempt": job.attempts, "jobType": job.job_type},
         )
         is_upload = document.source_kind == "upload"
+        attempt_transition = (
+            self._repository.get_publication_transition()
+            if not is_upload and job.job_type == "upsert"
+            else None
+        )
         try:
+            if document.processed_request_id == job.request_id:
+                reporter.stage(
+                    Stage.REMOVED if job.job_type == "delete" else Stage.READY,
+                    message="Recovered a job whose document outcome was already committed.",
+                )
+                self._repository.complete_job(
+                    job.job_id,
+                    expected_attempts=job.attempts,
+                    expected_lease_owner=self._worker_id,
+                )
+                return
             if is_upload:
                 self._process_upload(job, document, reporter)
             elif job.job_type == "upsert":
                 item = self._current_control(document, job)
-                self._process_upsert(job, document, item, reporter)
+                assert attempt_transition is not None
+                self._process_upsert(
+                    job,
+                    document,
+                    item,
+                    reporter,
+                    transition=attempt_transition,
+                )
             else:
                 item = self._current_control(document, job)
                 self._process_delete(job, document, item, reporter)
         except StaleRequestError as exc:
+            self._repository.fail_pending_publications_for_operation(
+                self._publication_operation_id(job),
+                code="STALE_REQUEST",
+                message=str(exc),
+            )
             reporter.stage(Stage.CANCELLED, message=str(exc))
-            self._repository.cancel_job(job.job_id, message=str(exc))
+            self._repository.cancel_job(
+                job.job_id,
+                message=str(exc),
+                expected_attempts=job.attempts,
+                expected_lease_owner=self._worker_id,
+            )
         except KNOWN_PROCESSING_ERRORS as exc:
             code = _error_code(exc)
             message = str(exc)
-            reporter.stage(Stage.FAILED, message=message, detail={"code": code})
-            self._repository.fail_job(job.job_id, code=code, message=message)
-            self._repository.record_document_error(
+            if not self._still_current(job) or (
+                attempt_transition is not None
+                and not self._repository.publication_transition_matches(
+                    attempt_transition
+                )
+            ):
+                self._repository.fail_pending_publications_for_operation(
+                    self._publication_operation_id(job),
+                    code="STALE_REQUEST",
+                    message=message,
+                )
+                reporter.stage(Stage.CANCELLED, message=message)
+                self._repository.cancel_job(
+                    job.job_id,
+                    message=message,
+                    expected_attempts=job.attempts,
+                    expected_lease_owner=self._worker_id,
+                )
+                return
+            recorded = self._repository.record_document_error(
                 job.document_key,
                 code=code,
                 message=message,
+                request_id=job.request_id,
+                job_id=job.job_id,
+                expected_attempts=job.attempts,
+                expected_lease_owner=self._worker_id,
             )
+            if not recorded:
+                LOGGER.info(
+                    "Ignoring failure from superseded job %s: %s",
+                    job.job_id,
+                    message,
+                )
+                return
+            reporter.stage(Stage.FAILED, message=message, detail={"code": code})
+            self._repository.fail_job(
+                job.job_id,
+                code=code,
+                message=message,
+                expected_attempts=job.attempts,
+                expected_lease_owner=self._worker_id,
+            )
+            target = (
+                attempt_transition.effective_target
+                if attempt_transition is not None
+                else PublicationTarget.UNSET
+            )
+            if target is not PublicationTarget.UNSET:
+                self._repository.record_publication_error(
+                    job.document_key,
+                    target=target,
+                    generation=attempt_transition.generation,
+                    code=code,
+                    message=message,
+                    operation_id=self._publication_operation_id(job),
+                )
             if is_upload:
                 return
             try:
@@ -322,6 +469,8 @@ class SearchEnhancementWorker:
         document: DocumentRecord,
         item: ControlItem,
         reporter: ProgressReporter,
+        *,
+        transition: PublicationTransition,
     ) -> None:
         if not self._still_current(job):
             raise StaleRequestError("Enhance request is no longer active.")
@@ -333,8 +482,12 @@ class SearchEnhancementWorker:
                 "The selected DriveItem is not a supported document type."
             )
 
-        permissions = self._control.list_permissions(document.key.item_id)
-        acl = map_drive_item_permissions(permissions)
+        target = transition.effective_target
+        if target is PublicationTarget.UNSET:
+            raise PublicationError(
+                "PUBLICATION_TARGET_UNSET: choose a publication target first."
+            )
+        publication_targets = self._publication_targets(transition)
         source_name = _required_string(drive_item, "name")
         source_bytes = self._control.download_content(document.key.item_id)
         source_fingerprint = content_fingerprint(source_bytes, filename=source_name)
@@ -350,23 +503,119 @@ class SearchEnhancementWorker:
             raise StaleRequestError(
                 "A newer command replaced this request before publication."
             )
-        reporter.stage(Stage.PUBLISHING, message="Copilot connector externalItem")
-        prepared = self._connector.prepare_item(
-            drive_item=drive_item,
-            rendered=processed.rendered,
-            acl=acl,
-            source_fingerprint=source_fingerprint,
-        )
-        self._connector.upsert(prepared)
-        if not self._still_current(job):
-            self._connector.delete(prepared.item_id)
+        if not self._repository.publication_transition_matches(transition):
             raise StaleRequestError(
-                "A newer command replaced this request during publication."
+                "The publication target changed before publication."
             )
+        reporter.stage(
+            Stage.PUBLISHING,
+            message=", ".join(
+                self._publisher(candidate).label
+                for candidate in publication_targets
+            ),
+        )
+        publications: dict[PublicationTarget, PublicationResult] = {}
+        operation_id = self._publication_operation_id(job)
+        for publication_target in publication_targets:
+            publisher = self._publisher(publication_target)
+            acl = self._publication_acl(publisher, document.key.item_id)
+            locator = publisher.locator(
+                document=document,
+                drive_item=drive_item,
+            )
+            with self._repository.publication_operation_lock(
+                job.document_key,
+                publication_target,
+            ):
+                if not self._job_claim_is_current(job):
+                    raise StaleRequestError(
+                        "The job lease changed before the remote write."
+                    )
+                if not self._repository.publication_transition_matches(transition):
+                    raise StaleRequestError(
+                        "The publication target changed before the remote write."
+                    )
+                if not self._repository.record_publication_pending(
+                    job.document_key,
+                    transition=transition,
+                    target=publication_target,
+                    locator=locator,
+                    operation_id=operation_id,
+                    request_id=job.request_id,
+                    job_id=job.job_id,
+                    expected_attempts=job.attempts,
+                    expected_lease_owner=self._worker_id,
+                ):
+                    raise StaleRequestError(
+                        "The publication target changed before the remote write."
+                    )
+                try:
+                    publication = publisher.publish(
+                        document=document,
+                        drive_item=drive_item,
+                        rendered=processed.rendered,
+                        acl=acl,
+                        source_fingerprint=source_fingerprint,
+                    )
+                except KNOWN_PROCESSING_ERRORS as exc:
+                    self._repository.record_publication_error(
+                        job.document_key,
+                        target=publication_target,
+                        generation=transition.generation,
+                        code=_error_code(exc),
+                        message=str(exc),
+                        operation_id=operation_id,
+                    )
+                    raise
+                if not self._still_current(job) or not self._job_claim_is_current(job):
+                    self._repository.record_publication_error(
+                        job.document_key,
+                        target=publication_target,
+                        generation=transition.generation,
+                        code="STALE_REQUEST",
+                        message="A newer request or lease superseded this publication.",
+                        operation_id=operation_id,
+                    )
+                    raise StaleRequestError(
+                        "A newer command replaced this request during publication."
+                    )
+                if not self._repository.publication_transition_matches(transition):
+                    self._repository.record_publication_error(
+                        job.document_key,
+                        target=publication_target,
+                        generation=transition.generation,
+                        code="STALE_PUBLICATION_TRANSITION",
+                        message="The publication target changed during publication.",
+                        operation_id=operation_id,
+                    )
+                    raise StaleRequestError(
+                        "The publication target changed during publication."
+                    )
+                if not self._repository.record_publication_success(
+                    job.document_key,
+                    target=publication_target,
+                    generation=transition.generation,
+                    locator=publication.locator,
+                    content_hash=publication.content_hash,
+                    original_characters=publication.original_characters,
+                    stored_characters=publication.stored_characters,
+                    stored_bytes=publication.stored_bytes,
+                    truncated=publication.truncated,
+                    operation_id=operation_id,
+                ):
+                    raise StaleRequestError(
+                        "The publication operation was superseded before commit."
+                    )
+            publications[publication_target] = publication
+
+        publication = publications[target]
+        connector_publication = publications.get(
+            PublicationTarget.COPILOT_CONNECTOR
+        )
 
         version = document.enhancement_version + 1
         self._store_artifacts(document, processed, version=version)
-        self._repository.record_success(
+        if not self._repository.record_success(
             job.document_key,
             request_id=job.request_id,
             source_etag=source_fingerprint,
@@ -374,25 +623,46 @@ class SearchEnhancementWorker:
                 drive_item, "lastModifiedDateTime"
             ),
             source_size=len(source_bytes),
-            acl_digest=acl_hash(acl),
-            external_item_id=prepared.item_id,
-            web_url=prepared.source_url,
+            acl_digest=(
+                connector_publication.acl_digest
+                if connector_publication is not None
+                else publication.acl_digest
+            ),
+            external_item_id=(
+                connector_publication.locator
+                if connector_publication is not None
+                else None
+            ),
+            web_url=publication.source_url,
             file_name=_required_string(drive_item, "name"),
             html_bytes=processed.rendered.byte_count,
-            request_bytes=prepared.request_bytes,
+            request_bytes=publication.request_bytes,
             content_hash=processed.rendered.sha256,
-        )
+            job_id=job.job_id,
+            expected_attempts=job.attempts,
+            expected_lease_owner=self._worker_id,
+        ):
+            raise StaleRequestError(
+                "A newer request completed before this result was committed."
+            )
         self._maybe_capture_feedback(job, document, processed, version)
         self._control.set_ready(
             item,
             html_bytes=processed.rendered.byte_count,
-            request_bytes=prepared.request_bytes,
+            request_bytes=publication.request_bytes,
         )
         reporter.stage(
             Stage.READY,
             detail={
                 "htmlBytes": processed.rendered.byte_count,
-                "requestBytes": prepared.request_bytes,
+                "requestBytes": publication.request_bytes,
+                "publicationTarget": target.value,
+                "publicationTargets": [
+                    candidate.value for candidate in publication_targets
+                ],
+                "originalCharacters": publication.original_characters,
+                "storedCharacters": publication.stored_characters,
+                "truncated": publication.truncated,
                 "version": version,
             },
         )
@@ -401,7 +671,9 @@ class SearchEnhancementWorker:
             stage_timings=processed.stage_timings,
             usage=processed.analysis.usage,
             html_bytes=processed.rendered.byte_count,
-            request_bytes=prepared.request_bytes,
+            request_bytes=publication.request_bytes,
+            expected_attempts=job.attempts,
+            expected_lease_owner=self._worker_id,
         )
 
     def _process_upload(
@@ -426,20 +698,26 @@ class SearchEnhancementWorker:
         )
         version = document.enhancement_version + 1
         self._store_artifacts(document, processed, version=version)
-        self._repository.record_success(
+        if not self._repository.record_success(
             job.document_key,
             request_id=job.request_id,
             source_etag=source_fingerprint,
             last_modified_datetime=_utc_iso(),
             source_size=len(source_bytes),
             acl_digest="",
-            external_item_id="",
+            external_item_id=None,
             web_url=document.web_url,
             file_name=document.file_name,
             html_bytes=processed.rendered.byte_count,
             request_bytes=processed.rendered.byte_count,
             content_hash=processed.rendered.sha256,
-        )
+            job_id=job.job_id,
+            expected_attempts=job.attempts,
+            expected_lease_owner=self._worker_id,
+        ):
+            raise StaleRequestError(
+                "A newer upload request completed before this result was committed."
+            )
         self._maybe_capture_feedback(job, document, processed, version)
         reporter.stage(
             Stage.READY,
@@ -451,6 +729,8 @@ class SearchEnhancementWorker:
             usage=processed.analysis.usage,
             html_bytes=processed.rendered.byte_count,
             request_bytes=processed.rendered.byte_count,
+            expected_attempts=job.attempts,
+            expected_lease_owner=self._worker_id,
         )
 
     def _load_upload_source(self, document: DocumentRecord) -> bytes:
@@ -556,28 +836,109 @@ class SearchEnhancementWorker:
         item: ControlItem,
         reporter: ProgressReporter,
     ) -> None:
-        if not self._still_current(job):
+        if not self._still_current(job) or not self._job_claim_is_current(job):
             raise StaleRequestError("Remove request is no longer active.")
         self._control.set_removing(item)
-        reporter.stage(Stage.REMOVING, message="Copilot connector delete")
-        item_id = document.external_item_id
-        if not item_id:
-            drive_item = self._control.get_drive_item(document.key.item_id)
-            item_id = external_item_id(drive_item)
-        self._connector.delete(item_id)
-        if not self._still_current(job):
+        publications = self._repository.list_document_publications(document.key)
+        reporter.stage(Stage.REMOVING, message="게시 콘텐츠 삭제")
+        drive_item: dict[str, Any] | None = None
+        if not publications:
+            target = self._repository.publication_target_for_jobs()
+            if target is not PublicationTarget.UNSET:
+                try:
+                    drive_item = self._control.get_drive_item(document.key.item_id)
+                except GraphRequestError as exc:
+                    if exc.status_code != 404:
+                        raise
+                with self._repository.publication_operation_lock(
+                    document.key,
+                    target,
+                ):
+                    if (
+                        not self._still_current(job)
+                        or not self._job_claim_is_current(job)
+                    ):
+                        raise StaleRequestError(
+                            "A newer request superseded this removal."
+                        )
+                    current = self._repository.get_publication(
+                        document.key,
+                        target,
+                    )
+                    if current is None:
+                        self._publisher(target).remove(
+                            document=document,
+                            locator=document.external_item_id,
+                            drive_item=drive_item,
+                        )
+                    elif not self._claim_and_remove_publication(
+                        document=document,
+                        publication=current,
+                        operation_id=job.request_id,
+                        drive_item=drive_item,
+                    ):
+                        raise PublicationError(
+                            "PUBLICATION_REMOVAL_CONFLICT: "
+                            "the publication changed before deletion."
+                        )
+        for publication in publications:
+            with self._repository.publication_operation_lock(
+                document.key,
+                publication.target,
+            ):
+                if (
+                    not self._still_current(job)
+                    or not self._job_claim_is_current(job)
+                ):
+                    raise StaleRequestError(
+                        "A newer request superseded this removal."
+                    )
+                current = self._repository.get_publication(
+                    document.key,
+                    publication.target,
+                )
+                if current is None:
+                    continue
+                if not self._claim_and_remove_publication(
+                    document=document,
+                    publication=current,
+                    operation_id=job.request_id,
+                    drive_item=drive_item,
+                ):
+                    if (
+                        not self._still_current(job)
+                        or not self._job_claim_is_current(job)
+                    ):
+                        raise StaleRequestError(
+                            "A newer request superseded publication deletion."
+                        )
+                    raise PublicationError(
+                        "PUBLICATION_REMOVAL_CONFLICT: "
+                        "the publication changed before deletion."
+                    )
+        if not self._still_current(job) or not self._job_claim_is_current(job):
             raise StaleRequestError(
                 "A newer command replaced this request during deletion."
             )
-        if self._artifacts is not None:
-            self._artifacts.delete_prefix(document_prefix(document.key))
-        self._repository.record_removed(
+        if not self._repository.record_removed(
             job.document_key,
             request_id=job.request_id,
-        )
+            job_id=job.job_id,
+            expected_attempts=job.attempts,
+            expected_lease_owner=self._worker_id,
+        ):
+            raise StaleRequestError(
+                "A newer request completed before removal was committed."
+            )
+        if self._artifacts is not None:
+            self._artifacts.delete_prefix(document_prefix(document.key))
         self._control.set_not_enabled(item)
         reporter.stage(Stage.REMOVED)
-        self._repository.complete_job(job.job_id)
+        self._repository.complete_job(
+            job.job_id,
+            expected_attempts=job.attempts,
+            expected_lease_owner=self._worker_id,
+        )
 
     def _current_control(
         self,
@@ -600,6 +961,324 @@ class SearchEnhancementWorker:
 
         current = self._repository.get_document(job.document_key)
         return current is not None and current.request_id == job.request_id
+
+    def _job_claim_is_current(self, job: JobRecord) -> bool:
+        return self._repository.job_claim_is_current(
+            job.job_id,
+            attempts=job.attempts,
+            lease_owner=self._worker_id,
+        )
+
+    def _publication_operation_id(self, job: JobRecord) -> str:
+        raw = f"{job.job_id}:{job.attempts}:{self._worker_id}".encode("utf-8")
+        return hashlib.sha256(raw).hexdigest()
+
+    def _publisher(self, target: PublicationTarget) -> Publisher:
+        try:
+            return self._publishers[target]
+        except KeyError as exc:
+            raise PublicationError(
+                f"PUBLICATION_TARGET_UNAVAILABLE: {target.value}."
+            ) from exc
+
+    def _claim_and_remove_publication(
+        self,
+        *,
+        document: DocumentRecord,
+        publication: PublicationRecord,
+        operation_id: str,
+        drive_item: dict[str, Any] | None = None,
+        remove_remote: bool = True,
+    ) -> bool:
+        if not self._repository.claim_publication_removal(
+            document.key,
+            publication.target,
+            expected_updated_at=publication.updated_at,
+            operation_id=operation_id,
+        ):
+            return False
+        current = self._repository.get_publication(
+            document.key,
+            publication.target,
+        )
+        if (
+            current is None
+            or current.status != "removing"
+            or current.operation_id != operation_id
+        ):
+            return False
+        if remove_remote:
+            self._publisher(publication.target).remove(
+                document=document,
+                locator=current.locator,
+                drive_item=drive_item,
+            )
+        return self._repository.remove_publication_record(
+            document.key,
+            publication.target,
+            operation_id=operation_id,
+        )
+
+    def _publication_acl(
+        self,
+        publisher: Publisher,
+        item_id: str,
+    ) -> tuple[Any, ...]:
+        if not publisher.requires_acl:
+            return ()
+        permissions = self._control.list_permissions(item_id)
+        return map_drive_item_permissions(permissions)
+
+    @staticmethod
+    def _publication_targets(
+        transition: PublicationTransition,
+    ) -> tuple[PublicationTarget, ...]:
+        effective = transition.effective_target
+        if effective is PublicationTarget.UNSET:
+            return ()
+        if (
+            transition.status not in {"active", "cleaning"}
+            and transition.active_target is not PublicationTarget.UNSET
+            and transition.active_target is not effective
+        ):
+            return (transition.active_target, effective)
+        return (effective,)
+
+    def _queue_reconcile_refresh(
+        self,
+        document: DocumentRecord,
+        *,
+        message: str,
+    ) -> bool:
+        queued = self._repository.queue_refresh_if_current(
+            document.key,
+            expected_request_id=document.request_id,
+            trigger=f"reconcile: {message}",
+        )
+        return queued is not None
+
+    def _advance_publication_transition(self) -> None:
+        transition = self._repository.get_publication_transition()
+        if transition.status == "active":
+            return
+        target = transition.desired_target
+        if target is PublicationTarget.UNSET:
+            if not self._repository.set_transition_status(
+                "cleaning",
+                expected_generation=transition.generation,
+                expected_status=transition.status,
+                expected_desired_target=transition.desired_target,
+                expected_active_target=transition.active_target,
+            ):
+                return
+            if not self._cleanup_previous_target_safely(
+                transition.active_target,
+                transition,
+            ):
+                return
+            self._repository.activate_publication_target(
+                expected_generation=transition.generation,
+                expected_desired_target=transition.desired_target,
+                expected_active_target=transition.active_target,
+            )
+            return
+
+        if (
+            target is PublicationTarget.SHAREPOINT_COLUMN
+            and not transition.column_provisioned
+        ):
+            self._repository.set_transition_status(
+                "failed",
+                code="CONTENT_COLUMN_NOT_PROVISIONED",
+                message="Provision the SharePoint content site column first.",
+                expected_generation=transition.generation,
+                expected_status=transition.status,
+                expected_desired_target=transition.desired_target,
+                expected_active_target=transition.active_target,
+            )
+            return
+
+        documents = self._repository.list_desired_sharepoint_documents()
+        waiting_for_jobs = False
+        for document in documents:
+            if document.status == "Queued":
+                if not self._repository.has_pending_job(
+                    document.key,
+                    request_id=document.request_id,
+                ):
+                    self._repository.queue_refresh(
+                        document.key,
+                        trigger="worker-publication-transition-recovery",
+                    )
+                waiting_for_jobs = True
+            elif document.status != "Ready":
+                waiting_for_jobs = True
+        if waiting_for_jobs:
+            return
+
+        ready = {
+            publication.document_key
+            for publication in self._repository.list_publications(
+                target=target,
+                generation=transition.generation,
+            )
+            if publication.status == "ready"
+        }
+        missing = [document for document in documents if document.key not in ready]
+        for document in missing:
+            publication = self._repository.get_publication(document.key, target)
+            if publication is not None and publication.status == "failed":
+                continue
+            if document.status == "Ready":
+                self._repository.queue_refresh(
+                    document.key,
+                    trigger="worker-publication-transition-recovery",
+                )
+        if missing:
+            return
+
+        if (
+            transition.status == "cleaning"
+            and transition.desired_target is transition.active_target
+        ):
+            for candidate in (
+                PublicationTarget.SHAREPOINT_COLUMN,
+                PublicationTarget.COPILOT_CONNECTOR,
+            ):
+                if candidate is transition.active_target:
+                    continue
+                if not self._cleanup_previous_target_safely(candidate, transition):
+                    return
+            self._repository.activate_publication_target(
+                expected_generation=transition.generation,
+                expected_desired_target=transition.desired_target,
+                expected_active_target=transition.active_target,
+            )
+            return
+
+        if target is PublicationTarget.SHAREPOINT_COLUMN:
+            if not transition.reindex_requested:
+                self._repository.set_transition_status(
+                    "awaiting_reindex",
+                    expected_generation=transition.generation,
+                    expected_status=transition.status,
+                    expected_desired_target=transition.desired_target,
+                    expected_active_target=transition.active_target,
+                )
+                return
+            if not transition.search_verified:
+                self._repository.set_transition_status(
+                    "awaiting_search",
+                    expected_generation=transition.generation,
+                    expected_status=transition.status,
+                    expected_desired_target=transition.desired_target,
+                    expected_active_target=transition.active_target,
+                )
+                return
+            if not transition.copilot_verified:
+                self._repository.set_transition_status(
+                    "awaiting_copilot",
+                    expected_generation=transition.generation,
+                    expected_status=transition.status,
+                    expected_desired_target=transition.desired_target,
+                    expected_active_target=transition.active_target,
+                )
+                return
+
+        if not self._repository.set_transition_status(
+            "cleaning",
+            expected_generation=transition.generation,
+            expected_status=transition.status,
+            expected_desired_target=transition.desired_target,
+            expected_active_target=transition.active_target,
+        ):
+            return
+        if not self._cleanup_previous_target_safely(
+            transition.active_target,
+            transition,
+        ):
+            return
+        self._repository.activate_publication_target(
+            expected_generation=transition.generation,
+            expected_desired_target=transition.desired_target,
+            expected_active_target=transition.active_target,
+        )
+
+    def _cleanup_previous_target_safely(
+        self,
+        target: PublicationTarget,
+        transition: PublicationTransition,
+    ) -> bool:
+        try:
+            return self._cleanup_previous_target(target, transition)
+        except KNOWN_PROCESSING_ERRORS as exc:
+            code = _error_code(exc)
+            message = str(exc)
+            self._repository.set_transition_status(
+                "failed",
+                code=code,
+                message=message,
+                expected_generation=transition.generation,
+                expected_status="cleaning",
+                expected_desired_target=transition.desired_target,
+                expected_active_target=transition.active_target,
+            )
+            LOGGER.error(
+                "Publication transition cleanup failed for %s: %s",
+                target.value,
+                message,
+            )
+            return False
+
+    def _cleanup_previous_target(
+        self,
+        target: PublicationTarget,
+        transition: PublicationTransition,
+    ) -> bool:
+        if target is PublicationTarget.UNSET:
+            return self._repository.publication_transition_matches(
+                transition,
+                status="cleaning",
+            )
+        if target is transition.desired_target:
+            return False
+        publications = self._repository.list_publications(target=target)
+        if any(publication.status == "pending" for publication in publications):
+            return False
+        for publication in publications:
+            with self._repository.publication_operation_lock(
+                publication.document_key,
+                target,
+            ):
+                if not self._repository.publication_transition_matches(
+                    transition,
+                    status="cleaning",
+                ):
+                    return False
+                current = self._repository.get_publication(
+                    publication.document_key,
+                    target,
+                )
+                if current is None:
+                    continue
+                if current.status == "pending":
+                    return False
+                document = self._repository.get_document(current.document_key)
+                if document is None:
+                    continue
+                operation_id = (
+                    f"transition-cleanup:{transition.generation}:{uuid4()}"
+                )
+                if not self._claim_and_remove_publication(
+                    document=document,
+                    publication=current,
+                    operation_id=operation_id,
+                ):
+                    return False
+        return self._repository.publication_transition_matches(
+            transition,
+            status="cleaning",
+        )
 
 
 def _utc_iso() -> str:
@@ -630,19 +1309,6 @@ def _is_supported_document(drive_item: dict[str, Any]) -> bool:
     file_value = drive_item.get("file")
     mime_type = file_value.get("mimeType") if isinstance(file_value, dict) else None
     return mime_type is None or mime_type in supported_content_types()
-
-
-def _modified_by(drive_item: dict[str, Any]) -> str:
-    identity_set = drive_item.get("lastModifiedBy")
-    if isinstance(identity_set, dict):
-        for identity_type in ("user", "application", "device"):
-            identity = identity_set.get(identity_type)
-            if isinstance(identity, dict):
-                for key in ("displayName", "email", "id"):
-                    value = identity.get(key)
-                    if isinstance(value, str) and value.strip():
-                        return value.strip()
-    raise ExternalItemError("SOURCE_MODIFIER_INVALID: no usable identity.")
 
 
 def _error_code(error: Exception) -> str:

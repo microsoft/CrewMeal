@@ -55,8 +55,25 @@ try {
         -Body $fullControlBody `
         -ContentType "application/json" | Out-Null
 
-    & "$PSScriptRoot\..\.venv\Scripts\python.exe" `
-        "$PSScriptRoot\configure_test_library.py"
+    $venvPython = "$PSScriptRoot\..\.venv\Scripts\python.exe"
+    $python = if (Test-Path $venvPython) {
+        $venvPython
+    }
+    else {
+        $sourcePath = (Resolve-Path "$PSScriptRoot\..\src").Path
+        $env:PYTHONPATH = if ($env:PYTHONPATH) {
+            "$sourcePath$([IO.Path]::PathSeparator)$env:PYTHONPATH"
+        }
+        else {
+            $sourcePath
+        }
+        (Get-Command python -ErrorAction Stop).Source
+    }
+    $configureArgs = @("$PSScriptRoot\configure_test_library.py")
+    if ($env:CREWMEAL_M365_SHAREPOINT_ACCESS_TOKEN) {
+        $configureArgs += "--apply-content-column"
+    }
+    & $python @configureArgs
     if ($LASTEXITCODE -ne 0) {
         throw "Test-library provisioning failed with exit code $LASTEXITCODE."
     }
@@ -76,5 +93,6 @@ finally {
     siteId = $env:CREWMEAL_M365_SITE_ID
     applicationId = $env:CREWMEAL_M365_CLIENT_ID
     runtimeRole = "write"
+    contentColumnAttached = [bool]$env:CREWMEAL_M365_SHAREPOINT_ACCESS_TOKEN
     provisioningCompleted = $true
 } | ConvertTo-Json
