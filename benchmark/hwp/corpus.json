@@ -1,0 +1,421 @@
+{
+  "schemaVersion": 1,
+  "description": "A SHA-256 pinned cross-project corpus for HWP5 and HWPX parser comparison. Third-party binaries are downloaded at run time and are not redistributed by CrewMeal.",
+  "documents": [
+    {
+      "id": "hwp-para-head",
+      "format": "hwp",
+      "filename": "hwp-para-head.hwp",
+      "source": {
+        "repository": "edwardkim/rhwp",
+        "commit": "8d3bfa4b92174b16bac587fe1409975cf34ba566",
+        "path": "rhwp-studio/public/samples/para-head-num-2.hwp",
+        "url": "https://raw.githubusercontent.com/edwardkim/rhwp/8d3bfa4b92174b16bac587fe1409975cf34ba566/rhwp-studio/public/samples/para-head-num-2.hwp"
+      },
+      "bytes": 16384,
+      "sha256": "71e776c1ce67a8b7c9d61e1b78461c34294e7a8e78ff4f4a24114ee8ca6447ce",
+      "license": "MIT (repository license)",
+      "provenance": "Project-authored public parser sample; download-only in this benchmark.",
+      "tags": ["numbering", "list", "fixture"],
+      "expectations": {
+        "sentinels": ["문단번호테스트", "새번호 목록 시작", "이전 번호 목록에 이어"],
+        "minPages": 1
+      }
+    },
+    {
+      "id": "hwp-number-bullet",
+      "format": "hwp",
+      "filename": "hwp-number-bullet.hwp",
+      "source": {
+        "repository": "edwardkim/rhwp",
+        "commit": "8d3bfa4b92174b16bac587fe1409975cf34ba566",
+        "path": "rhwp-studio/public/samples/number-bullet.hwp",
+        "url": "https://raw.githubusercontent.com/edwardkim/rhwp/8d3bfa4b92174b16bac587fe1409975cf34ba566/rhwp-studio/public/samples/number-bullet.hwp"
+      },
+      "bytes": 69120,
+      "sha256": "8d509006e6f4a389f00242966d7fa37f8c2a19a5c0d5a205863c9b8bd070d4a7",
+      "license": "MIT (repository license)",
+      "provenance": "Project public parser sample; download-only in this benchmark.",
+      "tags": ["numbering", "bullet", "korean", "fixture"],
+      "expectations": {
+        "sentinels": ["마스크 착용 의무", "코로나19 고위험군", "비말차단용 마스크"],
+        "minPages": 1
+      }
+    },
+    {
+      "id": "hwp-simple-table",
+      "format": "hwp",
+      "filename": "hwp-simple-table.hwp",
+      "source": {
+        "repository": "KimDaehyeon6873/hwp-hwpx-parser",
+        "commit": "339d1290ed46f90dc5d02a72622eb21df4b8925c",
+        "path": "tests/data/표.hwp",
+        "url": "https://raw.githubusercontent.com/KimDaehyeon6873/hwp-hwpx-parser/339d1290ed46f90dc5d02a72622eb21df4b8925c/tests/data/%ED%91%9C.hwp"
+      },
+      "bytes": 17408,
+      "sha256": "ed97e2136e53cbb09ab6362d5631f6f1e4f752a5e53f09e85e4bc9c19f9e6d35",
+      "license": "Apache-2.0 (repository license)",
+      "provenance": "Project test fixture; download-only in this benchmark.",
+      "tags": ["table", "image", "fixture"],
+      "expectations": {
+        "sentinels": ["ABC", "LMN", "456"],
+        "minTables": 2,
+        "minImages": 1,
+        "minPages": 1
+      }
+    },
+    {
+      "id": "hwp-nested-table",
+      "format": "hwp",
+      "filename": "hwp-nested-table.hwp",
+      "source": {
+        "repository": "edwardkim/rhwp",
+        "commit": "8d3bfa4b92174b16bac587fe1409975cf34ba566",
+        "path": "rhwp-studio/public/samples/issue1949_giant_cell_nested_tables_perf.hwp",
+        "url": "https://raw.githubusercontent.com/edwardkim/rhwp/8d3bfa4b92174b16bac587fe1409975cf34ba566/rhwp-studio/public/samples/issue1949_giant_cell_nested_tables_perf.hwp"
+      },
+      "bytes": 303616,
+      "sha256": "ef10261cd29325116028e4f4f3e6be1a72c675eb771bddfd8484e7fe5aa94b4e",
+      "license": "MIT (repository license)",
+      "provenance": "Project regression sample; download-only in this benchmark.",
+      "tags": ["nested-table", "large", "pagination", "regression"],
+      "expectations": {
+        "sentinels": ["수면비행선박 안전시설요건", "제1장 선체구조", "복합재료"],
+        "minTables": 1,
+        "minImages": 4,
+        "minPages": 100
+      }
+    },
+    {
+      "id": "hwp-textbox",
+      "format": "hwp",
+      "filename": "hwp-textbox.hwp",
+      "source": {
+        "repository": "KimDaehyeon6873/hwp-hwpx-parser",
+        "commit": "339d1290ed46f90dc5d02a72622eb21df4b8925c",
+        "path": "tests/data/글상자.hwp",
+        "url": "https://raw.githubusercontent.com/KimDaehyeon6873/hwp-hwpx-parser/339d1290ed46f90dc5d02a72622eb21df4b8925c/tests/data/%EA%B8%80%EC%83%81%EC%9E%90.hwp"
+      },
+      "bytes": 16384,
+      "sha256": "ea79f759223ad167ebbcca19e1a683c8e173a84aab3e89285dc237cec0bccbcd",
+      "license": "Apache-2.0 (repository license)",
+      "provenance": "Project test fixture; download-only in this benchmark.",
+      "tags": ["textbox", "image", "fixture"],
+      "expectations": {
+        "sentinels": ["그림 1", "ABC", "123"],
+        "minImages": 1,
+        "minPages": 1
+      }
+    },
+    {
+      "id": "hwp-footnotes",
+      "format": "hwp",
+      "filename": "hwp-footnotes.hwp",
+      "source": {
+        "repository": "KimDaehyeon6873/hwp-hwpx-parser",
+        "commit": "339d1290ed46f90dc5d02a72622eb21df4b8925c",
+        "path": "tests/data/각주미주.hwp",
+        "url": "https://raw.githubusercontent.com/KimDaehyeon6873/hwp-hwpx-parser/339d1290ed46f90dc5d02a72622eb21df4b8925c/tests/data/%EA%B0%81%EC%A3%BC%EB%AF%B8%EC%A3%BC.hwp"
+      },
+      "bytes": 15360,
+      "sha256": "165e38d72326a997f0d01bd5d88c858c71c743d4f541211533acd76bc2135706",
+      "license": "Apache-2.0 (repository license)",
+      "provenance": "Project test fixture; download-only in this benchmark.",
+      "tags": ["footnote", "endnote", "fixture"],
+      "expectations": {
+        "minFootnotes": 1,
+        "minEndnotes": 1,
+        "minPages": 1
+      }
+    },
+    {
+      "id": "hwp-header-footer",
+      "format": "hwp",
+      "filename": "hwp-header-footer.hwp",
+      "source": {
+        "repository": "mete0r/pyhwp",
+        "commit": "83239f0d3bdf438b2c9f7dcff455a6e841154a39",
+        "path": "tests/hwp5_tests/fixtures/headerfooter.hwp",
+        "url": "https://raw.githubusercontent.com/mete0r/pyhwp/83239f0d3bdf438b2c9f7dcff455a6e841154a39/tests/hwp5_tests/fixtures/headerfooter.hwp"
+      },
+      "bytes": 8704,
+      "sha256": "8dcc2edecf32b86724819de3265529d57200b502b9cc5dbc0378daa041c274c8",
+      "license": "AGPL-3.0 (repository license)",
+      "provenance": "Project test fixture; download-only in this benchmark.",
+      "tags": ["header", "footer", "fixture"],
+      "expectations": {
+        "sentinels": ["첫 페이지", "Header 이것은 머리말입니다.", "Footer 이것은 꼬리말입니다."],
+        "minPages": 1
+      }
+    },
+    {
+      "id": "hwp-multicolumn",
+      "format": "hwp",
+      "filename": "hwp-multicolumn.hwp",
+      "source": {
+        "repository": "mete0r/pyhwp",
+        "commit": "83239f0d3bdf438b2c9f7dcff455a6e841154a39",
+        "path": "tests/hwp5_tests/fixtures/multicolumns-layout.hwp",
+        "url": "https://raw.githubusercontent.com/mete0r/pyhwp/83239f0d3bdf438b2c9f7dcff455a6e841154a39/tests/hwp5_tests/fixtures/multicolumns-layout.hwp"
+      },
+      "bytes": 19968,
+      "sha256": "5312888f70a52168803e0dbdb9d6d3cdf54ae3b4ec7ae79f25a35f9c1cde67ff",
+      "license": "AGPL-3.0 (repository license)",
+      "provenance": "Project test fixture; download-only in this benchmark.",
+      "tags": ["multi-column", "pagination", "fixture"],
+      "expectations": {
+        "sentinels": ["첫페이지 첫 문단", "두 번 째 페이지", "새 쪽으로"],
+        "minPages": 4
+      }
+    },
+    {
+      "id": "hwp-pictures",
+      "format": "hwp",
+      "filename": "hwp-pictures.hwp",
+      "source": {
+        "repository": "mete0r/pyhwp",
+        "commit": "83239f0d3bdf438b2c9f7dcff455a6e841154a39",
+        "path": "tests/hwp5_tests/fixtures/sample-5017-pics.hwp",
+        "url": "https://raw.githubusercontent.com/mete0r/pyhwp/83239f0d3bdf438b2c9f7dcff455a6e841154a39/tests/hwp5_tests/fixtures/sample-5017-pics.hwp"
+      },
+      "bytes": 216576,
+      "sha256": "898dd6b821caaca62a6a449e8c90ecad0c20d669603e968558636296bbaf82a2",
+      "license": "AGPL-3.0 (repository license)",
+      "provenance": "Project test fixture; download-only in this benchmark.",
+      "tags": ["image", "text-wrap", "pagination", "fixture"],
+      "expectations": {
+        "sentinels": ["글자취급", "어울림 (양쪽 본문)"],
+        "minImages": 10,
+        "minPages": 10
+      }
+    },
+    {
+      "id": "hwp-page-split",
+      "format": "hwp",
+      "filename": "hwp-page-split.hwp",
+      "source": {
+        "repository": "mete0r/pyhwp",
+        "commit": "83239f0d3bdf438b2c9f7dcff455a6e841154a39",
+        "path": "tests/hwp5_tests/fixtures/paragraph-split-page.hwp",
+        "url": "https://raw.githubusercontent.com/mete0r/pyhwp/83239f0d3bdf438b2c9f7dcff455a6e841154a39/tests/hwp5_tests/fixtures/paragraph-split-page.hwp"
+      },
+      "bytes": 8704,
+      "sha256": "d27fc44a27af756211d04f4e7d7f6a549adf9095a7708252b4e90f3eb5a3ef8d",
+      "license": "AGPL-3.0 (repository license)",
+      "provenance": "Project test fixture; download-only in this benchmark.",
+      "tags": ["page-break", "pagination", "fixture"],
+      "expectations": {
+        "sentinels": ["가나다", "라마바", "new page"],
+        "minPages": 2
+      }
+    },
+    {
+      "id": "hwpx-meeting-summary",
+      "format": "hwpx",
+      "filename": "hwpx-meeting-summary.hwpx",
+      "source": {
+        "repository": "airmang/python-hwpx",
+        "commit": "1bf38e74a965ee940cf9aa69882f02cf891c78bc",
+        "path": "src/hwpx/conformance/corpus/meeting_summary.hwpx",
+        "url": "https://raw.githubusercontent.com/airmang/python-hwpx/1bf38e74a965ee940cf9aa69882f02cf891c78bc/src/hwpx/conformance/corpus/meeting_summary.hwpx"
+      },
+      "bytes": 7570,
+      "sha256": "c2e23b161a7909e459dcbb2a147200b112f23a293b9bd7fea81e8838dd684c1a",
+      "license": "Apache-2.0 (repository license)",
+      "provenance": "Project-authored synthetic conformance corpus.",
+      "tags": ["paragraph", "synthetic", "conformance"],
+      "expectations": {
+        "sentinels": ["회의 결과 요약", "참석자 전원이 안건에 동의하였습니다."],
+        "minPages": 1
+      }
+    },
+    {
+      "id": "hwpx-report-table",
+      "format": "hwpx",
+      "filename": "hwpx-report-table.hwpx",
+      "source": {
+        "repository": "airmang/python-hwpx",
+        "commit": "1bf38e74a965ee940cf9aa69882f02cf891c78bc",
+        "path": "src/hwpx/conformance/corpus/report_table.hwpx",
+        "url": "https://raw.githubusercontent.com/airmang/python-hwpx/1bf38e74a965ee940cf9aa69882f02cf891c78bc/src/hwpx/conformance/corpus/report_table.hwpx"
+      },
+      "bytes": 8139,
+      "sha256": "42fd3b2b962d039abcacaac039e935f1579655be8ac0d38e1f749b9857b5a1e2",
+      "license": "Apache-2.0 (repository license)",
+      "provenance": "Project-authored synthetic conformance corpus.",
+      "tags": ["table", "synthetic", "conformance"],
+      "expectations": {
+        "sentinels": ["분기 실적 보고", "매출", "1억원"],
+        "minTables": 1,
+        "minPages": 1
+      }
+    },
+    {
+      "id": "hwpx-notice",
+      "format": "hwpx",
+      "filename": "hwpx-notice.hwpx",
+      "source": {
+        "repository": "airmang/python-hwpx",
+        "commit": "1bf38e74a965ee940cf9aa69882f02cf891c78bc",
+        "path": "src/hwpx/conformance/corpus/notice.hwpx",
+        "url": "https://raw.githubusercontent.com/airmang/python-hwpx/1bf38e74a965ee940cf9aa69882f02cf891c78bc/src/hwpx/conformance/corpus/notice.hwpx"
+      },
+      "bytes": 7632,
+      "sha256": "26063f654f5037b6e282eedf5d0407f5969ac861dbc2a461135892a53bd884c5",
+      "license": "Apache-2.0 (repository license)",
+      "provenance": "Project-authored synthetic conformance corpus.",
+      "tags": ["notice", "synthetic", "conformance"],
+      "expectations": {
+        "sentinels": ["2026학년도 학교 운영 계획 알림", "학부모님께", "가정의 평안과 건강"],
+        "minPages": 1
+      }
+    },
+    {
+      "id": "hwpx-simple-table",
+      "format": "hwpx",
+      "filename": "hwpx-simple-table.hwpx",
+      "source": {
+        "repository": "airmang/python-hwpx",
+        "commit": "1bf38e74a965ee940cf9aa69882f02cf891c78bc",
+        "path": "tests/fixtures/hwpxlib_corpus/reader_writer__SimpleTable.hwpx",
+        "url": "https://raw.githubusercontent.com/airmang/python-hwpx/1bf38e74a965ee940cf9aa69882f02cf891c78bc/tests/fixtures/hwpxlib_corpus/reader_writer__SimpleTable.hwpx"
+      },
+      "bytes": 13315,
+      "sha256": "502d75c289813ce4b99648ecbc3cbe333bd8acd78e9f4b4b370566f308c1e6de",
+      "license": "Apache-2.0 (upstream hwpxlib corpus manifest)",
+      "provenance": "Vendored from neolord0/hwpxlib at commit 3bbaaa90bdb1f14c58fd2f87c80105bc8fd37473 with an upstream SHA manifest.",
+      "tags": ["table", "fixture", "cross-project"],
+      "expectations": {
+        "sentinels": ["1", "2", "3", "4", "5"],
+        "minTables": 1,
+        "minPages": 1
+      }
+    },
+    {
+      "id": "hwpx-simple-picture",
+      "format": "hwpx",
+      "filename": "hwpx-simple-picture.hwpx",
+      "source": {
+        "repository": "airmang/python-hwpx",
+        "commit": "1bf38e74a965ee940cf9aa69882f02cf891c78bc",
+        "path": "tests/fixtures/hwpxlib_corpus/reader_writer__SimplePicture.hwpx",
+        "url": "https://raw.githubusercontent.com/airmang/python-hwpx/1bf38e74a965ee940cf9aa69882f02cf891c78bc/tests/fixtures/hwpxlib_corpus/reader_writer__SimplePicture.hwpx"
+      },
+      "bytes": 79447,
+      "sha256": "7ed3bdf89986fd88fdbcd92eaeac3f852aa6984fb1f7ddf4dd4f582afe20084c",
+      "license": "Apache-2.0 (upstream hwpxlib corpus manifest)",
+      "provenance": "Vendored from neolord0/hwpxlib at commit 3bbaaa90bdb1f14c58fd2f87c80105bc8fd37473 with an upstream SHA manifest.",
+      "tags": ["image", "fixture", "cross-project"],
+      "expectations": {
+        "minImages": 1,
+        "minPages": 1
+      }
+    },
+    {
+      "id": "hwpx-header-footer",
+      "format": "hwpx",
+      "filename": "hwpx-header-footer.hwpx",
+      "source": {
+        "repository": "airmang/python-hwpx",
+        "commit": "1bf38e74a965ee940cf9aa69882f02cf891c78bc",
+        "path": "tests/fixtures/hwpxlib_corpus/reader_writer__HeaderFooter.hwpx",
+        "url": "https://raw.githubusercontent.com/airmang/python-hwpx/1bf38e74a965ee940cf9aa69882f02cf891c78bc/tests/fixtures/hwpxlib_corpus/reader_writer__HeaderFooter.hwpx"
+      },
+      "bytes": 12798,
+      "sha256": "0920b3b519d6bd316b83f549d14ebeb5f49ea5a10f2d7895da8186f2610aa671",
+      "license": "Apache-2.0 (upstream hwpxlib corpus manifest)",
+      "provenance": "Vendored from neolord0/hwpxlib at commit 3bbaaa90bdb1f14c58fd2f87c80105bc8fd37473 with an upstream SHA manifest.",
+      "tags": ["header", "footer", "fixture", "cross-project"],
+      "expectations": {
+        "sentinels": ["머리말 테스트", "꼬리말"],
+        "minPages": 1
+      }
+    },
+    {
+      "id": "hwpx-multicolumn",
+      "format": "hwpx",
+      "filename": "hwpx-multicolumn.hwpx",
+      "source": {
+        "repository": "airmang/python-hwpx",
+        "commit": "1bf38e74a965ee940cf9aa69882f02cf891c78bc",
+        "path": "tests/fixtures/hwpxlib_corpus/reader_writer__MultiColumn.hwpx",
+        "url": "https://raw.githubusercontent.com/airmang/python-hwpx/1bf38e74a965ee940cf9aa69882f02cf891c78bc/tests/fixtures/hwpxlib_corpus/reader_writer__MultiColumn.hwpx"
+      },
+      "bytes": 25049,
+      "sha256": "c5f0933d6d1fe0a2defd9be7ed3cb3839b16b7f2eabb85b1294f98a3a13badd3",
+      "license": "Apache-2.0 (upstream hwpxlib corpus manifest)",
+      "provenance": "Vendored from neolord0/hwpxlib at commit 3bbaaa90bdb1f14c58fd2f87c80105bc8fd37473 with an upstream SHA manifest.",
+      "tags": ["multi-column", "pagination", "fixture", "cross-project"],
+      "expectations": {
+        "sentinels": ["1", "5", "10"],
+        "minPages": 2
+      }
+    },
+    {
+      "id": "hwpx-seoul-official",
+      "format": "hwpx",
+      "filename": "hwpx-seoul-official.hwpx",
+      "source": {
+        "repository": "airmang/python-hwpx",
+        "commit": "1bf38e74a965ee940cf9aa69882f02cf891c78bc",
+        "path": "tests/fixtures/m3_gongmun_gold/seoul_sihaengmun.hwpx",
+        "url": "https://raw.githubusercontent.com/airmang/python-hwpx/1bf38e74a965ee940cf9aa69882f02cf891c78bc/tests/fixtures/m3_gongmun_gold/seoul_sihaengmun.hwpx",
+        "documentPage": "https://opengov.seoul.go.kr/sanction/34593549"
+      },
+      "bytes": 34403,
+      "sha256": "27d2cacc5facf6210512d76730eb81072fea812796c1546d8df33264f82d7d1e",
+      "license": "Upstream public-document terms; see source page and python-hwpx NOTICE",
+      "provenance": "Publicly disclosed Seoul official document with explicit NOTICE attribution.",
+      "tags": ["public-document", "official", "table", "real-world"],
+      "expectations": {
+        "sentinels": ["소규모주택정비사업 추진실적 제출", "서울특별시장", "전략주택공급과-13666"],
+        "minTables": 2,
+        "minPages": 1
+      }
+    },
+    {
+      "id": "hwpx-mpm-notice",
+      "format": "hwpx",
+      "filename": "hwpx-mpm-notice.hwpx",
+      "source": {
+        "repository": "airmang/python-hwpx",
+        "commit": "1bf38e74a965ee940cf9aa69882f02cf891c78bc",
+        "path": "tests/fixtures/m3_gongmun_gold/mpm_recruitment_notice.hwpx",
+        "url": "https://raw.githubusercontent.com/airmang/python-hwpx/1bf38e74a965ee940cf9aa69882f02cf891c78bc/tests/fixtures/m3_gongmun_gold/mpm_recruitment_notice.hwpx",
+        "documentPage": "https://www.mpm.go.kr/mpm/comm/noti/newsNoitice/index.jsp?boardId=bbs_0000000000000020&cntId=1669"
+      },
+      "bytes": 56161,
+      "sha256": "c5bfd5e6c71c2f01ec53cb3133930f1f95e1e9a3e4f71db4bd77395e7c0235bd",
+      "license": "Upstream public-document terms; see source page and python-hwpx NOTICE",
+      "provenance": "Publicly disclosed Ministry of Personnel Management notice with explicit NOTICE attribution.",
+      "tags": ["public-document", "notice", "table", "real-world"],
+      "expectations": {
+        "sentinels": ["인사혁신처 국민참여정책단 모집", "2023년 6월 19일", "모집 개요"],
+        "minTables": 1,
+        "minPages": 1
+      }
+    },
+    {
+      "id": "hwpx-complex-business-plan",
+      "format": "hwpx",
+      "filename": "hwpx-complex-business-plan.hwpx",
+      "source": {
+        "repository": "sxa-lab/openhanji",
+        "commit": "e3ea65dad5fd779917be6bdc63dcdfe04d08e60e",
+        "path": "tests/test_files/hwpx/sxa_business-plan-90p-19tbl-7img.hwpx",
+        "url": "https://raw.githubusercontent.com/sxa-lab/openhanji/e3ea65dad5fd779917be6bdc63dcdfe04d08e60e/tests/test_files/hwpx/sxa_business-plan-90p-19tbl-7img.hwpx"
+      },
+      "bytes": 24741,
+      "sha256": "5b43f06d3e23d23420e2f56c4dc4f2ec7820f36d6fe0ae4754fa65376723ec69",
+      "license": "Apache-2.0 (repository license)",
+      "provenance": "Project regression fixture; download-only in this benchmark.",
+      "tags": ["large", "table", "image", "pagination", "cross-project"],
+      "expectations": {
+        "sentinels": ["로렘 입숨은 일반적으로", "플레이스홀더 텍스트", "디자인 프로세스"],
+        "minTables": 19,
+        "minImages": 7,
+        "minPages": 10
+      }
+    }
+  ]
+}

@@ -175,10 +175,18 @@ class StructuredSlideAnalysisService:
         geometry_by_slide: Mapping[int, str] | None = None,
         progress: "ProgressReporter | None" = None,
         corrections: "Sequence[str] | None" = None,
+        allow_partial_pages: bool = False,
     ) -> StructuredAnalysisResult:
         reporter = progress or NullProgressReporter()
         expected_pages = set(range(1, source_manifest.slide_count + 1))
-        if set(page_images) != expected_pages:
+        actual_pages = set(page_images)
+        pages_match = (
+            bool(actual_pages)
+            and actual_pages.issubset(expected_pages)
+            if allow_partial_pages
+            else actual_pages == expected_pages
+        )
+        if not pages_match:
             raise StructuredSlideAnalysisError(
                 "Slide image pages do not match the presentation."
             )

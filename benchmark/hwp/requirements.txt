@@ -1,0 +1,3 @@
+hwp-hwpx-parser==1.0.0
+openhanji==0.1.0
+python-hwpx==3.4.1

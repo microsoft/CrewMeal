@@ -126,11 +126,10 @@ def convert_hwp_to_pdf(
     soffice_path: Path,
     timeout_seconds: float = 180,
 ) -> ConversionResult:
-    """Convert a Hancom HWP/HWPX document to PDF.
+    """Run the legacy LibreOffice HWP baseline used by the parser benchmark.
 
-    Requires the LibreOffice HWP import filter (bundled with recent LibreOffice
-    builds). HWP documents import into Writer, so the Writer PDF export filter
-    is used.
+    Production HWP/HWPX processing uses rhwp. This helper remains only to
+    reproduce the pre-rhwp comparison result.
     """
 
     return convert_document_to_pdf(

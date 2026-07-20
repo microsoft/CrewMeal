@@ -189,6 +189,39 @@ def test_structured_analysis_uses_strict_schema_and_retries_invalid_json() -> No
     )
 
 
+def test_structured_analysis_can_target_a_page_subset() -> None:
+    completions = FakeCompletions()
+    with StructuredSlideAnalysisService(
+        _config(),
+        completions=completions,
+    ) as service:
+        result = service.analyze(
+            {2: b"png"},
+            source_manifest=_manifest(slides=3),
+            source_name="report.hwp",
+            allow_partial_pages=True,
+        )
+
+    assert tuple(slide.slide_number for slide in result.slides) == (2,)
+    assert len(completions.requests) == 1
+
+
+def test_structured_analysis_rejects_a_page_subset_by_default() -> None:
+    with StructuredSlideAnalysisService(
+        _config(),
+        completions=FakeCompletions(),
+    ) as service:
+        with pytest.raises(
+            StructuredSlideAnalysisError,
+            match="pages do not match",
+        ):
+            service.analyze(
+                {2: b"png"},
+                source_manifest=_manifest(slides=3),
+                source_name="report.pptx",
+            )
+
+
 def test_structured_analysis_reports_usage_when_validation_fails() -> None:
     completions = FakeCompletions(invalid_always=True)
     with StructuredSlideAnalysisService(

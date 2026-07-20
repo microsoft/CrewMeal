@@ -88,7 +88,7 @@ def test_status_page_renders_timeline(tmp_path: Path) -> None:
     assert response.status_code == 200
     assert "deck.pptx" in response.text
     assert "완료" in response.text  # READY label
-    assert "슬라이드 분석" in response.text  # ANALYZING label
+    assert "콘텐츠 분석" in response.text  # ANALYZING label
     assert "총 2쪽" in response.text  # slide total surfaced
     assert "2/2쪽" in response.text  # collapsed analyze row shows slide progress
 
