@@ -53,6 +53,12 @@ param m365SiteUrl string
 @description('Microsoft 365 connection ID.')
 param m365ConnectionId string
 
+@description('MIP File SDK CLI command for decrypting MIP-protected documents (e.g. a wrapper around the Microsoft MIP File SDK). Empty disables MIP decryption. The M365 service principal must be an Azure RMS super user for unattended decryption to work.')
+param mipSdkCli string = ''
+
+@description('Azure RMS OAuth scope requested for the MIP SDK app-only token.')
+param mipRmsScope string = 'https://aadrm.com/.default'
+
 @description('Tenant ID expected by ingest authentication.')
 param ingestTenantId string
 
@@ -401,6 +407,17 @@ var commonEnv = [
   {
     name: 'CREWMEAL_M365_CONNECTION_ID'
     value: m365ConnectionId
+  }
+  {
+    // MIP decryption: unattended shell-out to the MIP SDK CLI. Requires the
+    // M365 service principal above to be granted Azure RMS super-user rights so
+    // it can decrypt any protected content in the tenant. Empty = disabled.
+    name: 'CREWMEAL_MIP_SDK_CLI'
+    value: mipSdkCli
+  }
+  {
+    name: 'CREWMEAL_MIP_RMS_SCOPE'
+    value: mipRmsScope
   }
   {
     name: 'SLIDE_IMAGE_MODEL'

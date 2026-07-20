@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from uuid import uuid4
 
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -538,7 +539,10 @@ def test_vision_model_settings_roundtrip(tmp_path: Path) -> None:
     assert settings["vision.reasoning_effort"] == "low"
 
 
-def test_settings_page_shows_decryption_card(tmp_path: Path) -> None:
+def test_settings_page_shows_decryption_card(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("CREWMEAL_MIP_SDK_CLI", raising=False)
     app, _, _ = _build(tmp_path)
     client = TestClient(app)
 
@@ -547,6 +551,23 @@ def test_settings_page_shows_decryption_card(tmp_path: Path) -> None:
     assert page.status_code == 200
     assert "암호화 문서 복호화" in page.text
     assert 'value="mip"' in page.text
+    # MIP is implemented but no SDK CLI is configured in this environment.
+    assert "SDK 미구성" in page.text
+
+
+def test_settings_page_shows_mip_available_when_configured(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv(
+        "CREWMEAL_MIP_SDK_CLI", "python -m crewmeal.search_enhancement.mip_tool"
+    )
+    app, _, _ = _build(tmp_path)
+    client = TestClient(app)
+
+    page = client.get("/admin/settings", headers=AUTH)
+
+    assert page.status_code == 200
+    assert "사용 가능" in page.text
 
 
 def test_decryption_toggle_roundtrip(tmp_path: Path) -> None:

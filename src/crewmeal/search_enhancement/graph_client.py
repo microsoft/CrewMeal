@@ -67,6 +67,12 @@ class GraphClient:
     def __exit__(self, *_: object) -> None:
         self.close()
 
+    @property
+    def credential(self) -> TokenCredential:
+        """The app-only credential, reusable for other resources (e.g. RMS)."""
+
+        return self._credential
+
     def request(
         self,
         method: str,

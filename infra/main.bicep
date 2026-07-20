@@ -69,6 +69,12 @@ param m365SiteUrl string
 @description('Microsoft 365 connection ID.')
 param m365ConnectionId string
 
+@description('MIP File SDK CLI command for decrypting MIP-protected documents. Empty disables MIP decryption. The M365 service principal must be an Azure RMS super user for unattended decryption.')
+param mipSdkCli string = ''
+
+@description('Azure RMS OAuth scope requested for the MIP SDK app-only token.')
+param mipRmsScope string = 'https://aadrm.com/.default'
+
 @description('Tenant ID expected by ingest authentication.')
 param ingestTenantId string = m365TenantId
 
@@ -138,6 +144,8 @@ module platform 'modules/platform.bicep' = {
     m365ListId: m365ListId
     m365SiteUrl: m365SiteUrl
     m365ConnectionId: m365ConnectionId
+    mipSdkCli: mipSdkCli
+    mipRmsScope: mipRmsScope
     ingestTenantId: ingestTenantId
     ingestAudience: ingestAudience
     ingestAllowedAppIds: ingestAllowedAppIds

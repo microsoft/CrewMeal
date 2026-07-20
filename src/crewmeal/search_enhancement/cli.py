@@ -10,6 +10,7 @@ from crewmeal.search_enhancement.connector_client import ConnectorClient
 from crewmeal.search_enhancement.database import SearchEnhancementRepository
 from crewmeal.search_enhancement.db_resilience import run_with_db_retry
 from crewmeal.search_enhancement.graph_client import GraphClient
+from crewmeal.search_enhancement.mip_sdk import MipSdkConfig, build_runner
 from crewmeal.search_enhancement.processor import PresentationProcessor
 from crewmeal.search_enhancement.schema import resolve_database_target
 from crewmeal.search_enhancement.sharepoint_control import SharePointControlClient
@@ -60,6 +61,13 @@ def main() -> int:
     with GraphClient(search_config) as graph:
         all_settings = repository.get_all_settings()
         vision_model = resolve_vision_model(app_config, all_settings)
+        # MIP decryption shells out to the MIP SDK CLI and authenticates with the
+        # same M365 service principal (which must be an Azure RMS super user).
+        # ``build_runner`` returns None when unconfigured, so MIP decryption — if
+        # an admin enables it — fails loudly rather than passing files through.
+        mip_runner = build_runner(
+            MipSdkConfig.from_environment(), graph.credential
+        )
         worker = SearchEnhancementWorker(
             config=search_config,
             repository=repository,
@@ -69,6 +77,7 @@ def main() -> int:
                 app_config,
                 vision_model=vision_model,
                 decryption_settings=all_settings,
+                mip_runner=mip_runner,
             ),
             artifact_store=artifact_store,
         )

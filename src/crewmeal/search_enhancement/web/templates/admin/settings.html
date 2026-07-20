@@ -164,7 +164,14 @@
 
 <div class="card">
   <h2 style="margin-top:0;">암호화 문서 복호화</h2>
-  <p class="muted">암호화된 문서를 처리 전에 복호화하는 파이프라인입니다. 기본은 모두 꺼짐이며, 아직 구현되지 않은 제공자를 켜면 해당 문서 처리 시 명확한 오류로 실패합니다. (워커 재시작 후 적용)</p>
+  <p class="muted">암호화된 문서를 처리 전에 복호화하는 파이프라인입니다. 기본은 모두 꺼짐이며, 구현되지 않았거나 백엔드가 구성되지 않은 제공자를 켜면 해당 문서 처리 시 명확한 오류로 실패합니다. (워커 재시작 후 적용)</p>
+  <p class="muted">
+    <strong>MIP</strong> 복호화는 MIP File SDK CLI로 위임합니다. 환경변수
+    <code>CREWMEAL_MIP_SDK_CLI</code> 로 CLI 경로를 지정하세요. (프로덕션: Microsoft MIP File SDK CLI ·
+    로컬/CI: <code>python -m crewmeal.search_enhancement.mip_tool</code> 레퍼런스 도구). 무인 복호화이므로
+    기존 M365 서비스 주체가 <strong>Azure RMS 슈퍼유저</strong>여야 하며, CrewMeal이
+    <code>https://aadrm.com/.default</code> app-only 토큰을 발급해 CLI에 전달합니다.
+  </p>
   <form method="post" action="/admin/settings/decryption">
     <table class="grid">
       <thead><tr><th>제공자</th><th>상태</th><th>활성화</th></tr></thead>
@@ -173,8 +180,10 @@
         <tr>
           <td>{{ prov.display_name }}</td>
           <td>
-            {% if prov.implemented %}
-            <span class="badge ok">구현됨</span>
+            {% if prov.implemented and prov.configured %}
+            <span class="badge ok">사용 가능</span>
+            {% elif prov.implemented %}
+            <span class="badge">구현됨 · SDK 미구성</span>
             {% else %}
             <span class="badge">구현 예정</span>
             {% endif %}

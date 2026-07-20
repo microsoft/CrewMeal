@@ -41,6 +41,7 @@ from crewmeal.search_enhancement.decryption import (
     decryption_setting_key,
     decryption_status,
 )
+from crewmeal.search_enhancement.mip_sdk import MipSdkConfig
 from crewmeal.search_enhancement.database import (
     DocumentRecord,
     FeedbackRecord,
@@ -263,7 +264,10 @@ def admin_settings(
         "vision_fields": vision_model_fields(
             AppConfig.from_environment(), all_settings
         ),
-        "decryption": decryption_status(all_settings),
+        "decryption": decryption_status(
+            all_settings,
+            configured={"mip": MipSdkConfig.from_environment().is_configured},
+        ),
         "publication": publication_transition,
         "publication_progress": publication_progress,
         "publication_document_count": len(

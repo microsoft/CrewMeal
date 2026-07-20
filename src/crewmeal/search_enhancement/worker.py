@@ -208,6 +208,9 @@ class SearchEnhancementWorker:
                 continue
 
             source_bytes = self._control.download_content(document.key.item_id)
+            source_bytes = self._processor.decrypt_source(
+                source_bytes, filename=document.file_name
+            )
             source_fingerprint = content_fingerprint(
                 source_bytes, filename=document.file_name
             )
@@ -490,6 +493,9 @@ class SearchEnhancementWorker:
         publication_targets = self._publication_targets(transition)
         source_name = _required_string(drive_item, "name")
         source_bytes = self._control.download_content(document.key.item_id)
+        source_bytes = self._processor.decrypt_source(
+            source_bytes, filename=source_name
+        )
         source_fingerprint = content_fingerprint(source_bytes, filename=source_name)
         corrections = self._document_corrections(document)
         processed = self._processor.process(
@@ -686,6 +692,9 @@ class SearchEnhancementWorker:
 
         reporter.stage(Stage.DOWNLOADING, message="uploaded source")
         source_bytes = self._load_upload_source(document)
+        source_bytes = self._processor.decrypt_source(
+            source_bytes, filename=document.file_name
+        )
         source_fingerprint = content_fingerprint(
             source_bytes, filename=document.file_name
         )
