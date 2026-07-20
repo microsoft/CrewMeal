@@ -8,6 +8,7 @@ signed session cookie set after logging in once).
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
@@ -40,8 +41,10 @@ from crewmeal.search_enhancement.decryption import (
     all_providers as all_decryption_providers,
     decryption_setting_key,
     decryption_status,
+    is_decryption_enabled,
 )
-from crewmeal.search_enhancement.mip_sdk import MipSdkConfig
+from crewmeal.search_enhancement.config import SearchEnhancementConfig
+from crewmeal.search_enhancement.mip_sdk import MipSdkConfig, probe_rms_health
 from crewmeal.search_enhancement.database import (
     DocumentRecord,
     FeedbackRecord,
@@ -241,6 +244,54 @@ def admin_job_retry(
 # --------------------------------------------------------------------------- #
 # Settings
 # --------------------------------------------------------------------------- #
+def _mip_live_health(all_settings: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
+    """Best-effort live RMS readiness for the settings page.
+
+    Only probes when MIP decryption is enabled *and* an adapter is configured,
+    so the common (off) case adds no latency or network calls. Building the
+    credential or probing must never break the settings page, so every failure
+    is swallowed and reported as an unavailable-token health entry. This is what
+    lets the UI distinguish "SDK wired" (``configured``) from "tenant actually
+    works" (``health``).
+    """
+
+    mip_config = MipSdkConfig.from_environment()
+    if not (is_decryption_enabled("mip", all_settings) and mip_config.is_configured):
+        return {}
+    try:
+        from azure.identity import ClientSecretCredential
+
+        cfg = SearchEnhancementConfig.from_environment()
+        credential = ClientSecretCredential(
+            tenant_id=cfg.tenant_id,
+            client_id=cfg.client_id,
+            client_secret=cfg.client_secret,
+        )
+    except Exception as exc:  # noqa: BLE001 - never break the settings page
+        return {
+            "mip": {
+                "ok": False,
+                "super_user": False,
+                "decrypt_ready": False,
+                "detail": f"service-principal credential unavailable: {exc}",
+            }
+        }
+    try:
+        health = probe_rms_health(credential, mip_config.scope)
+    finally:
+        close = getattr(credential, "close", None)
+        if callable(close):
+            close()
+    return {
+        "mip": {
+            "ok": health.ok,
+            "super_user": health.super_user,
+            "decrypt_ready": health.decrypt_ready,
+            "detail": health.describe(),
+        }
+    }
+
+
 @router.get("/settings", response_class=HTMLResponse)
 def admin_settings(
     request: Request,
@@ -267,6 +318,7 @@ def admin_settings(
         "decryption": decryption_status(
             all_settings,
             configured={"mip": MipSdkConfig.from_environment().is_configured},
+            health=_mip_live_health(all_settings),
         ),
         "publication": publication_transition,
         "publication_progress": publication_progress,

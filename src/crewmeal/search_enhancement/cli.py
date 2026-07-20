@@ -9,13 +9,49 @@ from crewmeal.search_enhancement.config import SearchEnhancementConfig
 from crewmeal.search_enhancement.connector_client import ConnectorClient
 from crewmeal.search_enhancement.database import SearchEnhancementRepository
 from crewmeal.search_enhancement.db_resilience import run_with_db_retry
+from crewmeal.search_enhancement.decryption import is_decryption_enabled
 from crewmeal.search_enhancement.graph_client import GraphClient
-from crewmeal.search_enhancement.mip_sdk import MipSdkConfig, build_runner
+from crewmeal.search_enhancement.mip_sdk import (
+    MipSdkConfig,
+    build_runner,
+    probe_rms_health,
+)
 from crewmeal.search_enhancement.processor import PresentationProcessor
 from crewmeal.search_enhancement.schema import resolve_database_target
 from crewmeal.search_enhancement.sharepoint_control import SharePointControlClient
 from crewmeal.search_enhancement.vision_model import resolve_vision_model
 from crewmeal.search_enhancement.worker import SearchEnhancementWorker
+
+
+def _log_mip_preflight(all_settings, mip_config, credential) -> None:
+    """Emit one loud startup signal when MIP decryption is enabled but not ready.
+
+    The admin decryption toggle only asks the pipeline to *attempt* decryption;
+    it does nothing unless the tenant is configured (RMS active, the service
+    principal an admin-consented super user, the adapter wired). The per-document
+    path already fails closed, but surfacing a misconfiguration here -- once, at
+    startup -- beats discovering it document by document. This never blocks the
+    worker: it only logs.
+    """
+
+    if not is_decryption_enabled("mip", all_settings):
+        return
+    if not mip_config.is_configured:
+        logging.warning(
+            "MIP decryption is enabled but CREWMEAL_MIP_SDK_CLI is not set; "
+            "protected documents will fail until the adapter is configured."
+        )
+        return
+    health = probe_rms_health(credential, mip_config.scope)
+    if health.decrypt_ready:
+        logging.info("MIP decryption preflight OK: %s", health.describe())
+    else:
+        logging.warning(
+            "MIP decryption is enabled but the tenant/service principal is not "
+            "ready: %s. Protected documents will fail until this is fixed; run "
+            "'python -m crewmeal.search_enhancement.mip_preflight' to diagnose.",
+            health.describe(),
+        )
 
 
 def main() -> int:
@@ -65,9 +101,9 @@ def main() -> int:
         # same M365 service principal (which must be an Azure RMS super user).
         # ``build_runner`` returns None when unconfigured, so MIP decryption — if
         # an admin enables it — fails loudly rather than passing files through.
-        mip_runner = build_runner(
-            MipSdkConfig.from_environment(), graph.credential
-        )
+        mip_config = MipSdkConfig.from_environment()
+        mip_runner = build_runner(mip_config, graph.credential)
+        _log_mip_preflight(all_settings, mip_config, graph.credential)
         worker = SearchEnhancementWorker(
             config=search_config,
             repository=repository,

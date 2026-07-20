@@ -208,25 +208,37 @@ def decryption_status(
     settings: Mapping[str, Any],
     *,
     configured: Mapping[str, bool] | None = None,
+    health: Mapping[str, Mapping[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     """Per-provider rows for the admin settings UI.
 
     ``implemented`` reports whether the integration code exists; ``configured``
     reports whether a runnable backend (e.g. a MIP SDK CLI) is wired up in the
     current environment. A provider can be implemented but not configured.
+
+    ``health`` optionally carries a live tenant-readiness result per provider
+    (e.g. whether an RMS token can be acquired and a super-user role is present).
+    It is distinct from ``configured``: a backend can be wired (``configured``)
+    yet still non-functional because the tenant/service principal is not set up.
+    When a provider has a health entry it is attached as ``row["health"]``.
     """
 
     configured = configured or {}
-    return [
-        {
+    health = health or {}
+    rows: list[dict[str, Any]] = []
+    for provider in _PROVIDERS:
+        row: dict[str, Any] = {
             "provider_id": provider.provider_id,
             "display_name": provider.display_name,
             "implemented": provider.implemented,
             "configured": bool(configured.get(provider.provider_id, False)),
             "enabled": is_decryption_enabled(provider.provider_id, settings),
         }
-        for provider in _PROVIDERS
-    ]
+        provider_health = health.get(provider.provider_id)
+        if provider_health is not None:
+            row["health"] = dict(provider_health)
+        rows.append(row)
+    return rows
 
 
 def maybe_decrypt(

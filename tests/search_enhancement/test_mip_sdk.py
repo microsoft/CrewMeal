@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import base64
+import json
 import os
 import subprocess
 from pathlib import Path
@@ -13,8 +15,12 @@ from crewmeal.search_enhancement.mip_sdk import (
     MipSdkConfig,
     MipSdkExecutionError,
     MipSdkUnavailableError,
+    RmsHealth,
     SubprocessMipSdkRunner,
     build_runner,
+    decode_token_claims,
+    probe_rms_health,
+    token_has_super_user,
 )
 
 
@@ -196,3 +202,62 @@ def test_config_from_environment_defaults(monkeypatch):
     assert config.is_configured is False
     assert config.scope == DEFAULT_RMS_SCOPE
     assert config.subcommand == "unprotect"
+
+
+# --------------------------------------------------------------------------- #
+# Tenant readiness probe
+# --------------------------------------------------------------------------- #
+def _jwt(claims: dict) -> str:
+    """A signature-less JWT whose middle segment encodes ``claims``."""
+
+    payload = base64.urlsafe_b64encode(json.dumps(claims).encode()).decode().rstrip("=")
+    return f"header.{payload}.signature"
+
+
+def test_decode_token_claims_and_super_user_detection():
+    claims = decode_token_claims(_jwt({"roles": ["Content.SuperUser"], "appid": "abc"}))
+    assert claims["appid"] == "abc"
+    assert token_has_super_user(claims) is True
+    # A single string role and non-super-user roles are handled.
+    assert token_has_super_user({"roles": "Content.SuperUser"}) is True
+    assert token_has_super_user({"roles": ["Content.Writer"]}) is False
+    assert token_has_super_user({}) is False
+    # Anything that is not a decodable JWT yields empty claims, never raises.
+    assert decode_token_claims("not-a-jwt") == {}
+    assert decode_token_claims("header.@@@notbase64@@@.sig") == {}
+
+
+def test_probe_rms_health_ready_when_super_user_present():
+    credential = _FakeCredential(_jwt({"roles": ["Content.SuperUser"], "appid": "app-1"}))
+    health = probe_rms_health(credential, DEFAULT_RMS_SCOPE)
+    assert isinstance(health, RmsHealth)
+    assert health.ok is True
+    assert health.super_user is True
+    assert health.decrypt_ready is True
+    assert health.app_id == "app-1"
+    assert health.roles == ("Content.SuperUser",)
+    assert credential.scopes == [DEFAULT_RMS_SCOPE]
+
+
+def test_probe_rms_health_token_ok_but_no_super_user():
+    credential = _FakeCredential(_jwt({"roles": ["Content.Writer"]}))
+    health = probe_rms_health(credential)
+    assert health.ok is True
+    assert health.super_user is False
+    assert health.decrypt_ready is False
+    assert "super-user" in health.describe()
+
+
+def test_probe_rms_health_token_acquisition_failure():
+    health = probe_rms_health(_FakeCredential(fail=True))
+    assert health.ok is False
+    assert health.decrypt_ready is False
+    assert "token acquisition failed" in (health.error or "")
+    assert "unavailable" in health.describe()
+
+
+def test_probe_rms_health_without_credential():
+    health = probe_rms_health(None)
+    assert health.ok is False
+    assert health.decrypt_ready is False
+    assert "credential" in (health.error or "")

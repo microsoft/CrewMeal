@@ -187,6 +187,16 @@
             {% else %}
             <span class="badge">구현 예정</span>
             {% endif %}
+            {% if prov.health %}
+            <div style="margin-top:.4rem;">
+              {% if prov.health.decrypt_ready %}
+              <span class="badge ok">테넌트 준비됨</span>
+              {% else %}
+              <span class="badge err">테넌트 미준비</span>
+              {% endif %}
+              <div style="font-size:.82rem; color:#555; margin-top:.2rem;">{{ prov.health.detail }}</div>
+            </div>
+            {% endif %}
           </td>
           <td>
             <input type="checkbox" name="enabled" value="{{ prov.provider_id }}"

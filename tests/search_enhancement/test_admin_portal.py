@@ -22,6 +22,8 @@ from crewmeal.search_enhancement.publication import (
 )
 from crewmeal.search_enhancement.web import create_app
 from crewmeal.search_enhancement.web.config import WebConfig
+from crewmeal.search_enhancement.web.routers import admin as admin_router
+from crewmeal.search_enhancement.decryption import decryption_setting_key
 
 ADMIN_KEY = "secret-admin-key"
 AUTH = {"X-Admin-Key": ADMIN_KEY}
@@ -585,3 +587,60 @@ def test_decryption_toggle_roundtrip(tmp_path: Path) -> None:
     settings = repository.get_all_settings()
     assert settings["decryption.mip.enabled"] is True
     assert settings["decryption.generic.enabled"] is False
+
+
+def test_mip_live_health_noop_when_disabled(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv(
+        "CREWMEAL_MIP_SDK_CLI", "python -m crewmeal.search_enhancement.mip_tool"
+    )
+    # MIP configured but not enabled -> no probe, no network, empty result.
+    assert admin_router._mip_live_health({}) == {}
+
+
+def test_mip_live_health_swallows_credential_errors(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Enabled + configured, but the service-principal env is incomplete: the
+    # settings page must still render, so the failure is reported as an
+    # unavailable-token health entry rather than raising.
+    monkeypatch.setenv(
+        "CREWMEAL_MIP_SDK_CLI", "python -m crewmeal.search_enhancement.mip_tool"
+    )
+    for var in (
+        "CREWMEAL_M365_TENANT_ID",
+        "CREWMEAL_M365_CLIENT_ID",
+        "CREWMEAL_M365_CLIENT_SECRET",
+        "CREWMEAL_M365_SITE_ID",
+        "CREWMEAL_M365_DRIVE_ID",
+        "CREWMEAL_M365_LIST_ID",
+        "CREWMEAL_M365_SITE_URL",
+    ):
+        monkeypatch.delenv(var, raising=False)
+
+    health = admin_router._mip_live_health({decryption_setting_key("mip"): True})
+
+    assert health["mip"]["decrypt_ready"] is False
+    assert "unavailable" in health["mip"]["detail"]
+
+
+def test_settings_page_renders_live_tenant_health(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        admin_router,
+        "_mip_live_health",
+        lambda _settings: {
+            "mip": {
+                "ok": True,
+                "super_user": True,
+                "decrypt_ready": True,
+                "detail": "RMS token acquired and super-user role present",
+            }
+        },
+    )
+    app, _, _ = _build(tmp_path)
+    page = TestClient(app).get("/admin/settings", headers=AUTH)
+
+    assert page.status_code == 200
+    assert "테넌트 준비됨" in page.text
+    assert "super-user role present" in page.text

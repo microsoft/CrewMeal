@@ -165,6 +165,28 @@ def test_decryption_status_rows():
     }
     assert enabled_rows["mip"]["enabled"] is True
     assert enabled_rows["mip"]["configured"] is True
+    # No health passed -> no health key on any row.
+    assert "health" not in enabled_rows["mip"]
+
+    # Live health is attached only to the provider it is supplied for, and is
+    # distinct from ``configured`` (backend wired) -- it reports tenant reach.
+    health_rows = {
+        row["provider_id"]: row
+        for row in decryption_status(
+            {decryption_setting_key("mip"): True},
+            configured={"mip": True},
+            health={
+                "mip": {
+                    "ok": True,
+                    "super_user": True,
+                    "decrypt_ready": True,
+                    "detail": "RMS token acquired and super-user role present",
+                }
+            },
+        )
+    }
+    assert health_rows["mip"]["health"]["decrypt_ready"] is True
+    assert "health" not in health_rows["generic"]
 
 
 def _processor(settings, runner=None) -> PresentationProcessor:

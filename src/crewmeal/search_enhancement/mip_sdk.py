@@ -29,11 +29,15 @@ the public ``DecryptionError`` hierarchy.
 
 from __future__ import annotations
 
+import base64
+import binascii
+import json
 import logging
 import os
 import shlex
 import subprocess
 import tempfile
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol, runtime_checkable
@@ -243,3 +247,115 @@ def build_runner(
     if not config.is_configured or credential is None:
         return None
     return SubprocessMipSdkRunner(config, credential)
+
+
+# --------------------------------------------------------------------------- #
+# Tenant readiness probe
+#
+# Enabling the admin decryption toggle only tells the pipeline to *attempt*
+# decryption; it does nothing unless the tenant is actually set up (RMS active,
+# the service principal granted Content.SuperUser + admin-consented, credentials
+# wired). Per document the pipeline already fails closed, but an operator who
+# flips the toggle deserves one loud, early signal. These helpers acquire an RMS
+# app-only token and report -- without ever raising or logging the token --
+# whether decryption can really work, so both the worker (at startup) and the
+# admin UI (live) can surface a misconfiguration up front.
+# --------------------------------------------------------------------------- #
+@dataclass(frozen=True, slots=True)
+class RmsHealth:
+    """Result of a live Azure RMS token probe. Advisory only, never fatal."""
+
+    ok: bool
+    super_user: bool
+    roles: tuple[str, ...] = ()
+    app_id: str | None = None
+    error: str | None = None
+
+    @property
+    def decrypt_ready(self) -> bool:
+        """Token acquired *and* a super-user role claim is present."""
+
+        return self.ok and self.super_user
+
+    def describe(self) -> str:
+        """A short, non-sensitive human summary for logs / the admin UI."""
+
+        if not self.ok:
+            return f"RMS token unavailable ({self.error or 'unknown error'})"
+        if not self.super_user:
+            roles = ", ".join(self.roles) if self.roles else "none"
+            return (
+                "RMS token acquired but no super-user role claim present "
+                f"(roles: {roles}); protected documents may fail unless "
+                "super-user is granted via group membership"
+            )
+        return "RMS token acquired and super-user role present"
+
+
+def decode_token_claims(token: str) -> dict:
+    """Best-effort decode of a JWT payload (no signature verification).
+
+    Returns ``{}`` for anything that is not a decodable JWT. Never raises and
+    never logs the token itself; only the decoded, non-sensitive payload claims
+    are returned.
+    """
+
+    parts = token.split(".")
+    if len(parts) < 2:
+        return {}
+    payload = parts[1]
+    payload += "=" * (-len(payload) % 4)
+    try:
+        return json.loads(base64.urlsafe_b64decode(payload))
+    except (binascii.Error, ValueError):
+        return {}
+
+
+def token_has_super_user(claims: Mapping[str, object]) -> bool:
+    """Whether a token's ``roles`` claim carries an RMS super-user role.
+
+    Super-user granted via *group membership* does not surface as a role claim,
+    so ``False`` means "verify", not "definitely absent".
+    """
+
+    roles = claims.get("roles") or []
+    if isinstance(roles, str):
+        roles = [roles]
+    return any("superuser" in str(role).lower() for role in roles)
+
+
+def probe_rms_health(
+    credential: TokenCredential | None, scope: str = DEFAULT_RMS_SCOPE
+) -> RmsHealth:
+    """Acquire an RMS app-only token and report whether decryption can work.
+
+    Self-contained and **non-fatal**: it acquires a token, decodes the
+    non-sensitive claims, and reports whether an RMS super-user role is present.
+    It never raises and never logs the token, so it is safe to call from a web
+    request handler or at worker startup to surface tenant-configuration
+    problems *before* documents fail one by one.
+    """
+
+    if credential is None:
+        return RmsHealth(
+            ok=False,
+            super_user=False,
+            error="no service-principal credential configured",
+        )
+    try:
+        token = credential.get_token(scope).token
+    except Exception as exc:  # noqa: BLE001 - reported, never propagated
+        return RmsHealth(
+            ok=False, super_user=False, error=f"{type(exc).__name__}: {exc}"
+        )
+    claims = decode_token_claims(token)
+    roles = claims.get("roles") or []
+    if isinstance(roles, str):
+        roles = [roles]
+    return RmsHealth(
+        ok=True,
+        super_user=token_has_super_user(claims),
+        roles=tuple(str(role) for role in roles),
+        app_id=(claims.get("appid") or claims.get("azp")),
+        error=None,
+    )
