@@ -90,9 +90,33 @@ class MipDecryptionProvider:
     display_name = "Microsoft Purview (MIP) 암호화"
     implemented = True
 
-    # Markers that appear in MIP/IRM-protected wrappers. Safe to match on: they
-    # do not occur in ordinary Office/PDF payloads.
-    _MARKERS = (b"MicrosoftIRMServices", b"MSIP_Label", b"\x09DRMContent")
+    # OLE/CFB compound-file magic. Rights-protected Office documents -- both the
+    # MIP File SDK's "native" protection and classic Office IRM -- are compound
+    # files (ordinary OOXML is a ZIP starting with ``PK``), so the magic tells us
+    # when to scan the whole payload for the (possibly deep) DRM streams.
+    _CFB_MAGIC = b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1"
+
+    # Markers that identify an RMS/MIP-*encrypted* wrapper. Each is specific
+    # enough that it does not occur in ordinary Office/PDF payloads. Verified
+    # against real Microsoft Information Protection File SDK output on a live
+    # tenant (2026-07): a protected .pptx is a compound file carrying the
+    # DataSpaces DRM transform and an embedded XrML publishing license.
+    #
+    # Note we deliberately do NOT match ``MSIP_Label`` here: that marks a
+    # *sensitivity label*, which is present (in plaintext) on labelled-but-
+    # unencrypted documents too. Those need no decryption, so matching it would
+    # spawn the SDK subprocess for every labelled file -- wasteful and wrong.
+    _MARKERS = (
+        # DataSpaces DRM transform name, stored UTF-16LE in the compound file's
+        # directory. Present in MIP-protected Office documents.
+        "Microsoft.Metadata.DRMTransform".encode("utf-16-le"),
+        # The embedded XrML publishing/end-use license that wraps the content key.
+        b"<XrML",
+        b"Microsoft Rights Label",
+        # Classic Office IRM markers, kept for breadth / older producers.
+        b"MicrosoftIRMServices",
+        b"\x09DRMContent",
+    )
 
     def __init__(self, runner: MipSdkRunner | None = None) -> None:
         self._runner = runner
@@ -100,6 +124,14 @@ class MipDecryptionProvider:
     def detect(
         self, data: bytes, *, filename: str, content_type: str | None
     ) -> bool:
+        if data[:8] == self._CFB_MAGIC:
+            # A rights-protected Office document is a compound file whose DRM
+            # transform and license streams can sit well past the first few KB,
+            # depending on the compound-file layout. Scan the whole payload -- a
+            # handful of substring checks, reached only when the provider is
+            # enabled AND the file is a compound file, so the common case
+            # (unprotected OOXML/PDF) never pays for it.
+            return any(marker in data for marker in self._MARKERS)
         head = data[:4096]
         return any(marker in head for marker in self._MARKERS)
 

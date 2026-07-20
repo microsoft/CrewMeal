@@ -17,8 +17,21 @@ from crewmeal.search_enhancement.mip_sdk import (
 )
 from crewmeal.search_enhancement.processor import PresentationProcessor
 
-_MIP_PAYLOAD = b"....MSIP_Label{guid}...." + b"\x00" * 16
+_CFB_MAGIC = b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1"
+# A realistic MIP-protected payload: a compound file whose DRM transform marker
+# sits past the first 4 KB (as it can in real MIP File SDK output), so the tests
+# exercise the whole-payload scan, not just a 4 KB head.
+_MIP_PAYLOAD = (
+    _CFB_MAGIC
+    + b"\x00" * 6000
+    + "Microsoft.Metadata.DRMTransform".encode("utf-16-le")
+    + b'<XrML><BODY type="Microsoft Rights Label">...</BODY></XrML>'
+)
 _PLAIN_PAYLOAD = b"%PDF-1.7 normal document"
+# A labelled-but-unencrypted OOXML (a ZIP, not a compound file) carrying the
+# MSIP_Label sensitivity-label marker. It needs no decryption, so detection must
+# NOT fire on it.
+_LABELLED_UNENCRYPTED_PAYLOAD = b"PK\x03\x04" + b"..MSIP_Label{guid}Enabled=True.."
 
 
 class _StubRunner:
@@ -99,10 +112,32 @@ def test_enabled_mip_ignores_plain_documents():
 
 def test_mip_detect_matches_known_markers():
     provider = MipDecryptionProvider()
-    for marker in (b"MicrosoftIRMServices", b"MSIP_Label", b"\x09DRMContent"):
-        payload = b"zzz" + marker + b"zzz"
+    # Real MIP File SDK output is an OLE/CFB compound file whose DRM markers can
+    # sit past the first 4 KB, so verify detection scans the whole compound file.
+    cfb_markers = (
+        "Microsoft.Metadata.DRMTransform".encode("utf-16-le"),
+        b"<XrML",
+        b"Microsoft Rights Label",
+        b"MicrosoftIRMServices",
+        b"\x09DRMContent",
+    )
+    for marker in cfb_markers:
+        payload = _CFB_MAGIC + b"\x00" * 5000 + marker + b"\x00" * 8
         assert provider.detect(payload, filename="x", content_type=None) is True
     assert provider.detect(_PLAIN_PAYLOAD, filename="x", content_type=None) is False
+    # A MIP-protected PDF is a native %PDF (not a compound file); its encryption
+    # dictionary carries /Subtype /MicrosoftIRMServices near the top, caught by
+    # the head scan.
+    protected_pdf = b"%PDF-2.0\n" + b"x" * 40 + b"/Subtype /MicrosoftIRMServices" + b"..."
+    assert provider.detect(protected_pdf, filename="d.pdf", content_type=None) is True
+    # A labelled-but-unencrypted document must NOT be routed to decryption: the
+    # MSIP_Label marker is present on plaintext files and needs no super-user.
+    assert (
+        provider.detect(
+            _LABELLED_UNENCRYPTED_PAYLOAD, filename="x.pptx", content_type=None
+        )
+        is False
+    )
 
 
 def test_enabling_generic_is_inert_until_implemented():
