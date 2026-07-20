@@ -59,6 +59,16 @@ from crewmeal.search_enhancement.web.security import (
     verify_admin_key,
 )
 from crewmeal.search_enhancement.pricing import estimate_cost
+from crewmeal.search_enhancement.publication import (
+    COLUMN_DISPLAY_NAME_SETTING,
+    DEFAULT_COLUMN_DISPLAY_NAME,
+    DEFAULT_COLUMN_INTERNAL_NAME,
+    PublicationTarget,
+    SHAREPOINT_COLUMN_MAX_CHARACTERS,
+    parse_publication_target,
+    publication_column_display_name,
+    validate_column_display_name,
+)
 from crewmeal.search_enhancement.web.viewmodels import build_status_view
 
 # Public sub-router (login/logout must be reachable without the gate).
@@ -238,6 +248,15 @@ def admin_settings(
     saved: bool = False,
 ) -> HTMLResponse:
     all_settings = repository.get_all_settings()
+    publication_transition = repository.get_publication_transition()
+    publication_progress = (
+        repository.publication_progress(
+            target=publication_transition.desired_target,
+            generation=publication_transition.generation,
+        )
+        if publication_transition.desired_target is not PublicationTarget.UNSET
+        else {"ready": 0, "failed": 0, "pending": 0, "truncated": 0}
+    )
     context = {
         "settings": all_settings,
         "formats": format_status(all_settings),
@@ -245,9 +264,146 @@ def admin_settings(
             AppConfig.from_environment(), all_settings
         ),
         "decryption": decryption_status(all_settings),
+        "publication": publication_transition,
+        "publication_progress": publication_progress,
+        "publication_document_count": len(
+            repository.list_desired_sharepoint_documents()
+        ),
+        "publication_column_display_name": publication_column_display_name(
+            all_settings
+        ),
+        "publication_column_internal_name": DEFAULT_COLUMN_INTERNAL_NAME,
+        "publication_column_limit": SHAREPOINT_COLUMN_MAX_CHARACTERS,
         "saved": saved,
     }
     return templates.TemplateResponse(request, "admin/settings.html", context)
+
+
+@router.post("/settings/publication")
+def admin_settings_publication_save(
+    target: str = Form(...),
+    column_display_name_value: str = Form(DEFAULT_COLUMN_DISPLAY_NAME),
+    repository: SearchEnhancementRepository = Depends(get_repository),
+) -> RedirectResponse:
+    try:
+        parsed = parse_publication_target(target)
+        if parsed is PublicationTarget.UNSET:
+            raise ValueError("Choose a publication target.")
+        display_name = validate_column_display_name(column_display_name_value)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    repository.set_setting(COLUMN_DISPLAY_NAME_SETTING, display_name)
+    transition = repository.request_publication_target(parsed)
+    if (
+        transition.status != "active"
+        and transition.effective_target is parsed
+    ):
+        _queue_publication_republish(repository)
+    return RedirectResponse(
+        "/admin/settings?saved=1", status_code=status.HTTP_303_SEE_OTHER
+    )
+
+
+@router.post("/settings/publication/column-provisioned")
+def admin_settings_publication_column_provisioned(
+    generation: int = Form(...),
+    desired_target: str = Form(...),
+    repository: SearchEnhancementRepository = Depends(get_repository),
+) -> RedirectResponse:
+    try:
+        repository.set_column_provisioned(
+            expected_generation=generation,
+            expected_desired_target=desired_target,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    if repository.get_publication_transition().status != "active":
+        _queue_publication_republish(repository)
+    return RedirectResponse(
+        "/admin/settings?saved=1", status_code=status.HTTP_303_SEE_OTHER
+    )
+
+
+@router.post("/settings/publication/reindex-requested")
+def admin_settings_publication_reindex_requested(
+    generation: int = Form(...),
+    desired_target: str = Form(...),
+    repository: SearchEnhancementRepository = Depends(get_repository),
+) -> RedirectResponse:
+    try:
+        repository.set_reindex_requested(
+            expected_generation=generation,
+            expected_desired_target=desired_target,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return RedirectResponse(
+        "/admin/settings?saved=1", status_code=status.HTTP_303_SEE_OTHER
+    )
+
+
+@router.post("/settings/publication/search-verified")
+def admin_settings_publication_search_verified(
+    canary: str = Form(...),
+    source_url: str = Form(...),
+    generation: int = Form(...),
+    desired_target: str = Form(...),
+    repository: SearchEnhancementRepository = Depends(get_repository),
+) -> RedirectResponse:
+    phrase = canary.strip()
+    url = source_url.strip()
+    if len(phrase) < 8 or not url.startswith("https://"):
+        raise HTTPException(
+            status_code=422,
+            detail="A unique canary and HTTPS source URL are required.",
+        )
+    try:
+        repository.set_search_verified(
+            expected_generation=generation,
+            expected_desired_target=desired_target,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    repository.set_setting("publication.search_canary", phrase)
+    repository.set_setting("publication.search_source_url", url)
+    return RedirectResponse(
+        "/admin/settings?saved=1", status_code=status.HTTP_303_SEE_OTHER
+    )
+
+
+@router.post("/settings/publication/copilot-verified")
+def admin_settings_publication_copilot_verified(
+    generation: int = Form(...),
+    desired_target: str = Form(...),
+    repository: SearchEnhancementRepository = Depends(get_repository),
+) -> RedirectResponse:
+    try:
+        repository.set_copilot_verified(
+            expected_generation=generation,
+            expected_desired_target=desired_target,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return RedirectResponse(
+        "/admin/settings?saved=1", status_code=status.HTTP_303_SEE_OTHER
+    )
+
+
+def _queue_publication_republish(
+    repository: SearchEnhancementRepository,
+) -> None:
+    transition = repository.get_publication_transition()
+    target = transition.effective_target
+    for document in repository.list_desired_sharepoint_documents():
+        publication = repository.get_publication(document.key, target)
+        if (
+            publication is not None
+            and publication.generation == transition.generation
+            and publication.status == "ready"
+        ):
+            continue
+        repository.queue_refresh(document.key, trigger="admin-publication-transition")
 
 
 @router.post("/settings/decryption")
@@ -326,13 +482,19 @@ def admin_settings_save(
     value: str = Form(""),
     repository: SearchEnhancementRepository = Depends(get_repository),
 ) -> RedirectResponse:
+    normalized_key = key.strip()
+    if normalized_key.startswith("publication."):
+        raise HTTPException(
+            status_code=422,
+            detail="Publication settings must use the dedicated publication form.",
+        )
     parsed: Any = value.strip()
     try:
         parsed = json.loads(value)
     except (json.JSONDecodeError, TypeError):
         parsed = value.strip()
-    if key.strip():
-        repository.set_setting(key.strip(), parsed)
+    if normalized_key:
+        repository.set_setting(normalized_key, parsed)
     return RedirectResponse(
         "/admin/settings?saved=1", status_code=status.HTTP_303_SEE_OTHER
     )

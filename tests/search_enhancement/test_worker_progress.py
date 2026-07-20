@@ -182,6 +182,7 @@ class UnusedConnector(FakeConnector):
 def _build_repo(tmp_path: Path) -> tuple[SearchEnhancementRepository, LocalArtifactStore]:
     repository = SearchEnhancementRepository(tmp_path / "worker.db")
     repository.initialize()
+    repository.request_publication_target("copilot_connector")
     store = LocalArtifactStore(tmp_path / "artifacts")
     return repository, store
 

@@ -238,3 +238,14 @@ class RenderedHtml:
     sha256: str
     slide_titles: tuple[str, ...]
     keywords: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class ColumnRenderedContent:
+    content: str
+    byte_count: int
+    character_count: int
+    original_character_count: int
+    sha256: str
+    truncated: bool
+    omitted_units: int

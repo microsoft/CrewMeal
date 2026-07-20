@@ -79,6 +79,16 @@ def test_manifest_rejects_duplicate_binary(tmp_path):
         load_corpus_manifest(path)
 
 
+def test_manifest_rejects_unsafe_document_id(tmp_path):
+    payload = json.loads(DEFAULT_MANIFEST_PATH.read_text(encoding="utf-8"))
+    payload["documents"][0]["id"] = "../outside"
+    path = tmp_path / "corpus.json"
+    path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+
+    with pytest.raises(CorpusManifestError, match="safe path component"):
+        load_corpus_manifest(path)
+
+
 def test_adapter_contract_rejects_negative_counts():
     output = _output(images_count=-1)
 

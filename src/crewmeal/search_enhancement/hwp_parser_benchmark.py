@@ -33,6 +33,7 @@ BENCHMARK_ROOT = REPOSITORY_ROOT / "benchmark" / "hwp"
 DEFAULT_MANIFEST_PATH = BENCHMARK_ROOT / "corpus.json"
 DEFAULT_RESULT_DIR = REPOSITORY_ROOT / "result" / "hwp-parser-benchmark"
 PARSER_ADAPTER_PATH = BENCHMARK_ROOT / "adapters" / "parser_adapter.py"
+SAFE_DOCUMENT_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 KORDOC_ADAPTER_PATH = BENCHMARK_ROOT / "adapters" / "kordoc.mjs"
 MAX_CORPUS_FILE_BYTES = 50 * 1024 * 1024
 HWP5_MAGIC = bytes.fromhex("d0cf11e0a1b11ae1")
@@ -132,6 +133,10 @@ def load_corpus_manifest(path: Path = DEFAULT_MANIFEST_PATH) -> tuple[CorpusDocu
         if not isinstance(raw, dict):
             raise CorpusManifestError(f"documents[{index}] must be an object.")
         document_id = _require_nonempty_string(raw.get("id"), f"documents[{index}].id")
+        if SAFE_DOCUMENT_ID_PATTERN.fullmatch(document_id) is None:
+            raise CorpusManifestError(
+                f"documents[{index}].id must be a safe path component."
+            )
         if document_id in seen_ids:
             raise CorpusManifestError(f"Duplicate corpus id: {document_id}")
         seen_ids.add(document_id)

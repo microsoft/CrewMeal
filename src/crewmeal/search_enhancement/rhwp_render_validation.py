@@ -46,6 +46,8 @@ WARNING_PATTERN = re.compile(
     r"LAYOUT_OVERFLOW|WARN(?:ING)?|오류|error",
     re.IGNORECASE,
 )
+SAFE_PATH_COMPONENT = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+SHA256_PATTERN = re.compile(r"^[0-9a-fA-F]{64}$")
 
 
 class RhwpValidationError(RuntimeError):
@@ -381,6 +383,10 @@ def load_archive_documents(
     seen_hashes: set[str] = set()
     for record in records:
         sha256 = str(record["sha256"])
+        if SHA256_PATTERN.fullmatch(sha256) is None:
+            raise RhwpValidationError(
+                "Archive manifest sha256 must contain 64 hexadecimal characters."
+            )
         if sha256 in seen_hashes:
             continue
         seen_hashes.add(sha256)
@@ -388,7 +394,18 @@ def load_archive_documents(
         actual_format = IN_SCOPE_CLASSIFICATIONS.get(classification)
         if actual_format is None:
             continue
-        path = root / str(record["unique_relative_path"])
+        relative_path = Path(str(record["unique_relative_path"]))
+        if relative_path.is_absolute() or ".." in relative_path.parts:
+            raise RhwpValidationError(
+                "Archived unique path must stay within the manifest directory."
+            )
+        path = (root / relative_path).resolve()
+        try:
+            path.relative_to(root.resolve())
+        except ValueError as exc:
+            raise RhwpValidationError(
+                "Archived unique path must stay within the manifest directory."
+            ) from exc
         if not path.is_file():
             raise RhwpValidationError(f"Archived unique file is missing: {path}")
         documents.append(
@@ -406,8 +423,18 @@ def load_archive_documents(
 
 
 def _output_path(result_dir: Path, *parts: str) -> tuple[Path, str]:
+    if any(SAFE_PATH_COMPONENT.fullmatch(part) is None for part in parts):
+        raise RhwpValidationError("Artifact path contains an unsafe component.")
     relative = Path("artifacts").joinpath(*parts)
-    return result_dir / relative, f"/output/{relative.as_posix()}"
+    artifact_root = (result_dir / "artifacts").resolve()
+    resolved = (result_dir / relative).resolve()
+    try:
+        resolved.relative_to(artifact_root)
+    except ValueError as exc:
+        raise RhwpValidationError(
+            "Artifact path escapes the configured result directory."
+        ) from exc
+    return resolved, f"/output/{relative.as_posix()}"
 
 
 def _backend_status(command: Mapping[str, Any], inspection: Mapping[str, Any]) -> str:

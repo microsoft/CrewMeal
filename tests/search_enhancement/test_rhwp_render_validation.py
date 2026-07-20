@@ -8,6 +8,7 @@ from crewmeal.search_enhancement.rhwp_render_validation import (
     DockerRhwpRunner,
     RhwpValidationError,
     _backend_status,
+    _output_path,
     _pixmap_nonwhite_ratio,
     inspect_pdf,
     inspect_svg_directory,
@@ -113,6 +114,47 @@ def test_archive_loader_deduplicates_and_uses_content_classification(tmp_path):
     assert len(documents) == 2
     assert {document.format for document in documents} == {"hwp", "hwpx"}
     assert next(document for document in documents if document.sha256[0] == "a").format == "hwp"
+
+
+@pytest.mark.parametrize(
+    ("sha256", "relative_path", "message"),
+    [
+        ("not-a-hash", "unique/one.hwp", "64 hexadecimal"),
+        ("a" * 64, "../outside.hwp", "must stay within"),
+    ],
+)
+def test_archive_loader_rejects_unsafe_manifest_paths(
+    tmp_path,
+    sha256,
+    relative_path,
+    message,
+):
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "records": [
+                    {
+                        "repository": "owner/repo",
+                        "path": "one.hwp",
+                        "bytes": 3,
+                        "sha256": sha256,
+                        "classification": "hwp5-ole",
+                        "unique_relative_path": relative_path,
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(RhwpValidationError, match=message):
+        load_archive_documents(manifest)
+
+
+def test_output_path_rejects_traversal_component(tmp_path):
+    with pytest.raises(RhwpValidationError, match="unsafe component"):
+        _output_path(tmp_path, "controlled", "../outside")
 
 
 def test_backend_status_requires_command_and_valid_output():

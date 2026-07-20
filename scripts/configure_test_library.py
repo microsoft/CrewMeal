@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from html import escape as xml_escape
 import json
 import os
 from pathlib import Path
@@ -11,6 +12,10 @@ import requests
 
 from crewmeal.search_enhancement.config import SearchEnhancementConfig
 from crewmeal.search_enhancement.graph_client import GraphClient
+from crewmeal.search_enhancement.publication import (
+    DEFAULT_COLUMN_DISPLAY_NAME,
+    DEFAULT_COLUMN_INTERNAL_NAME,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -89,6 +94,21 @@ COLUMNS: tuple[dict[str, Any], ...] = (
     },
 )
 
+CONTENT_SITE_COLUMN: dict[str, Any] = {
+    "name": DEFAULT_COLUMN_INTERNAL_NAME,
+    "displayName": DEFAULT_COLUMN_DISPLAY_NAME,
+    "description": "CrewMeal이 생성한 검색용 구조화 Markdown",
+    "columnGroup": "CrewMeal",
+    "hidden": False,
+    "indexed": False,
+    "text": {
+        "allowMultipleLines": True,
+        "appendChangesToExistingText": False,
+        "linesForEditing": 12,
+        "textType": "plain",
+    },
+}
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(
@@ -102,23 +122,43 @@ def main() -> int:
             "CREWMEAL_M365_SHAREPOINT_ACCESS_TOKEN."
         ),
     )
+    parser.add_argument(
+        "--apply-content-column",
+        action="store_true",
+        help=(
+            "Attach and normalize the content site column using the short-lived "
+            "token in CREWMEAL_M365_SHAREPOINT_ACCESS_TOKEN."
+        ),
+    )
     args = parser.parse_args()
 
     config = SearchEnhancementConfig.from_environment()
     with GraphClient(config) as graph:
         created = _ensure_columns(graph, config)
-    if args.apply_formatting:
+        content_column = _ensure_content_site_column(graph, config)
+    if args.apply_formatting or args.apply_content_column:
         token = os.environ.get("CREWMEAL_M365_SHAREPOINT_ACCESS_TOKEN")
         if not token:
             parser.error(
-                "--apply-formatting requires "
+                "--apply-formatting/--apply-content-column requires "
                 "CREWMEAL_M365_SHAREPOINT_ACCESS_TOKEN"
             )
+    if args.apply_content_column:
+        content_column.update(
+            _configure_sharepoint_content_column(
+                config,
+                token,
+                field_id=str(content_column["id"]),
+                display_name=str(content_column["displayName"]),
+            )
+        )
+    if args.apply_formatting:
         _configure_sharepoint_formatting(config, token)
     print(
         json.dumps(
             {
                 "createdColumns": created,
+                "contentSiteColumn": content_column,
                 "formattingApplied": args.apply_formatting,
             },
             ensure_ascii=False,
@@ -152,6 +192,264 @@ def _ensure_columns(
     return created
 
 
+def _ensure_content_site_column(
+    graph: GraphClient,
+    config: SearchEnhancementConfig,
+    *,
+    display_name: str = DEFAULT_COLUMN_DISPLAY_NAME,
+) -> dict[str, Any]:
+    definition = {
+        **CONTENT_SITE_COLUMN,
+        "displayName": display_name,
+    }
+    site_path = f"/sites/{config.site_id}/columns"
+    site_columns = graph.get_json(
+        site_path,
+        params={
+            "$select": "id,name,displayName,hidden,indexed,text,columnGroup",
+            "$top": "200",
+        },
+    )
+    site_column = _find_column(site_columns, DEFAULT_COLUMN_INTERNAL_NAME)
+    created = False
+    renamed = False
+    if site_column is None:
+        value = graph.send_json(
+            "POST",
+            site_path,
+            body=definition,
+            expected=(201,),
+        )
+        if not isinstance(value, dict):
+            raise RuntimeError("Graph did not return the created site column.")
+        site_column = value
+        created = True
+    else:
+        _validate_content_column(site_column)
+
+    updates: dict[str, Any] = {}
+    if str(site_column.get("displayName") or "") != display_name:
+        updates["displayName"] = display_name
+        renamed = True
+    if updates:
+        value = graph.send_json(
+            "PATCH",
+            f"{site_path}/{site_column['id']}",
+            body=updates,
+            expected=(200,),
+        )
+        if isinstance(value, dict):
+            site_column = value
+        else:
+            site_column = {**site_column, **updates}
+
+    refreshed = graph.get_json(
+        f"{site_path}/{site_column['id']}",
+        params={
+            "$select": "id,name,displayName,hidden,indexed,text,columnGroup",
+        },
+    )
+    site_column = refreshed
+    _validate_content_column(site_column)
+
+    list_path = f"/sites/{config.site_id}/lists/{config.list_id}/columns"
+    list_columns = graph.get_json(
+        list_path,
+        params={
+            "$select": "id,name,displayName,hidden,indexed,text",
+            "$top": "200",
+        },
+    )
+    list_column = _find_column(list_columns, DEFAULT_COLUMN_INTERNAL_NAME)
+    attached = list_column is not None
+    if list_column is not None:
+        _validate_content_column(list_column)
+        if str(list_column.get("id") or "").lower() != str(
+            site_column.get("id") or ""
+        ).lower():
+            raise RuntimeError(
+                "CONTENT_COLUMN_SOURCE_MISMATCH: the library column does not use "
+                "the CrewMeal site-column definition."
+            )
+
+    return {
+        "id": str(site_column["id"]),
+        "name": DEFAULT_COLUMN_INTERNAL_NAME,
+        "displayName": display_name,
+        "appendChangesToExistingText": bool(
+            site_column.get("text", {}).get("appendChangesToExistingText")
+        ),
+        "created": created,
+        "attached": attached,
+        "renamed": renamed,
+    }
+
+
+def _find_column(
+    page: dict[str, Any],
+    name: str,
+) -> dict[str, Any] | None:
+    for column in page.get("value", []):
+        if isinstance(column, dict) and str(column.get("name") or "") == name:
+            return column
+    return None
+
+
+def _validate_content_column(column: dict[str, Any]) -> None:
+    text = column.get("text")
+    if not isinstance(text, dict):
+        raise RuntimeError(
+            "CONTENT_COLUMN_TYPE_MISMATCH: expected a text site column."
+        )
+    if text.get("allowMultipleLines") is not True:
+        raise RuntimeError(
+            "CONTENT_COLUMN_TYPE_MISMATCH: expected multiple lines of text."
+        )
+    text_type = str(text.get("textType") or "plain")
+    if text_type != "plain":
+        raise RuntimeError(
+            "CONTENT_COLUMN_TYPE_MISMATCH: expected plain-text storage."
+        )
+
+
+def _configure_sharepoint_content_column(
+    config: SearchEnhancementConfig,
+    access_token: str,
+    *,
+    field_id: str,
+    display_name: str,
+) -> dict[str, Any]:
+    session = requests.Session()
+    session.headers.update(
+        {
+            "Authorization": f"Bearer {access_token}",
+            "Accept": "application/json;odata=nometadata",
+            "Content-Type": "application/json;odata=nometadata",
+        }
+    )
+    try:
+        digest = _request_digest(session, config.site_url)
+        site_field_url = (
+            f"{config.site_url}/_api/web/fields(guid'{field_id}')"
+        )
+        normalize = session.post(
+            site_field_url,
+            headers={
+                "IF-MATCH": "*",
+                "X-HTTP-Method": "MERGE",
+                "X-RequestDigest": digest,
+            },
+            json={
+                "Title": display_name,
+                "AppendOnly": False,
+                "RichText": False,
+            },
+            timeout=60,
+        )
+        if normalize.status_code not in {200, 204}:
+            normalize.raise_for_status()
+
+        list_field_url = (
+            f"{config.site_url}/_api/web/lists(guid'{config.list_id}')/"
+            f"fields(guid'{field_id}')"
+        )
+        current = session.get(
+            list_field_url,
+            params={
+                "$select": (
+                    "Id,InternalName,Title,TypeAsString,RichText,AppendOnly"
+                )
+            },
+            timeout=60,
+        )
+        created = current.status_code == 404
+        if created:
+            schema = (
+                f'<Field Type="Note" ID="{{{field_id}}}" '
+                f'Name="{DEFAULT_COLUMN_INTERNAL_NAME}" '
+                f'StaticName="{DEFAULT_COLUMN_INTERNAL_NAME}" '
+                f'DisplayName="{xml_escape(display_name, quote=True)}" '
+                'Group="CrewMeal" RichText="FALSE" '
+                'AppendOnly="FALSE" NumLines="12" />'
+            )
+            response = session.post(
+                (
+                    f"{config.site_url}/_api/web/lists(guid'{config.list_id}')/"
+                    "fields/createfieldasxml"
+                ),
+                headers={"X-RequestDigest": digest},
+                json={
+                    "parameters": {
+                        "SchemaXml": schema,
+                        # SP.AddFieldOptions.AddFieldInternalNameHint
+                        "Options": 8,
+                    }
+                },
+                timeout=60,
+            )
+            response.raise_for_status()
+        elif not current.ok:
+            current.raise_for_status()
+
+        normalize_list = session.post(
+            list_field_url,
+            headers={
+                "IF-MATCH": "*",
+                "X-HTTP-Method": "MERGE",
+                "X-RequestDigest": digest,
+            },
+            json={
+                "Title": display_name,
+                "AppendOnly": False,
+                "RichText": False,
+            },
+            timeout=60,
+        )
+        if normalize_list.status_code not in {200, 204}:
+            normalize_list.raise_for_status()
+
+        verified = session.get(
+            list_field_url,
+            params={
+                "$select": (
+                    "Id,InternalName,Title,TypeAsString,RichText,AppendOnly"
+                )
+            },
+            timeout=60,
+        )
+        verified.raise_for_status()
+        value = verified.json()
+        if (
+            str(value.get("InternalName") or "") != DEFAULT_COLUMN_INTERNAL_NAME
+            or str(value.get("TypeAsString") or "") != "Note"
+            or value.get("RichText") is not False
+            or value.get("AppendOnly") is not False
+        ):
+            raise RuntimeError(
+                "CONTENT_COLUMN_TYPE_MISMATCH: SharePoint did not preserve "
+                "the expected plain-text replacement field contract."
+            )
+        return {
+            "attached": True,
+            "sharePointFieldCreated": created,
+            "appendChangesToExistingText": False,
+        }
+    finally:
+        session.close()
+
+
+def _request_digest(session: requests.Session, site_url: str) -> str:
+    context_response = session.post(
+        f"{site_url}/_api/contextinfo",
+        timeout=60,
+    )
+    context_response.raise_for_status()
+    digest = context_response.json().get("FormDigestValue")
+    if not isinstance(digest, str) or not digest:
+        raise RuntimeError("SharePoint did not return a form digest.")
+    return digest
+
+
 def _configure_sharepoint_formatting(
     config: SearchEnhancementConfig,
     access_token: str,
@@ -167,12 +465,7 @@ def _configure_sharepoint_formatting(
         }
     )
     try:
-        context_response = session.post(
-            f"{config.site_url}/_api/contextinfo",
-            timeout=60,
-        )
-        context_response.raise_for_status()
-        digest = context_response.json()["FormDigestValue"]
+        digest = _request_digest(session, config.site_url)
         field_name = quote("CrewmealSearchStatus", safe="")
         field_response = session.post(
             (

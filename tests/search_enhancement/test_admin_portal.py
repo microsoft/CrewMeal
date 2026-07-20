@@ -16,6 +16,9 @@ from crewmeal.search_enhancement.database import (
     SearchEnhancementRepository,
 )
 from crewmeal.search_enhancement.pricing import estimate_cost
+from crewmeal.search_enhancement.publication import (
+    COLUMN_DISPLAY_NAME_SETTING,
+)
 from crewmeal.search_enhancement.web import create_app
 from crewmeal.search_enhancement.web.config import WebConfig
 
@@ -230,6 +233,164 @@ def test_settings_roundtrip(tmp_path: Path) -> None:
 
     page = client.get("/admin/settings", headers=AUTH)
     assert "analysis_dpi" in page.text
+
+
+def test_publication_settings_select_target_and_queue_republish(
+    tmp_path: Path,
+) -> None:
+    app, repository, store = _build(tmp_path)
+    document = _seed_document(repository, store)
+    client = TestClient(app)
+
+    response = client.post(
+        "/admin/settings/publication",
+        data={
+            "target": "copilot_connector",
+            "column_display_name_value": "검색 콘텐츠 HTML",
+        },
+        headers=AUTH,
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    transition = repository.get_publication_transition()
+    assert transition.desired_target.value == "copilot_connector"
+    assert transition.status == "staging"
+    assert repository.get_setting(COLUMN_DISPLAY_NAME_SETTING) == (
+        "검색 콘텐츠 HTML"
+    )
+    refreshed = repository.get_document(document.key)
+    assert refreshed is not None and refreshed.status == "Queued"
+
+
+def test_publication_target_change_supersedes_an_old_queued_refresh(
+    tmp_path: Path,
+) -> None:
+    app, repository, store = _build(tmp_path)
+    document = _seed_document(repository, store)
+    repository.queue_refresh(document.key, trigger="older-target")
+    queued = repository.get_document(document.key)
+    assert queued is not None
+
+    response = TestClient(app).post(
+        "/admin/settings/publication",
+        data={
+            "target": "copilot_connector",
+            "column_display_name_value": "검색 콘텐츠 HTML",
+        },
+        headers=AUTH,
+        follow_redirects=False,
+    )
+
+    current = repository.get_document(document.key)
+    assert response.status_code == 303
+    assert current is not None
+    assert current.request_id != queued.request_id
+    assert repository.has_pending_job(
+        document.key,
+        request_id=current.request_id,
+    )
+
+
+def test_publication_settings_reject_unknown_target(tmp_path: Path) -> None:
+    app, _, _ = _build(tmp_path)
+    response = TestClient(app).post(
+        "/admin/settings/publication",
+        data={
+            "target": "not-a-target",
+            "column_display_name_value": "검색 콘텐츠 HTML",
+        },
+        headers=AUTH,
+    )
+    assert response.status_code == 422
+
+
+def test_generic_settings_form_rejects_publication_keys(tmp_path: Path) -> None:
+    app, repository, _ = _build(tmp_path)
+    response = TestClient(app).post(
+        "/admin/settings",
+        data={"key": "publication.target", "value": '"sharepoint_column"'},
+        headers=AUTH,
+    )
+    assert response.status_code == 422
+    assert repository.get_setting("publication.target") is None
+
+
+def test_settings_page_shows_publication_contract(tmp_path: Path) -> None:
+    app, _, _ = _build(tmp_path)
+    page = TestClient(app).get("/admin/settings", headers=AUTH)
+    assert page.status_code == 200
+    assert "검색 콘텐츠 게시 방식" in page.text
+    assert "CrewmealSearchContent" in page.text
+    assert "63999" in page.text
+
+
+def test_publication_validation_form_carries_transition_identity(
+    tmp_path: Path,
+) -> None:
+    app, repository, _ = _build(tmp_path)
+    transition = repository.request_publication_target("sharepoint_column")
+
+    page = TestClient(app).get("/admin/settings", headers=AUTH)
+
+    assert page.status_code == 200
+    assert f'name="generation" value="{transition.generation}"' in page.text
+    assert 'name="desired_target" value="sharepoint_column"' in page.text
+
+
+def test_replaying_column_provisioning_keeps_active_transition_active(
+    tmp_path: Path,
+) -> None:
+    app, repository, _ = _build(tmp_path)
+    repository.request_publication_target("sharepoint_column")
+    repository.set_column_provisioned()
+    repository.set_transition_status("awaiting_reindex")
+    repository.set_reindex_requested()
+    repository.set_search_verified()
+    repository.set_copilot_verified()
+    repository.activate_publication_target()
+    before = repository.get_publication_transition()
+
+    response = TestClient(app).post(
+        "/admin/settings/publication/column-provisioned",
+        data={
+            "generation": str(before.generation),
+            "desired_target": before.desired_target.value,
+        },
+        headers=AUTH,
+        follow_redirects=False,
+    )
+
+    after = repository.get_publication_transition()
+    assert response.status_code == 303
+    assert after.generation == before.generation
+    assert after.status == "active"
+    assert after.active_target.value == "sharepoint_column"
+
+
+def test_stale_publication_validation_form_cannot_approve_new_generation(
+    tmp_path: Path,
+) -> None:
+    app, repository, _ = _build(tmp_path)
+    stale = repository.request_publication_target("sharepoint_column")
+    repository.request_publication_target("copilot_connector")
+    current = repository.request_publication_target("sharepoint_column")
+    assert current.generation > stale.generation
+
+    response = TestClient(app).post(
+        "/admin/settings/publication/column-provisioned",
+        data={
+            "generation": str(stale.generation),
+            "desired_target": stale.desired_target.value,
+        },
+        headers=AUTH,
+        follow_redirects=False,
+    )
+
+    after = repository.get_publication_transition()
+    assert response.status_code == 409
+    assert after.generation == current.generation
+    assert after.column_provisioned is False
 
 
 def test_feedback_export_is_ndjson(tmp_path: Path) -> None:

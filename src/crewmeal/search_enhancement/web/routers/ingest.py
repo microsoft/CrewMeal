@@ -128,7 +128,8 @@ def create_request(
         drive_id=search_config.drive_id,
         item_id=drive_item_id,
     )
-    repository.upsert_document(
+    job_type = "upsert" if desired_enabled else "delete"
+    repository.upsert_document_and_enqueue(
         key=key,
         list_id=search_config.list_id,
         list_item_id=payload.item.list_item_id,
@@ -137,11 +138,6 @@ def create_request(
         connection_id=search_config.connection_id,
         desired_enabled=desired_enabled,
         status="Queued",
-        request_id=payload.request_id,
-    )
-    job_type = "upsert" if desired_enabled else "delete"
-    repository.enqueue_job(
-        key=key,
         request_id=payload.request_id,
         job_type=job_type,
         trigger="spfx",
