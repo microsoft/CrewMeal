@@ -228,13 +228,16 @@ def test_decode_token_claims_and_super_user_detection():
 
 
 def test_probe_rms_health_ready_when_super_user_present():
-    credential = _FakeCredential(_jwt({"roles": ["Content.SuperUser"], "appid": "app-1"}))
+    credential = _FakeCredential(
+        _jwt({"roles": ["Content.SuperUser"], "appid": "app-1", "oid": "sp-oid-1"})
+    )
     health = probe_rms_health(credential, DEFAULT_RMS_SCOPE)
     assert isinstance(health, RmsHealth)
     assert health.ok is True
     assert health.super_user is True
     assert health.decrypt_ready is True
     assert health.app_id == "app-1"
+    assert health.object_id == "sp-oid-1"
     assert health.roles == ("Content.SuperUser",)
     assert credential.scopes == [DEFAULT_RMS_SCOPE]
 

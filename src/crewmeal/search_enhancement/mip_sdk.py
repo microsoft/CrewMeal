@@ -269,6 +269,7 @@ class RmsHealth:
     super_user: bool
     roles: tuple[str, ...] = ()
     app_id: str | None = None
+    object_id: str | None = None
     error: str | None = None
 
     @property
@@ -357,5 +358,6 @@ def probe_rms_health(
         super_user=token_has_super_user(claims),
         roles=tuple(str(role) for role in roles),
         app_id=(claims.get("appid") or claims.get("azp")),
+        object_id=claims.get("oid"),
         error=None,
     )
