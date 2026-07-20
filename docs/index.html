@@ -3,403 +3,421 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CrewMeal — Copilot을 위한 멀티포맷 콘텐츠 강화 플랫폼</title>
-  <meta name="description" content="CrewMeal은 PPTX·PDF는 비전 분석하고 HWP·HWPX는 rhwp로 semantic-first 처리해 구조화된 검색 메타데이터로 강화하는 Microsoft Copilot 콘텐츠 플랫폼입니다." />
-  <meta property="og:title" content="CrewMeal — Copilot을 위한 멀티포맷 콘텐츠 강화 플랫폼" />
-  <meta property="og:description" content="CrewMeal은 PPTX·PDF는 비전 분석하고 HWP·HWPX는 rhwp로 semantic-first 처리해 구조화된 검색 메타데이터로 강화하는 Microsoft Copilot 콘텐츠 플랫폼입니다." />
+  <title>CrewMeal — Copilot이 못 읽던 한국 문서(PPT·HWP)를 차려냅니다</title>
+  <meta name="description" content="CrewMeal은 한국 고객사의 PPT와 HWP를 읽어 Microsoft Copilot 검색 인덱스를 강화합니다. PPT는 Vision AI(GPT-5.6 Luna)가 보고, HWP는 오픈소스 rhwp 모듈이 네이티브로 읽습니다." />
+  <meta property="og:title" content="CrewMeal — Copilot이 못 읽던 한국 문서(PPT·HWP)를 차려냅니다" />
+  <meta property="og:description" content="PPT는 Vision AI가 보고, HWP는 오픈소스 rhwp가 읽습니다. 원본은 그대로 두고 강화 사본만 Copilot 커넥터에 색인합니다." />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="CrewMeal" />
   <meta property="og:url" content="https://microsoft.github.io/CrewMeal/" />
   <meta property="og:image" content="https://microsoft.github.io/CrewMeal/assets/brand/og-image.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:type" content="image/png" />
-  <meta property="og:image:alt" content="CrewMeal — multi-format documents plated as high-quality content for Copilot" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="CrewMeal — Copilot을 위한 멀티포맷 콘텐츠 강화 플랫폼" />
-  <meta name="twitter:description" content="PPTX·PDF는 비전 분석, HWP·HWPX는 rhwp semantic-first 처리로 Microsoft Copilot 검색 품질을 높입니다." />
+  <meta name="twitter:title" content="CrewMeal — Copilot이 못 읽던 한국 문서(PPT·HWP)를 차려냅니다" />
+  <meta name="twitter:description" content="PPT는 Vision AI가 보고, HWP는 오픈소스 rhwp가 읽습니다." />
   <meta name="twitter:image" content="https://microsoft.github.io/CrewMeal/assets/brand/og-image.png" />
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect x='4' y='10' width='32' height='20' rx='6' fill='%2322261f'/%3E%3Crect x='8' y='14' width='11' height='12' rx='3' fill='%232e6fb0'/%3E%3Crect x='21' y='14' width='11' height='12' rx='3' fill='%23c63f27'/%3E%3C/svg%3E" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23ff8a5c'/%3E%3Ctext y='74' x='50' font-size='62' text-anchor='middle'%3E%F0%9F%8D%B1%3C/text%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&display=swap" />
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-  <div class="progress" id="progress" aria-hidden="true"></div>
+  <a class="skip" href="#main" data-ko="본문으로 건너뛰기" data-en="Skip to content">본문으로 건너뛰기</a>
+
   <!-- NAV -->
   <header class="nav">
     <div class="wrap nav-inner">
-      <div class="brand">
-        <span class="logo">🍱</span>
-        <div>CrewMeal <small data-ko="검색 콘텐츠 강화" data-en="Search Content Enrichment">검색 콘텐츠 강화</small></div>
-      </div>
-      <nav class="nav-links" aria-label="sections">
-        <a href="#grounding" data-ko="그라운딩" data-en="Grounding">그라운딩</a>
-        <a href="#model" data-ko="운영 모델" data-en="Production model">운영 모델</a>
-        <a href="#enhance" data-ko="강화하기" data-en="Enhance">강화하기</a>
-        <a href="#results" data-ko="결과" data-en="Results">결과</a>
-        <a href="#features" data-ko="기능" data-en="Features">기능</a>
-        <a href="#formats" data-ko="포맷" data-en="Formats">포맷</a>
-        <a href="#pipeline" data-ko="흐름" data-en="Pipeline">흐름</a>
-      </nav>
-      <div class="nav-ctl">
-        <div class="lang" role="group" aria-label="language">
-          <button data-lang="ko" class="active">KO</button>
-          <button data-lang="en">EN</button>
+      <a class="brand" href="#top" aria-label="CrewMeal home">
+        <svg class="mark" viewBox="0 0 40 40" aria-hidden="true">
+          <rect x="4" y="10" width="32" height="20" rx="6" style="fill:var(--ink)"/>
+          <rect x="8" y="14" width="11" height="12" rx="3" style="fill:var(--vision)"/>
+          <rect x="21" y="14" width="11" height="12" rx="3" style="fill:var(--persimmon)"/>
+          <rect x="11" y="31.5" width="18" height="3" rx="1.5" style="fill:var(--ink)"/>
+        </svg>
+        <span>
+          <b>CrewMeal</b>
+          <span class="sub" data-ko="Copilot 검색 콘텐츠 강화" data-en="Copilot search enrichment">Copilot 검색 콘텐츠 강화</span>
+        </span>
+      </a>
+      <div class="nav-right">
+        <div class="lang" role="group" aria-label="Language">
+          <button data-lang="ko" class="active" type="button">KO</button>
+          <button data-lang="en" type="button">EN</button>
         </div>
-        <a class="ghost" href="https://github.com/microsoft/CrewMeal" target="_blank" rel="noopener">GitHub ↗</a>
+        <a class="nav-gh" href="https://github.com/microsoft/CrewMeal" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 1.5A10.5 10.5 0 0 0 8.68 22c.53.1.72-.23.72-.5v-1.9c-2.94.64-3.56-1.26-3.56-1.26-.48-1.22-1.17-1.55-1.17-1.55-.96-.66.07-.64.07-.64 1.06.07 1.62 1.09 1.62 1.09.94 1.62 2.47 1.15 3.07.88.1-.68.37-1.15.67-1.42-2.35-.27-4.82-1.18-4.82-5.23 0-1.16.41-2.1 1.09-2.84-.11-.27-.47-1.35.1-2.8 0 0 .89-.29 2.91 1.08a10 10 0 0 1 5.3 0c2.02-1.37 2.9-1.08 2.9-1.08.58 1.45.22 2.53.11 2.8.68.74 1.09 1.68 1.09 2.84 0 4.06-2.48 4.95-4.84 5.22.38.33.72.97.72 1.96v2.9c0 .28.19.61.73.5A10.5 10.5 0 0 0 12 1.5Z"/></svg>
+          <span>GitHub</span>
+        </a>
       </div>
+      <div class="nav-progress" id="progress" aria-hidden="true"></div>
     </div>
   </header>
 
-  <!-- HERO -->
-  <section class="hero">
-    <div class="wrap">
-      <div class="hero-banner">
-        <img src="./assets/brand/crewmeal-banner.png" width="1536" height="512" alt="CrewMeal plates PPTX, PDF and XLSX documents like a crew meal for an AI co-pilot, served back as Executive Summary, Key Insights and Structured Data" />
-      </div>
-      <span class="badge"><span class="dot"></span><span data-ko="Microsoft · 오픈소스 PoC" data-en="Microsoft · Open-source PoC">Microsoft · 오픈소스 PoC</span></span>
-      <h1 data-ko="Copilot을 위한 멀티포맷 콘텐츠를 &#10;더 맛있게 차려냅니다." data-en="Serving richer multi-format content&#10;for Microsoft Copilot.">Copilot을 위한 멀티포맷 콘텐츠를 더 맛있게 차려냅니다.</h1>
-      <p class="lead" data-ko="CrewMeal은 SharePoint의 PPTX·PDF는 GPT-5.6 Luna로 분석하고, HWP·HWPX는 rhwp가 추출한 본문·표·머리말·각주를 semantic-first로 처리합니다. 이미지처럼 의미가 없는 객체만 선택적으로 시각 분석해, 원본을 건드리지 않고 Copilot 검색용 구조화 메타데이터를 만듭니다." data-en="CrewMeal analyzes SharePoint PPTX and PDF files with GPT-5.6 Luna, while rhwp extracts HWP and HWPX text, tables, headers and notes through a semantic-first path. Only objects without semantic meaning, such as images, receive targeted visual analysis — producing structured metadata for Copilot without touching the originals.">CrewMeal은 SharePoint의 PPTX·PDF는 GPT-5.6 Luna로 분석하고, HWP·HWPX는 rhwp가 추출한 본문·표·머리말·각주를 semantic-first로 처리합니다. 이미지처럼 의미가 없는 객체만 선택적으로 시각 분석해, 원본을 건드리지 않고 Copilot 검색용 구조화 메타데이터를 만듭니다.</p>
+  <main id="main">
+    <span id="top"></span>
 
-      <div class="cta">
-        <a class="btn primary" href="https://github.com/microsoft/CrewMeal" target="_blank" rel="noopener" data-ko="GitHub에서 보기" data-en="View on GitHub">GitHub에서 보기</a>
-        <a class="btn secondary" href="#results" data-ko="강화 전후 결과 보기" data-en="See before vs after">강화 전후 결과 보기</a>
-      </div>
-
-      <div class="highlights">
-        <div class="hl fmt">
-          <div class="hl-ic">🗂️</div>
-          <div class="hl-v" data-ko="4+" data-en="4+">4+</div>
-          <div class="hl-t" data-ko="지원 문서 포맷" data-en="Document formats">지원 문서 포맷</div>
-          <div class="hl-d" data-ko="PPTX · PDF · HWP · HWPX 지원 · DOCX · XLSX 확장 예정" data-en="PPTX, PDF, HWP &amp; HWPX today · DOCX &amp; XLSX next">PPTX · PDF · HWP · HWPX 지원 · DOCX · XLSX 확장 예정</div>
-        </div>
-        <div class="hl cost">
-          <div class="hl-ic">📉</div>
-          <div class="hl-v" data-ko="-39.65%" data-en="-39.65%">-39.65%</div>
-          <div class="hl-t" data-ko="Luna 운영 비용" data-en="Luna operating cost">Luna 운영 비용</div>
-          <div class="hl-d" data-ko="동일 169장 기준 GPT-5.2 대비 추정 토큰 비용 절감" data-en="Estimated token-cost reduction versus GPT-5.2 across the same 169 slides">동일 169장 기준 GPT-5.2 대비 추정 토큰 비용 절감</div>
-        </div>
-        <div class="hl ctl">
-          <div class="hl-ic">🎛️</div>
-          <div class="hl-v" data-ko="On · Off" data-en="On · Off">On · Off</div>
-          <div class="hl-t" data-ko="관리자 토글" data-en="Admin toggles">관리자 토글</div>
-          <div class="hl-d" data-ko="포맷별 기능과 복호화(MIP 등)를 관리 포털에서 즉시 켜고 끄기" data-en="Flip each format and decryption (MIP, etc.) on or off from the admin portal">포맷별 기능과 복호화(MIP 등)를 관리 포털에서 즉시 켜고 끄기</div>
-        </div>
-      </div>
-
-      <!-- naming story -->
-      <div class="story">
-        <div class="emoji">✈️🍱</div>
+    <!-- HERO -->
+    <section class="hero">
+      <div class="wrap hero-grid">
         <div>
-          <div class="chain">
+          <span class="badge"><span class="dot"></span><span data-ko="Microsoft · 오픈소스 PoC" data-en="Microsoft · Open-source PoC">Microsoft · 오픈소스 PoC</span></span>
+          <h1 data-i18n-html data-ko="Copilot이 못 읽던 한국 문서,<br><span class=&quot;hl&quot;>PPT와 HWP</span>를 차려냅니다." data-en="Serving the Korean docs Copilot<br>couldn't read — <span class=&quot;hl&quot;>PPT &amp; HWP</span>.">Copilot이 못 읽던 한국 문서,<br><span class="hl">PPT와 HWP</span>를 차려냅니다.</h1>
+          <p class="lead" data-ko="그동안 Copilot과 WorkIQ가 아쉬웠던 지점 — 표·도형·다이어그램으로 가득한 PPT, 그리고 닫힌 포맷 HWP. CrewMeal이 이 둘을 읽어 검색 인덱스를 강화합니다." data-en="The gap in Copilot and WorkIQ so far — slides packed with tables, shapes and diagrams, and the closed HWP format. CrewMeal reads both and enriches your search index.">그동안 Copilot과 WorkIQ가 아쉬웠던 지점 — 표·도형·다이어그램으로 가득한 PPT, 그리고 닫힌 포맷 HWP. CrewMeal이 이 둘을 읽어 검색 인덱스를 강화합니다.</p>
+          <div class="hero-cta">
+            <a class="btn primary" href="https://github.com/microsoft/CrewMeal" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 1.5A10.5 10.5 0 0 0 8.68 22c.53.1.72-.23.72-.5v-1.9c-2.94.64-3.56-1.26-3.56-1.26-.48-1.22-1.17-1.55-1.17-1.55-.96-.66.07-.64.07-.64 1.06.07 1.62 1.09 1.62 1.09.94 1.62 2.47 1.15 3.07.88.1-.68.37-1.15.67-1.42-2.35-.27-4.82-1.18-4.82-5.23 0-1.16.41-2.1 1.09-2.84-.11-.27-.47-1.35.1-2.8 0 0 .89-.29 2.91 1.08a10 10 0 0 1 5.3 0c2.02-1.37 2.9-1.08 2.9-1.08.58 1.45.22 2.53.11 2.8.68.74 1.09 1.68 1.09 2.84 0 4.06-2.48 4.95-4.84 5.22.38.33.72.97.72 1.96v2.9c0 .28.19.61.73.5A10.5 10.5 0 0 0 12 1.5Z"/></svg>
+              <span data-ko="GitHub에서 보기" data-en="View on GitHub">GitHub에서 보기</span>
+            </a>
+            <a class="btn ghost" href="#engines">
+              <span data-ko="두 엔진 살펴보기" data-en="See the two engines">두 엔진 살펴보기</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </a>
+          </div>
+
+          <div class="chain" aria-label="naming">
             <span data-ko="Copilot에 주는 양질의 콘텐츠" data-en="Quality content for Copilot">Copilot에 주는 양질의 콘텐츠</span>
-            <span class="arrow">→</span>
-            <span data-ko="부조종사(co-pilot)의 기내식" data-en="the meal a co-pilot eats in-flight">부조종사(co-pilot)의 기내식</span>
-            <span class="arrow">→</span>
-            <span><b>Crew Meal</b></span>
-          </div>
-          <p style="margin:8px 0 0;color:var(--muted);font-size:14px" data-ko="이름에 담긴 뜻: Copilot이 잘 일하도록 먹여주는 잘 차려진 한 끼." data-en="The name in a bite: a well-plated meal that keeps your Copilot flying well.">이름에 담긴 뜻: Copilot이 잘 일하도록 먹여주는 잘 차려진 한 끼.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- MODEL -->
-  <section id="model">
-    <div class="wrap">
-      <div class="eyebrow" data-ko="운영 비전 모델" data-en="Production vision model">운영 비전 모델</div>
-      <h2 class="sec" data-ko="실제 문서로 검증한 GPT-5.6 Luna" data-en="GPT-5.6 Luna, validated on real documents">실제 문서로 검증한 GPT-5.6 Luna</h2>
-      <p class="sec-lead" data-ko="대표 업무 프레젠테이션 10개, 총 227장을 동일한 프롬프트와 스키마로 비교했습니다. Luna는 전 문서를 완료했고, 품질 차이는 대부분 표현 방식이었으며 실제 의미 있는 차이 사례는 Luna가 더 정확했습니다." data-en="We compared 10 representative business presentations (227 slides) with the same prompt and schema. Luna completed every document; most measured quality gaps were phrasing differences, and the one materially different reviewed case favored Luna.">대표 업무 프레젠테이션 10개, 총 227장을 동일한 프롬프트와 스키마로 비교했습니다. Luna는 전 문서를 완료했고, 품질 차이는 대부분 표현 방식이었으며 실제 의미 있는 차이 사례는 Luna가 더 정확했습니다.</p>
-
-      <div class="grid tri">
-        <div class="card">
-          <div class="ic good">✓</div>
-          <h3 data-ko="10 / 10 완료" data-en="10 / 10 completed">10 / 10 완료</h3>
-          <p data-ko="Luna는 227장을 모두 처리했습니다. 같은 실행에서 GPT-5.2는 8개 문서를 완료하고 2개에서 장기 타임아웃이 발생했습니다." data-en="Luna processed all 227 slides. In the same run, GPT-5.2 completed eight documents and hit long-running timeouts on two.">Luna는 227장을 모두 처리했습니다. 같은 실행에서 GPT-5.2는 8개 문서를 완료하고 2개에서 장기 타임아웃이 발생했습니다.</p>
-        </div>
-        <div class="card">
-          <div class="ic star">↓</div>
-          <h3 data-ko="비용 39.65% 절감" data-en="39.65% lower cost">비용 39.65% 절감</h3>
-          <p data-ko="두 모델이 모두 완료한 169장에서 Luna 추정 비용은 $2.7805, GPT-5.2는 $4.6074였습니다. 실패 호출 비용은 제외된 보수적 비교입니다." data-en="Across the 169 slides both models completed, Luna's estimated cost was $2.7805 versus $4.6074 for GPT-5.2. This conservative comparison excludes failed-call spend.">두 모델이 모두 완료한 169장에서 Luna 추정 비용은 $2.7805, GPT-5.2는 $4.6074였습니다. 실패 호출 비용은 제외된 보수적 비교입니다.</p>
-        </div>
-        <div class="card">
-          <div class="ic">⚡</div>
-          <h3 data-ko="중앙 지연 76.92% 단축" data-en="76.92% lower median latency">중앙 지연 76.92% 단축</h3>
-          <p data-ko="요청 중앙값은 10.18초 대 44.08초, p95는 58.48초 대 174.48초였습니다. 비교 슬라이드의 98.82%에서 Luna가 더 빨랐습니다." data-en="Median request latency was 10.18s versus 44.08s, while p95 was 58.48s versus 174.48s. Luna was faster on 98.82% of compared slides.">요청 중앙값은 10.18초 대 44.08초, p95는 58.48초 대 174.48초였습니다. 비교 슬라이드의 98.82%에서 Luna가 더 빨랐습니다.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- GROUNDING -->
-  <section id="grounding">
-    <div class="wrap">
-      <div class="eyebrow" data-ko="듀얼 인덱스 그라운딩" data-en="Dual-index grounding">듀얼 인덱스 그라운딩</div>
-      <h2 class="sec" data-ko="원본은 그대로, 강화 사본으로 Copilot을 그라운딩" data-en="Keep the original — ground Copilot on the enriched copy">원본은 그대로, 강화 사본으로 Copilot을 그라운딩</h2>
-      <p class="sec-lead" data-ko="CrewMeal은 PPTX의 좌표 근거와 HWP/HWPX의 rhwp semantic 구조를 포맷별 기준값으로 삼아 고품질 HTML로 강화하고 Microsoft Graph 커넥터에 별도 색인합니다. 같은 문서가 SharePoint 원본과 외부 인덱스에 함께 있으면, Copilot은 정확도가 높은 외부(강화) 사본을 우선 근거로 답변합니다." data-en="CrewMeal uses PPTX geometry and rhwp's semantic HWP/HWPX structure as format-specific ground truth, enriches each document into high-quality HTML, and indexes it separately through the Microsoft Graph connector. When both copies exist, Copilot answers from the higher-fidelity external copy first.">CrewMeal은 PPTX의 좌표 근거와 HWP/HWPX의 rhwp semantic 구조를 포맷별 기준값으로 삼아 고품질 HTML로 강화하고 Microsoft Graph 커넥터에 별도 색인합니다. 같은 문서가 SharePoint 원본과 외부 인덱스에 함께 있으면, Copilot은 정확도가 높은 외부(강화) 사본을 우선 근거로 답변합니다.</p>
-
-      <figure class="arch zoom">
-        <img src="./assets/deck/arch-dual-index.png" width="3840" height="2160" alt="Dual-index grounding architecture: source, enhancement worker, processing, publish, consumption" loading="lazy" />
-        <figcaption data-ko="전체 데이터 흐름 — 소스 · Microsoft 365 → 향상 워커 → 처리 파이프라인(좌표 기준값) → 게시(ACL) → 듀얼 인덱스에서 외부 사본 우선 소비. (고객 제안 자료)" data-en="End-to-end flow — Source · Microsoft 365 → enhancement worker → processing (geometry ground-truth) → publish (ACL) → dual-index consumption with the external copy prioritized. (Customer proposal deck)">전체 데이터 흐름 — 소스 · Microsoft 365 → 향상 워커 → 처리 파이프라인(좌표 기준값) → 게시(ACL) → 듀얼 인덱스에서 외부 사본 우선 소비. (고객 제안 자료)</figcaption>
-      </figure>
-
-      <div class="grid tri">
-        <div class="card"><div class="ic bad">!</div><h3 data-ko="문제" data-en="Problem">문제</h3><p data-ko="Copilot은 문서를 추출 텍스트로만 인식합니다. 표의 값, 도형의 관계, 다이어그램 구조를 놓치거나 잘못 해석(할루시네이션)해 답변 신뢰도가 떨어집니다." data-en="Copilot sees documents only as extracted text. It misses table values, shape relationships and diagram structure — or hallucinates them — which erodes answer reliability.">Copilot은 문서를 추출 텍스트로만 인식합니다. 표의 값, 도형의 관계, 다이어그램 구조를 놓치거나 잘못 해석(할루시네이션)해 답변 신뢰도가 떨어집니다.</p></div>
-        <div class="card"><div class="ic good">✓</div><h3 data-ko="해결" data-en="Solution">해결</h3><p data-ko="PPTX 좌표와 rhwp RenderTree의 본문·표·머리말·각주를 기준값으로 삼아 고품질 HTML로 변환하고, Microsoft Graph 커넥터로 외부 인덱스에 별도 색인합니다." data-en="We use PPTX geometry plus rhwp RenderTree text, tables, headers and notes as ground truth, convert them to high-quality HTML, and index the result separately through the Microsoft Graph connector.">PPTX 좌표와 rhwp RenderTree의 본문·표·머리말·각주를 기준값으로 삼아 고품질 HTML로 변환하고, Microsoft Graph 커넥터로 외부 인덱스에 별도 색인합니다.</p></div>
-        <div class="card"><div class="ic star">★</div><h3 data-ko="효과" data-en="Impact">효과</h3><p data-ko="강화 사본을 우선 근거로 사용해 답변 정확도가 올라갑니다. 원본 권한(ACL)은 그대로 유지되고, 변경분은 자동으로 동기화됩니다." data-en="Using the enriched copy as the primary source raises answer accuracy. The original permissions (ACL) are preserved, and changes sync automatically.">강화 사본을 우선 근거로 사용해 답변 정확도가 올라갑니다. 원본 권한(ACL)은 그대로 유지되고, 변경분은 자동으로 동기화됩니다.</p></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ENHANCE -->
-  <section id="enhance">
-    <div class="wrap">
-      <div class="eyebrow" data-ko="사용 방법" data-en="How it works">사용 방법</div>
-      <h2 class="sec" data-ko="사용자는 이렇게 인덱스를 강화합니다" data-en="This is how a user enriches the index">사용자는 이렇게 인덱스를 강화합니다</h2>
-      <p class="sec-lead" data-ko="운영자가 SharePoint에서 문서를 고르고 명령 한 번으로 강화를 시작합니다. 나머지는 워커가 비동기로 처리합니다. 아래는 실제 구동 화면입니다." data-en="An operator picks a document in SharePoint and starts enrichment with a single command; the worker handles the rest asynchronously. Below are real product screens.">운영자가 SharePoint에서 문서를 고르고 명령 한 번으로 강화를 시작합니다. 나머지는 워커가 비동기로 처리합니다. 아래는 실제 구동 화면입니다.</p>
-
-      <div class="steps">
-        <figure class="estep zoom">
-          <span class="badge-step pre" data-ko="선행 설정 · 1회" data-en="One-time setup">선행 설정 · 1회</span>
-          <img src="./assets/deck/flow-0-memory.png" width="1236" height="725" alt="Copilot memory: prioritize External over SharePoint native" loading="lazy" />
-          <figcaption><b data-ko="Copilot 메모리 각인" data-en="Register a Copilot memory">Copilot 메모리 각인</b><span data-ko="“SharePoint와 External이 함께 검색되면 External(강화 사본)을 우선 근거로 답하라”고 한 번 각인해 인덱스 이중화 충돌을 피합니다." data-en="Tell Copilot once: when both SharePoint and External results appear, ground on the External (enriched) copy first — avoiding dual-index conflicts.">“SharePoint와 External이 함께 검색되면 External(강화 사본)을 우선 근거로 답하라”고 한 번 각인해 인덱스 이중화 충돌을 피합니다.</span></figcaption>
-        </figure>
-
-        <figure class="estep zoom">
-          <span class="badge-step" data-ko="1단계" data-en="Step 1">1단계</span>
-          <img src="./assets/deck/flow-1-command.png" width="1440" height="914" alt="Select a document in SharePoint and run the enhance command" loading="lazy" />
-          <figcaption><b data-ko="문서 선택 → 「코파일럿을 위해 검색강화」" data-en="Select a document → “Enhance for Copilot”">문서 선택 → 「코파일럿을 위해 검색강화」</b><span data-ko="SharePoint 문서 라이브러리에서 대상 문서를 고르고 컨텍스트 메뉴의 검색강화 명령을 실행합니다." data-en="Pick the target document in the SharePoint library and run the search-enhancement command from the context menu.">SharePoint 문서 라이브러리에서 대상 문서를 고르고 컨텍스트 메뉴의 검색강화 명령을 실행합니다.</span></figcaption>
-        </figure>
-
-        <figure class="estep zoom">
-          <span class="badge-step" data-ko="2단계" data-en="Step 2">2단계</span>
-          <img src="./assets/deck/flow-2-queued.png" width="1396" height="727" alt="SharePoint library shows the enhancement status in the document's column" loading="lazy" />
-          <figcaption><b data-ko="SharePoint 컬럼에 상태 · 링크 표시" data-en="Status &amp; link in the SharePoint column">SharePoint 컬럼에 상태 · 링크 표시</b><span data-ko="명령을 실행하면 문서 행의 검색강화 컬럼에 진행 상태가 표시되고, 상태 링크를 통해 진행 상황 페이지로 들어갑니다." data-en="Running the command surfaces the progress status in the document’s enhancement column, with a status link into the progress page.">명령을 실행하면 문서 행의 검색강화 컬럼에 진행 상태가 표시되고, 상태 링크를 통해 진행 상황 페이지로 들어갑니다.</span></figcaption>
-        </figure>
-
-        <figure class="estep zoom">
-          <span class="badge-step" data-ko="3단계" data-en="Step 3">3단계</span>
-          <img src="./assets/deck/flow-3-manage.png" width="1165" height="1444" alt="Status page: stage-by-stage progress timeline with re-run and remove actions" loading="lazy" />
-          <figcaption><b data-ko="링크 클릭 → 진행 확인 · 재실행 · 삭제" data-en="Open the link → track, re-run, delete">링크 클릭 → 진행 확인 · 재실행 · 삭제</b><span data-ko="링크를 클릭하면 단계별 진행 상황을 실시간으로 확인하고, 필요하면 강화를 다시 실행하거나 결과를 삭제할 수 있습니다." data-en="Click the link to watch stage-by-stage progress in real time, and re-run the enrichment or delete the result whenever you need.">링크를 클릭하면 단계별 진행 상황을 실시간으로 확인하고, 필요하면 강화를 다시 실행하거나 결과를 삭제할 수 있습니다.</span></figcaption>
-        </figure>
-      </div>
-    </div>
-  </section>
-
-  <!-- RESULTS -->
-  <section id="results">
-    <div class="wrap">
-      <div class="eyebrow" data-ko="결과" data-en="Results">결과</div>
-      <h2 class="sec" data-ko="강화 전후, Copilot의 답변이 달라집니다" data-en="Before vs after — the answer changes">강화 전후, Copilot의 답변이 달라집니다</h2>
-      <p class="sec-lead" data-ko="실제 고객 제안 POC에서 캡처한 화면입니다. 표·도형·이미지로 표현된 정보는 강화 전에는 답변하지 못하지만, 강화 후에는 정확한 근거와 출처로 답변합니다. 이미지를 클릭하면 크게 볼 수 있습니다." data-en="Captured from a real customer-proposal PoC. Information expressed as tables, shapes and images cannot be answered before enrichment — but is answered accurately, with sources, afterward. Click any image to enlarge.">실제 고객 제안 POC에서 캡처한 화면입니다. 표·도형·이미지로 표현된 정보는 강화 전에는 답변하지 못하지만, 강화 후에는 정확한 근거와 출처로 답변합니다. 이미지를 클릭하면 크게 볼 수 있습니다.</p>
-
-      <!-- case 1: Gantt -->
-      <article class="demo">
-        <header class="demo-head">
-          <span class="kind" data-ko="간트 차트" data-en="Gantt chart">간트 차트</span>
-          <h3 data-ko="표와 막대로 그려진 일정" data-en="A schedule drawn as a table of bars">표와 막대로 그려진 일정</h3>
-          <p data-ko="W1~W12 막대와 마일스톤(Kick-Off · To-Be 확정 · OPEN · 완료보고)이 도형으로 배치된 슬라이드. 막대 위치가 곧 일정입니다." data-en="A slide where W1–W12 bars and milestones (Kick-Off · To-Be · OPEN · completion) are laid out as shapes. The bar position is the schedule.">W1~W12 막대와 마일스톤(Kick-Off · To-Be 확정 · OPEN · 완료보고)이 도형으로 배치된 슬라이드. 막대 위치가 곧 일정입니다.</p>
-        </header>
-        <div class="demo-grid">
-          <figure class="demo-src zoom">
-            <img src="./assets/deck/case-gantt-source.png" width="1156" height="805" alt="Source Gantt slide with W1-W12 bars and milestones" loading="lazy" />
-            <figcaption data-ko="원본 슬라이드 「4. 프로젝트 구축일정」" data-en="Source slide “4. Project schedule”">원본 슬라이드 「4. 프로젝트 구축일정」</figcaption>
-          </figure>
-          <div class="ba">
-            <figure class="ba-card before zoom">
-              <div class="ba-tag" data-ko="강화 전" data-en="Before">강화 전</div>
-              <img src="./assets/deck/case-gantt-before.png" width="734" height="650" alt="Before: Copilot cannot determine the week range" loading="lazy" />
-              <figcaption><b class="fail" data-ko="답변 실패" data-en="Cannot answer">답변 실패</b><span data-ko="“통합 테스트는 언제인가?” — 작업이 있다는 것은 알지만 막대가 텍스트로 추출되지 않아 정확한 주차(W)를 확인할 수 없다고 답합니다." data-en="“When is the integration test?” — it knows the task exists but says it can't determine the exact week (W), because the bars aren't extracted as text.">“통합 테스트는 언제인가?” — 작업이 있다는 것은 알지만 막대가 텍스트로 추출되지 않아 정확한 주차(W)를 확인할 수 없다고 답합니다.</span></figcaption>
-            </figure>
-            <figure class="ba-card after zoom">
-              <div class="ba-tag" data-ko="강화 후" data-en="After">강화 후</div>
-              <img src="./assets/deck/case-gantt-after.png" width="735" height="488" alt="After: Copilot answers the exact W12 / end-of-April timing" loading="lazy" />
-              <figcaption><b class="ok" data-ko="정확 답변" data-en="Answered">정확 답변</b><span data-ko="“완료보고 시점은?” — W12 종료 시점(4월 말, 안정화·인수인계 완료 후)까지 근거·출처와 함께 정확히 답합니다." data-en="“When is the completion report?” — it answers precisely: the W12 end point (late April, after stabilization/handover), with evidence and a source.">“완료보고 시점은?” — W12 종료 시점(4월 말, 안정화·인수인계 완료 후)까지 근거·출처와 함께 정확히 답합니다.</span></figcaption>
-            </figure>
+            <span class="arrow" aria-hidden="true">→</span>
+            <span data-ko="부조종사(co-pilot)의 기내식" data-en="the co-pilot's in-flight meal">부조종사(co-pilot)의 기내식</span>
+            <span class="arrow" aria-hidden="true">→</span>
+            <span><b>Crew&nbsp;Meal</b></span>
           </div>
         </div>
-      </article>
 
-      <!-- case 2: Process diagram -->
-      <article class="demo">
-        <header class="demo-head">
-          <span class="kind" data-ko="이미지 프로세스도" data-en="Image-only process map">이미지 프로세스도</span>
-          <h3 data-ko="통째로 이미지로 붙은 스윔레인" data-en="A swim-lane pasted as one image">통째로 이미지로 붙은 스윔레인</h3>
-          <p data-ko="사업부 · 회계/자금팀 · 자금팀 시스템 · VAN/은행 레인의 외화 펌뱅킹 프로세스 흐름도. 슬라이드에 한 장의 이미지로 삽입돼 텍스트가 전혀 없습니다." data-en="A foreign-currency firm-banking process across business · accounting/treasury · treasury-system · VAN/bank lanes — inserted as a single image with no text at all.">사업부 · 회계/자금팀 · 자금팀 시스템 · VAN/은행 레인의 외화 펌뱅킹 프로세스 흐름도. 슬라이드에 한 장의 이미지로 삽입돼 텍스트가 전혀 없습니다.</p>
-        </header>
-        <div class="demo-grid">
-          <figure class="demo-src zoom">
-            <img src="./assets/deck/case-process-source.png" width="1147" height="808" alt="Source slide: a swim-lane process diagram pasted as one image" loading="lazy" />
-            <figcaption data-ko="원본 슬라이드 「외화 펌뱅킹 프로세스 정의」" data-en="Source slide “FX firm-banking process”">원본 슬라이드 「외화 펌뱅킹 프로세스 정의」</figcaption>
-          </figure>
-          <div class="ba">
-            <figure class="ba-card before zoom">
-              <div class="ba-tag" data-ko="강화 전" data-en="Before">강화 전</div>
-              <img src="./assets/deck/case-process-before.png" width="733" height="608" alt="Before: Copilot cannot read the image-only process" loading="lazy" />
-              <figcaption><b class="fail" data-ko="답변 실패" data-en="Cannot answer">답변 실패</b><span data-ko="이미지 안의 텍스트와 흐름이 인덱스에 없어 프로세스 단계를 답변하지 못합니다." data-en="With the in-image text and flow absent from the index, it can't answer the process steps.">이미지 안의 텍스트와 흐름이 인덱스에 없어 프로세스 단계를 답변하지 못합니다.</span></figcaption>
-            </figure>
-            <figure class="ba-card after zoom">
-              <div class="ba-tag" data-ko="강화 후" data-en="After">강화 후</div>
-              <img src="./assets/deck/case-process-after.png" width="723" height="537" alt="After: Copilot answers the process flow" loading="lazy" />
-              <figcaption><b class="ok" data-ko="정확 답변" data-en="Answered">정확 답변</b><span data-ko="비전 분석으로 이미지 속 레인·단계를 복원해 프로세스 흐름을 정확히 답변합니다." data-en="Vision analysis restores the lanes and steps inside the image, so it answers the process flow accurately.">비전 분석으로 이미지 속 레인·단계를 복원해 프로세스 흐름을 정확히 답변합니다.</span></figcaption>
-            </figure>
+        <!-- tray visual -->
+        <div class="tray" data-reveal>
+          <div class="tray-card">
+            <div class="tray-title">
+              <span class="plate">
+                <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.4"/></svg>
+                <span data-ko="CrewMeal이 차려내는 것" data-en="What CrewMeal plates">CrewMeal이 차려내는 것</span>
+              </span>
+              <span data-ko="한 접시씩" data-en="one plate each">한 접시씩</span>
+            </div>
+            <div class="tray-slots">
+              <div class="slot ppt">
+                <span class="fmt">.pptx</span>
+                <span class="eng"><b>PowerPoint</b><span data-ko="발표자료 · 제안서" data-en="Decks & proposals">발표자료 · 제안서</span></span>
+                <span class="via">→ Vision AI</span>
+              </div>
+              <div class="slot hwp">
+                <span class="fmt">.hwp</span>
+                <span class="eng"><b>HWP · HWPX</b><span data-ko="한글 문서" data-en="Hangul documents">한글 문서</span></span>
+                <span class="via">→ rhwp</span>
+              </div>
+            </div>
+            <div class="tray-foot">
+              <svg class="arrow-down" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
+              <span data-ko="강화된 externalItem으로" data-en="as an enriched externalItem into"><span>강화된 externalItem으로</span></span>
+              <b data-ko="Copilot 검색에" data-en="Copilot search">Copilot 검색에</b>
+            </div>
           </div>
         </div>
-      </article>
-    </div>
-  </section>
+      </div>
+    </section>
 
-  <!-- FEATURES -->
-  <section id="features">
-    <div class="wrap">
-      <div class="eyebrow" data-ko="핵심 기능" data-en="Capabilities">핵심 기능</div>
-      <h2 class="sec" data-ko="한 번의 파이프라인, 여러 포맷" data-en="One pipeline, many formats">한 번의 파이프라인, 여러 포맷</h2>
-      <p class="sec-lead" data-ko="모든 포맷은 동일한 SharePoint 인제스트 경로로 흐릅니다. 새 포맷을 켜면 인제스트·재조정·시연에 자동 편입됩니다." data-en="Every format flows through the same SharePoint ingest path. Turn a format on and it is automatically picked up by ingest, reconcile, and the tryout playground.">모든 포맷은 동일한 SharePoint 인제스트 경로로 흐릅니다. 새 포맷을 켜면 인제스트·재조정·시연에 자동 편입됩니다.</p>
+    <!-- PROBLEM -->
+    <section class="problem" id="problem">
+      <div class="wrap">
+        <div class="eyebrow" data-ko="그동안의 아쉬움" data-en="The gap so far">그동안의 아쉬움</div>
+        <h2 class="sec" data-ko="Copilot·WorkIQ가 한국 문서를 놓치던 이유" data-en="Why Copilot & WorkIQ kept missing Korean documents">Copilot·WorkIQ가 한국 문서를 놓치던 이유</h2>
+        <p class="sec-lead" data-ko="한국 고객사의 실제 문서는 텍스트만으로 설명되지 않습니다. 색인 앞에는 두 가지 벽이 있었습니다." data-en="Real Korean customer documents aren't captured by text alone. Two walls stood in front of the index.">한국 고객사의 실제 문서는 텍스트만으로 설명되지 않습니다. 색인 앞에는 두 가지 벽이 있었습니다.</p>
 
-      <div class="grid cards">
-        <div class="card">
-          <div class="ic">🗂️</div>
-          <h3 data-ko="멀티포맷 문서 지원" data-en="Multi-format documents">멀티포맷 문서 지원</h3>
-          <p data-ko="PPTX·PDF는 visual-first, HWP·HWPX는 rhwp semantic-first로 처리하고 하나의 안전한 HTML 계약으로 합칩니다. DOCX·XLSX는 구조가 준비되어 있습니다." data-en="PPTX and PDF use a visual-first path; HWP and HWPX use rhwp semantic-first extraction. Both converge on one safe HTML contract. DOCX and XLSX are scaffolded and ready.">PPTX·PDF는 visual-first, HWP·HWPX는 rhwp semantic-first로 처리하고 하나의 안전한 HTML 계약으로 합칩니다. DOCX·XLSX는 구조가 준비되어 있습니다.</p>
-          <span class="pill ready" data-ko="PPTX · PDF · HWP · HWPX 구현" data-en="PPTX · PDF · HWP · HWPX live">PPTX · PDF · HWP · HWPX 구현</span>
-        </div>
-        <div class="card">
-          <div class="ic">🔁</div>
-          <h3 data-ko="교체 가능한 분석 모델" data-en="Swappable analysis model">교체 가능한 분석 모델</h3>
-          <p data-ko="프리미엄 비전 모델은 30페이지 발표자료 한 건에 토큰 비용만 1만 원이 넘습니다. 관리 포털에서 provider·배포·엔드포인트를 교체해 자사/오픈 호환 모델로 비용을 낮춥니다." data-en="A premium vision model can cost over ₩10,000 in tokens for a single 30-page deck. Swap the provider, deployment and endpoint in the admin portal to move to a self-hosted or open-compatible model.">프리미엄 비전 모델은 30페이지 발표자료 한 건에 토큰 비용만 1만 원이 넘습니다. 관리 포털에서 provider·배포·엔드포인트를 교체해 자사/오픈 호환 모델로 비용을 낮춥니다.</p>
-          <span class="pill ready" data-ko="관리자 교체 UI" data-en="Admin swap UI">관리자 교체 UI</span>
-        </div>
-        <div class="card">
-          <div class="ic">🔐</div>
-          <h3 data-ko="암호화 문서 복호화" data-en="Encrypted-document decryption">암호화 문서 복호화</h3>
-          <p data-ko="MIP(Microsoft Purview) 및 기타 암호화 솔루션을 위한 복호화 파이프라인 훅. 관리자 토글로 on/off 하며, 활성화 후 실제 복호화 연동은 배포 환경에 맞춰 확장합니다." data-en="A decryption pipeline hook for MIP (Microsoft Purview) and other encryption solutions. Toggle it on/off in the admin portal; wire the real decryptor to your deployment when you enable it.">MIP(Microsoft Purview) 및 기타 암호화 솔루션을 위한 복호화 파이프라인 훅. 관리자 토글로 on/off 하며, 활성화 후 실제 복호화 연동은 배포 환경에 맞춰 확장합니다.</p>
-          <span class="pill soon" data-ko="구조 준비 · 토글 제공" data-en="Scaffolded · toggle ready">구조 준비 · 토글 제공</span>
-        </div>
-        <div class="card">
-          <div class="ic">📥</div>
-          <h3 data-ko="SharePoint 인제스트" data-en="SharePoint ingest">SharePoint 인제스트</h3>
-          <p data-ko="SPFx 명령이 강화·삭제 요청을 큐에 적재하면 워커가 claim/lease로 자동 처리합니다. 원본 문서는 수정하지 않습니다." data-en="SPFx commands enqueue enrich/remove requests; the worker claims and leases them automatically. Original documents are never modified.">SPFx 명령이 강화·삭제 요청을 큐에 적재하면 워커가 claim/lease로 자동 처리합니다. 원본 문서는 수정하지 않습니다.</p>
-          <span class="pill ready" data-ko="opt-in 워크플로" data-en="opt-in workflow">opt-in 워크플로</span>
-        </div>
-        <div class="card">
-          <div class="ic">🎛️</div>
-          <h3 data-ko="관리자 포털" data-en="Admin portal">관리자 포털</h3>
-          <p data-ko="대시보드·문서 상태·포맷 토글·모델 교체·복호화 설정·시연 업로드를 한 곳에서. 누적 토큰 비용도 실시간 추정합니다." data-en="Dashboard, document status, format toggles, model swap, decryption settings and a tryout uploader — all in one place, with live token-cost estimates.">대시보드·문서 상태·포맷 토글·모델 교체·복호화 설정·시연 업로드를 한 곳에서. 누적 토큰 비용도 실시간 추정합니다.</p>
-          <span class="pill ready" data-ko="비용 가시성" data-en="Cost visibility">비용 가시성</span>
-        </div>
-        <div class="card">
-          <div class="ic">💬</div>
-          <h3 data-ko="피드백 루프" data-en="Feedback loop">피드백 루프</h3>
-          <p data-ko="상태 페이지의 튜닝 코멘트가 프롬프트에 주입되어 재작업되고, 피드백 코퍼스로 축적되어 JSONL로 내보낼 수 있습니다." data-en="Tuning comments from the status page are injected into the prompt for a re-run and accumulate as a feedback corpus you can export as JSONL.">상태 페이지의 튜닝 코멘트가 프롬프트에 주입되어 재작업되고, 피드백 코퍼스로 축적되어 JSONL로 내보낼 수 있습니다.</p>
-          <span class="pill ready" data-ko="JSONL 내보내기" data-en="JSONL export">JSONL 내보내기</span>
+        <div class="duo">
+          <div class="pcard ppt" data-reveal>
+            <span class="ptag">.pptx</span>
+            <h3 data-ko="표·도형·다이어그램" data-en="Tables, shapes, diagrams">표·도형·다이어그램</h3>
+            <p data-ko="일정은 막대의 위치로, 프로세스는 이미지 한 장으로 표현됩니다. 텍스트 추출만으로는 값과 관계가 사라집니다." data-en="Schedules live in the position of a bar; a whole process is pasted as one image. Text extraction loses the values and the relationships.">일정은 막대의 위치로, 프로세스는 이미지 한 장으로 표현됩니다. 텍스트 추출만으로는 값과 관계가 사라집니다.</p>
+            <div class="miss">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v5"/><path d="M12 16.5h.01"/><path d="M10.3 3.9 2.4 18a1.9 1.9 0 0 0 1.7 2.9h15.8a1.9 1.9 0 0 0 1.7-2.9L13.7 3.9a1.9 1.9 0 0 0-3.4 0Z"/></svg>
+              <span data-ko="Copilot은 텍스트만 인식 → 값·관계 유실, 때론 할루시네이션" data-en="Copilot sees only text → values and relationships are lost, sometimes hallucinated">Copilot은 텍스트만 인식 → 값·관계 유실, 때론 할루시네이션</span>
+            </div>
+          </div>
+          <div class="pcard hwp" data-reveal>
+            <span class="ptag">.hwp · .hwpx</span>
+            <h3 data-ko="닫힌 한글 포맷" data-en="The closed Hangul format">닫힌 한글 포맷</h3>
+            <p data-ko="공공·기업 문서의 사실상 표준이지만 포맷이 닫혀 있어, 일반 인덱싱 파이프라인은 본문을 열지 못합니다." data-en="The de-facto standard across Korean public sector and enterprise — but the format is closed, so ordinary indexing pipelines can't open the body.">공공·기업 문서의 사실상 표준이지만 포맷이 닫혀 있어, 일반 인덱싱 파이프라인은 본문을 열지 못합니다.</p>
+            <div class="miss">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v5"/><path d="M12 16.5h.01"/><path d="M10.3 3.9 2.4 18a1.9 1.9 0 0 0 1.7 2.9h15.8a1.9 1.9 0 0 0 1.7-2.9L13.7 3.9a1.9 1.9 0 0 0-3.4 0Z"/></svg>
+              <span data-ko="Copilot은 본문 접근 불가 → 검색에서 사실상 비어 있음" data-en="Copilot can't reach the body → effectively empty in search">Copilot은 본문 접근 불가 → 검색에서 사실상 비어 있음</span>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- FORMATS -->
-  <section id="formats">
-    <div class="wrap">
-      <div class="eyebrow" data-ko="지원 포맷" data-en="Formats">지원 포맷</div>
-      <h2 class="sec" data-ko="포맷별 지원 현황" data-en="Format support matrix">포맷별 지원 현황</h2>
-      <p class="sec-lead" data-ko="각 포맷은 관리 포털에서 개별로 켜고 끌 수 있습니다. 구현된 포맷은 기본 활성, 스켈레톤 포맷은 잠금 상태입니다." data-en="Each format can be toggled independently in the admin portal. Implemented formats are on by default; scaffolded formats stay locked until built.">각 포맷은 관리 포털에서 개별로 켜고 끌 수 있습니다. 구현된 포맷은 기본 활성, 스켈레톤 포맷은 잠금 상태입니다.</p>
+    <!-- TWO ENGINES (signature) -->
+    <section class="engines" id="engines">
+      <div class="wrap">
+        <div class="eyebrow" data-ko="핵심 · 두 개의 엔진" data-en="Core · two engines">핵심 · 두 개의 엔진</div>
+        <h2 class="sec" data-ko="PPT는 보고, HWP는 읽습니다" data-en="PPT is seen. HWP is read.">PPT는 보고, HWP는 읽습니다</h2>
+        <p class="sec-lead" data-ko="포맷마다 가장 잘 맞는 방식으로. 하나의 파이프라인 안에서 두 엔진이 각자의 문서를 강화합니다." data-en="Each format handled the way it's best handled. One pipeline, two engines, each enriching its own kind of document.">포맷마다 가장 잘 맞는 방식으로. 하나의 파이프라인 안에서 두 엔진이 각자의 문서를 강화합니다.</p>
 
-      <div class="formats">
-        <table>
-          <thead>
-            <tr>
-              <th data-ko="포맷" data-en="Format">포맷</th>
-              <th data-ko="확장자" data-en="Extensions">확장자</th>
-              <th data-ko="처리 방식" data-en="Processing">처리 방식</th>
-              <th data-ko="상태" data-en="Status">상태</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>PowerPoint</td>
-              <td class="ext">.pptx</td>
-              <td data-ko="LibreOffice → PDF → 렌더 · 간트 geometry 근거" data-en="LibreOffice → PDF → render · Gantt geometry facts">LibreOffice → PDF → 렌더 · 간트 geometry 근거</td>
-              <td><span class="tag ok" data-ko="구현됨" data-en="Live">구현됨</span></td>
-            </tr>
-            <tr>
-              <td>PDF</td>
-              <td class="ext">.pdf</td>
-              <td data-ko="PyMuPDF 직접 렌더 · 페이지 텍스트 근거" data-en="PyMuPDF direct render · page-text evidence">PyMuPDF 직접 렌더 · 페이지 텍스트 근거</td>
-              <td><span class="tag ok" data-ko="구현됨" data-en="Live">구현됨</span></td>
-            </tr>
-            <tr>
-              <td data-ko="한글 (HWP)" data-en="Hangul (HWP)">한글 (HWP)</td>
-              <td class="ext">.hwp · .hwpx</td>
-              <td data-ko="rhwp RenderTree → semantic HTML · visual-only 페이지만 선택 분석" data-en="rhwp RenderTree → semantic HTML · targeted analysis for visual-only pages">rhwp RenderTree → semantic HTML · visual-only 페이지만 선택 분석</td>
-              <td><span class="tag ok" data-ko="구현됨" data-en="Live">구현됨</span></td>
-            </tr>
-            <tr>
-              <td>Word</td>
-              <td class="ext">.docx</td>
-              <td data-ko="핸들러 등록 · 추출 로직 예정" data-en="Handler registered · extraction planned">핸들러 등록 · 추출 로직 예정</td>
-              <td><span class="tag plan" data-ko="구현 예정" data-en="Planned">구현 예정</span></td>
-            </tr>
-            <tr>
-              <td>Excel</td>
-              <td class="ext">.xlsx</td>
-              <td data-ko="핸들러 등록 · 셀/표 추출 예정" data-en="Handler registered · cell/table extraction planned">핸들러 등록 · 셀/표 추출 예정</td>
-              <td><span class="tag plan" data-ko="구현 예정" data-en="Planned">구현 예정</span></td>
-            </tr>
-            <tr>
-              <td data-ko="MIP 민감도 레이블 암호화 문서" data-en="MIP sensitivity-label encrypted documents">MIP 민감도 레이블 암호화 문서</td>
-              <td class="ext" data-ko="지원 포맷 공통" data-en="All supported formats">지원 포맷 공통</td>
-              <td data-ko="Microsoft Purview (MIP) 선행 복호화 연동 예정" data-en="Microsoft Purview (MIP) pre-decryption integration planned">Microsoft Purview (MIP) 선행 복호화 연동 예정</td>
-              <td><span class="tag plan" data-ko="구현 예정" data-en="Planned">구현 예정</span></td>
-            </tr>
-            <tr>
-              <td data-ko="서드파티 DRM 암호화 문서" data-en="Third-party DRM-encrypted documents">서드파티 DRM 암호화 문서</td>
-              <td class="ext" data-ko="지원 포맷 공통" data-en="All supported formats">지원 포맷 공통</td>
-              <td data-ko="DRM 공급자별 선행 복호화 어댑터 연동 예정" data-en="Provider-specific pre-decryption adapter planned">DRM 공급자별 선행 복호화 어댑터 연동 예정</td>
-              <td><span class="tag plan" data-ko="구현 예정" data-en="Planned">구현 예정</span></td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="engine-grid">
+          <!-- Vision -->
+          <article class="engine vision" data-reveal>
+            <div class="ehead">
+              <span class="eic">
+                <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M3 20h18"/><circle cx="12" cy="10.5" r="3.1"/><circle cx="12" cy="10.5" r=".6" fill="currentColor"/></svg>
+              </span>
+              <div>
+                <div class="elabel">PPT · PDF → Vision AI</div>
+                <h3 data-ko="슬라이드를 봅니다" data-en="It sees the slide">슬라이드를 봅니다</h3>
+                <div class="verb">sees the page</div>
+              </div>
+            </div>
+            <p data-ko="페이지를 이미지로 렌더링해 GPT-5.6 Luna가 사람처럼 봅니다. 표의 값, 도형의 위치, 이미지 속 흐름까지 구조화된 JSON으로 읽어냅니다." data-en="Pages are rendered to images and read by GPT-5.6 Luna the way a person would — table values, shape positions, even the flow inside a picture, all into structured JSON.">페이지를 이미지로 렌더링해 GPT-5.6 Luna가 사람처럼 봅니다. 표의 값, 도형의 위치, 이미지 속 흐름까지 구조화된 JSON으로 읽어냅니다.</p>
+            <ul>
+              <li><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 6.5"/></svg><span data-ko="간트 막대의 위치를 실제 일정으로 복원" data-en="Recovers a Gantt schedule from bar positions">간트 막대의 위치를 실제 일정으로 복원</span></li>
+              <li><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 6.5"/></svg><span data-ko="이미지로 붙은 프로세스도 단계까지 해석" data-en="Reads a process pasted as a single image, step by step">이미지로 붙은 프로세스도 단계까지 해석</span></li>
+              <li><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 6.5"/></svg><span data-ko="OOXML 지오메트리를 근거로 삼아 환각 억제" data-en="Grounds on OOXML geometry to suppress hallucination">OOXML 지오메트리를 근거로 삼아 환각 억제</span></li>
+            </ul>
+            <div class="efoot">
+              <span class="stat"><span class="n">−39.65%</span><span class="l" data-ko="GPT-5.2 대비 토큰 비용 · 동일 169장" data-en="Token cost vs GPT-5.2 · same 169 slides">GPT-5.2 대비 토큰 비용 · 동일 169장</span></span>
+              <span class="stat"><span class="n">10 / 10</span><span class="l" data-ko="대표 업무 PPT 완료" data-en="Representative decks completed">대표 업무 PPT 완료</span></span>
+            </div>
+          </article>
+
+          <!-- rhwp -->
+          <article class="engine rhwp" data-reveal>
+            <div class="ehead">
+              <span class="eic">
+                <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9.5 12.5 8 14l1.5 1.5"/><path d="M14.5 12.5 16 14l-1.5 1.5"/></svg>
+              </span>
+              <div>
+                <div class="elabel">HWP · HWPX → rhwp</div>
+                <h3 data-ko="포맷을 읽습니다" data-en="It reads the format">포맷을 읽습니다</h3>
+                <div class="verb">reads the format</div>
+              </div>
+            </div>
+            <p data-ko="닫힌 HWP를 네이티브로 파싱합니다. rhwp는 Rust+WebAssembly 기반 오픈소스 한글 엔진으로, LibreOffice 변환 없이 문단·표·수식·이미지 구조를 그대로 가져옵니다." data-en="It parses the closed HWP format natively. rhwp is an open-source Rust+WebAssembly Hangul engine that lifts paragraphs, tables, equations and images straight out — no LibreOffice conversion.">닫힌 HWP를 네이티브로 파싱합니다. rhwp는 Rust+WebAssembly 기반 오픈소스 한글 엔진으로, LibreOffice 변환 없이 문단·표·수식·이미지 구조를 그대로 가져옵니다.</p>
+            <ul>
+              <li><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 6.5"/></svg><span data-ko="HWP 5.0(OLE2) · HWPX · HML 네이티브 파싱" data-en="Native parsing of HWP 5.0 (OLE2), HWPX and HML">HWP 5.0(OLE2) · HWPX · HML 네이티브 파싱</span></li>
+              <li><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 6.5"/></svg><span data-ko="표·수식·도형 구조를 무손실로 보존" data-en="Preserves table, equation and shape structure losslessly">표·수식·도형 구조를 무손실로 보존</span></li>
+              <li><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 6.5"/></svg><span data-ko="오픈소스 · MIT · npm @rhwp/core" data-en="Open source · MIT · npm @rhwp/core">오픈소스 · MIT · npm @rhwp/core</span></li>
+            </ul>
+            <div class="efoot">
+              <a class="chip-link" href="https://github.com/edwardkim/rhwp" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 1.5A10.5 10.5 0 0 0 8.68 22c.53.1.72-.23.72-.5v-1.9c-2.94.64-3.56-1.26-3.56-1.26-.48-1.22-1.17-1.55-1.17-1.55-.96-.66.07-.64.07-.64 1.06.07 1.62 1.09 1.62 1.09.94 1.62 2.47 1.15 3.07.88.1-.68.37-1.15.67-1.42-2.35-.27-4.82-1.18-4.82-5.23 0-1.16.41-2.1 1.09-2.84-.11-.27-.47-1.35.1-2.8 0 0 .89-.29 2.91 1.08a10 10 0 0 1 5.3 0c2.02-1.37 2.9-1.08 2.9-1.08.58 1.45.22 2.53.11 2.8.68.74 1.09 1.68 1.09 2.84 0 4.06-2.48 4.95-4.84 5.22.38.33.72.97.72 1.96v2.9c0 .28.19.61.73.5A10.5 10.5 0 0 0 12 1.5Z"/></svg>
+                edwardkim/rhwp
+              </a>
+              <span class="stat"><span class="n" data-ko="모두의 한글" data-en="Open for everyone">모두의 한글</span><span class="l" data-ko="알(R) — All HWP, open for everyone" data-en="알(R) — All HWP, open for everyone">알(R) — All HWP, open for everyone</span></span>
+            </div>
+          </article>
+        </div>
+
+        <!-- convergence -->
+        <div class="converge" data-reveal>
+          <div class="lines" aria-hidden="true">
+            <svg viewBox="0 0 600 38" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path d="M150 2 C150 26, 300 12, 300 36" />
+              <path d="M450 2 C450 26, 300 12, 300 36" />
+            </svg>
+          </div>
+          <div class="copilot-node">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+            <span data-ko="Copilot 검색" data-en="Copilot search">Copilot 검색</span>
+            <span class="tag">externalItem</span>
+          </div>
+        </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- PIPELINE -->
-  <section id="pipeline">
-    <div class="wrap">
-      <div class="eyebrow" data-ko="파이프라인" data-en="Pipeline">파이프라인</div>
-      <h2 class="sec" data-ko="문서 한 건이 강화되기까지" data-en="How one document gets enriched">문서 한 건이 강화되기까지</h2>
-      <p class="sec-lead" data-ko="모든 포맷은 같은 인제스트·색인 흐름을 사용하되, 준비 단계에서는 visual-first와 semantic-first 중 가장 충실한 경로를 선택합니다." data-en="Every format shares one ingest and indexing flow, while preparation selects the highest-fidelity visual-first or semantic-first path.">모든 포맷은 같은 인제스트·색인 흐름을 사용하되, 준비 단계에서는 visual-first와 semantic-first 중 가장 충실한 경로를 선택합니다.</p>
+    <!-- PROOF -->
+    <section id="results">
+      <div class="wrap">
+        <div class="eyebrow" data-ko="결과 · 강화 전후" data-en="Results · before & after">결과 · 강화 전후</div>
+        <h2 class="sec" data-ko="강화 전후, Copilot의 답변이 달라집니다" data-en="Before vs after — the answer changes">강화 전후, Copilot의 답변이 달라집니다</h2>
+        <p class="sec-lead" data-ko="실제 고객 제안 PoC에서 캡처한 화면입니다. 표·도형·이미지로 표현된 정보는 강화 전에는 답하지 못하지만, 강화 후에는 근거·출처와 함께 답합니다. 이미지를 클릭하면 크게 볼 수 있습니다." data-en="Captured from a real customer-proposal PoC. Information drawn as tables, shapes and images goes unanswered before enrichment — and is answered with sources afterward. Click any image to enlarge.">실제 고객 제안 PoC에서 캡처한 화면입니다. 표·도형·이미지로 표현된 정보는 강화 전에는 답하지 못하지만, 강화 후에는 근거·출처와 함께 답합니다. 이미지를 클릭하면 크게 볼 수 있습니다.</p>
 
-      <div class="flow">
-        <div class="step"><div class="n">01</div><h4 data-ko="감지 · 검증" data-en="Detect · validate">감지 · 검증</h4><p data-ko="확장자·매직·크기로 핸들러를 고릅니다." data-en="Pick a handler by extension, magic and size.">확장자·매직·크기로 핸들러를 고릅니다.</p></div>
-        <div class="step"><div class="n">02</div><h4 data-ko="복호화 훅" data-en="Decrypt hook">복호화 훅</h4><p data-ko="활성화 시 암호화 문서를 복호화합니다." data-en="Decrypts encrypted docs when enabled.">활성화 시 암호화 문서를 복호화합니다.</p></div>
-        <div class="step"><div class="n">03</div><h4 data-ko="포맷별 추출" data-en="Format extraction">포맷별 추출</h4><p data-ko="이미지 렌더 또는 rhwp semantic 구조 추출." data-en="Render images or extract rhwp semantic structure.">이미지 렌더 또는 rhwp semantic 구조 추출.</p></div>
-        <div class="step"><div class="n">04</div><h4 data-ko="선택 분석" data-en="Selective analysis">선택 분석</h4><p data-ko="필요한 페이지만 GPT-5.6 Luna로 분석." data-en="Use GPT-5.6 Luna only where needed.">필요한 페이지만 GPT-5.6 Luna로 분석.</p></div>
-        <div class="step"><div class="n">05</div><h4 data-ko="HTML 생성" data-en="Render HTML">HTML 생성</h4><p data-ko="허용 태그 HTML로 렌더링." data-en="Render to allow-listed HTML.">허용 태그 HTML로 렌더링.</p></div>
-        <div class="step"><div class="n">06</div><h4 data-ko="색인" data-en="Index">색인</h4><p data-ko="Copilot 커넥터에 externalItem 게시." data-en="Publish externalItem to the connector.">Copilot 커넥터에 externalItem 게시.</p></div>
+        <article class="demo" data-reveal>
+          <header class="demo-head">
+            <span class="kind" data-ko="간트 차트 · PPT" data-en="Gantt chart · PPT">간트 차트 · PPT</span>
+            <h3 data-ko="표와 막대로 그려진 일정" data-en="A schedule drawn as a table of bars">표와 막대로 그려진 일정</h3>
+            <p data-ko="W1~W12 막대와 마일스톤이 도형으로 배치된 슬라이드. 막대의 위치가 곧 일정입니다." data-en="A slide where W1–W12 bars and milestones are laid out as shapes. The bar position is the schedule.">W1~W12 막대와 마일스톤이 도형으로 배치된 슬라이드. 막대의 위치가 곧 일정입니다.</p>
+          </header>
+          <div class="demo-grid">
+            <figure class="demo-src zoom">
+              <img src="./assets/deck/case-gantt-source.png" width="1156" height="805" alt="Source Gantt slide with W1-W12 bars and milestones" loading="lazy" />
+              <figcaption data-ko="원본 슬라이드 「4. 프로젝트 구축일정」" data-en="Source slide “4. Project schedule”">원본 슬라이드 「4. 프로젝트 구축일정」</figcaption>
+            </figure>
+            <div class="ba">
+              <figure class="ba-card before zoom">
+                <span class="ba-tag" data-ko="강화 전" data-en="Before">강화 전</span>
+                <img src="./assets/deck/case-gantt-before.png" width="734" height="650" alt="Before: Copilot cannot determine the week range" loading="lazy" />
+                <figcaption><b class="fail" data-ko="답변 실패" data-en="Cannot answer">답변 실패</b><span data-ko="“통합 테스트는 언제인가?” — 막대가 텍스트로 추출되지 않아 정확한 주차(W)를 확인할 수 없다고 답합니다." data-en="“When is the integration test?” — it can't determine the exact week, because the bars aren't extracted as text.">“통합 테스트는 언제인가?” — 막대가 텍스트로 추출되지 않아 정확한 주차(W)를 확인할 수 없다고 답합니다.</span></figcaption>
+              </figure>
+              <figure class="ba-card after zoom">
+                <span class="ba-tag" data-ko="강화 후" data-en="After">강화 후</span>
+                <img src="./assets/deck/case-gantt-after.png" width="735" height="488" alt="After: Copilot answers the exact W12 / end-of-April timing" loading="lazy" />
+                <figcaption><b class="ok" data-ko="정확 답변" data-en="Answered">정확 답변</b><span data-ko="“완료보고 시점은?” — W12 종료(4월 말, 안정화·인수인계 후)까지 근거·출처와 함께 정확히 답합니다." data-en="“When is the completion report?” — it answers precisely: the end of W12 (late April, after stabilization), with a source.">“완료보고 시점은?” — W12 종료(4월 말, 안정화·인수인계 후)까지 근거·출처와 함께 정확히 답합니다.</span></figcaption>
+              </figure>
+            </div>
+          </div>
+        </article>
+
+        <article class="demo" data-reveal>
+          <header class="demo-head">
+            <span class="kind" data-ko="이미지 프로세스도 · PPT" data-en="Image-only process map · PPT">이미지 프로세스도 · PPT</span>
+            <h3 data-ko="통째로 이미지로 붙은 스윔레인" data-en="A swim-lane pasted as one image">통째로 이미지로 붙은 스윔레인</h3>
+            <p data-ko="사업부·회계/자금팀·시스템·VAN/은행 레인의 외화 펌뱅킹 흐름도. 한 장의 이미지로 삽입돼 텍스트가 전혀 없습니다." data-en="A foreign-currency firm-banking flow across business, treasury, system and VAN/bank lanes — inserted as a single image with no text at all.">사업부·회계/자금팀·시스템·VAN/은행 레인의 외화 펌뱅킹 흐름도. 한 장의 이미지로 삽입돼 텍스트가 전혀 없습니다.</p>
+          </header>
+          <div class="demo-grid">
+            <figure class="demo-src zoom">
+              <img src="./assets/deck/case-process-source.png" width="1147" height="808" alt="Source slide: a swim-lane process diagram pasted as one image" loading="lazy" />
+              <figcaption data-ko="원본 슬라이드 「외화 펌뱅킹 프로세스 정의」" data-en="Source slide “FX firm-banking process”">원본 슬라이드 「외화 펌뱅킹 프로세스 정의」</figcaption>
+            </figure>
+            <div class="ba">
+              <figure class="ba-card before zoom">
+                <span class="ba-tag" data-ko="강화 전" data-en="Before">강화 전</span>
+                <img src="./assets/deck/case-process-before.png" width="733" height="608" alt="Before: Copilot cannot read the image-only process" loading="lazy" />
+                <figcaption><b class="fail" data-ko="답변 실패" data-en="Cannot answer">답변 실패</b><span data-ko="이미지 안의 텍스트와 흐름이 인덱스에 없어 프로세스 단계를 답변하지 못합니다." data-en="With the in-image text and flow absent from the index, it can't answer the process steps.">이미지 안의 텍스트와 흐름이 인덱스에 없어 프로세스 단계를 답변하지 못합니다.</span></figcaption>
+              </figure>
+              <figure class="ba-card after zoom">
+                <span class="ba-tag" data-ko="강화 후" data-en="After">강화 후</span>
+                <img src="./assets/deck/case-process-after.png" width="723" height="537" alt="After: Copilot answers the process flow" loading="lazy" />
+                <figcaption><b class="ok" data-ko="정확 답변" data-en="Answered">정확 답변</b><span data-ko="비전 분석으로 이미지 속 레인·단계를 복원해 프로세스 흐름을 정확히 답변합니다." data-en="Vision analysis restores the lanes and steps inside the image, so it answers the flow accurately.">비전 분석으로 이미지 속 레인·단계를 복원해 프로세스 흐름을 정확히 답변합니다.</span></figcaption>
+              </figure>
+            </div>
+          </div>
+        </article>
       </div>
-    </div>
-  </section>
+    </section>
+
+    <!-- GROUNDING -->
+    <section class="grounding" id="grounding">
+      <div class="wrap">
+        <div class="eyebrow" data-ko="그라운딩" data-en="Grounding">그라운딩</div>
+        <h2 class="sec" data-ko="원본은 그대로, 강화 사본으로 그라운딩" data-en="Keep the original — ground on the enriched copy">원본은 그대로, 강화 사본으로 그라운딩</h2>
+        <p class="sec-lead" data-ko="원본 문서는 건드리지 않습니다. 강화된 사본만 Microsoft Graph 커넥터에 추가로 색인해, Copilot이 우선 근거로 삼게 합니다." data-en="Original documents are never touched. Only the enriched copy is indexed as an extra item in the Microsoft Graph connector, so Copilot grounds on it first.">원본 문서는 건드리지 않습니다. 강화된 사본만 Microsoft Graph 커넥터에 추가로 색인해, Copilot이 우선 근거로 삼게 합니다.</p>
+
+        <div class="gsteps">
+          <div class="gstep" data-reveal>
+            <span class="gic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 13 9 5 9-5"/></svg></span>
+            <h3 data-ko="추가 색인" data-en="Indexed alongside">추가 색인</h3>
+            <p data-ko="원본 라이브러리는 그대로 두고, 강화 HTML을 externalItem으로 별도 색인합니다." data-en="The original library stays as-is; the enriched HTML is indexed separately as an externalItem.">원본 라이브러리는 그대로 두고, 강화 HTML을 externalItem으로 별도 색인합니다.</p>
+          </div>
+          <div class="gstep" data-reveal>
+            <span class="gic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.4 3 7.7 7 9 4-1.3 7-4.6 7-9V6l-7-3Z"/><path d="m9.5 12 1.8 1.8 3.4-3.6"/></svg></span>
+            <h3 data-ko="권한 유지" data-en="Permissions preserved">권한 유지</h3>
+            <p data-ko="원본의 ACL을 그대로 상속합니다. 볼 수 있는 사람에게만 검색 결과로 나타납니다." data-en="It inherits the original ACL, so it only surfaces to people already allowed to see it.">원본의 ACL을 그대로 상속합니다. 볼 수 있는 사람에게만 검색 결과로 나타납니다.</p>
+          </div>
+          <div class="gstep" data-reveal>
+            <span class="gic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 4v4h-4"/><path d="M3 20v-4h4"/></svg></span>
+            <h3 data-ko="자동 동기화" data-en="Auto-synced">자동 동기화</h3>
+            <p data-ko="원본이 바뀌면 지문(fingerprint) 변화로 감지해 다시 강화합니다. 권한 변경은 AI 호출 없이 갱신합니다." data-en="When the original changes, a fingerprint shift triggers re-enrichment; ACL-only changes update without any AI call.">원본이 바뀌면 지문(fingerprint) 변화로 감지해 다시 강화합니다. 권한 변경은 AI 호출 없이 갱신합니다.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FORMATS + PIPELINE -->
+    <section id="formats">
+      <div class="wrap">
+        <div class="eyebrow" data-ko="지원 범위" data-en="Coverage">지원 범위</div>
+        <h2 class="sec" data-ko="한 파이프라인, 여러 포맷" data-en="One pipeline, many formats">한 파이프라인, 여러 포맷</h2>
+        <p class="sec-lead" data-ko="모든 포맷은 같은 인제스트 경로로 흐릅니다. 포맷별 지원과 복호화는 관리 포털 토글로 켜고 끕니다." data-en="Every format flows through the same ingest path; per-format support and decryption are admin-portal toggles.">모든 포맷은 같은 인제스트 경로로 흐릅니다. 포맷별 지원과 복호화는 관리 포털 토글로 켜고 끕니다.</p>
+
+        <div class="fmt-grid">
+          <div class="formats" data-reveal>
+            <p class="panel-label" data-ko="포맷별 지원 현황" data-en="Format support">포맷별 지원 현황</p>
+            <table>
+              <thead>
+                <tr>
+                  <th data-ko="포맷" data-en="Format">포맷</th>
+                  <th data-ko="처리 엔진" data-en="Engine">처리 엔진</th>
+                  <th data-ko="상태" data-en="Status">상태</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="fname">PowerPoint</span><br><span class="ext">.pptx</span></td>
+                  <td><span class="via-mini v">Vision AI</span></td>
+                  <td><span class="tag ok" data-ko="구현됨" data-en="Live">구현됨</span></td>
+                </tr>
+                <tr>
+                  <td><span class="fname">PDF</span><br><span class="ext">.pdf</span></td>
+                  <td><span class="via-mini v">Vision AI</span> <span class="ext">· PyMuPDF</span></td>
+                  <td><span class="tag ok" data-ko="구현됨" data-en="Live">구현됨</span></td>
+                </tr>
+                <tr>
+                  <td><span class="fname" data-ko="한글 (HWP)" data-en="Hangul (HWP)">한글 (HWP)</span><br><span class="ext">.hwp · .hwpx</span></td>
+                  <td><span class="via-mini h">rhwp</span></td>
+                  <td><span class="tag ok" data-ko="구현됨" data-en="Live">구현됨</span></td>
+                </tr>
+                <tr>
+                  <td><span class="fname">Word</span><br><span class="ext">.docx</span></td>
+                  <td><span class="ext" data-ko="핸들러 등록" data-en="Handler registered">핸들러 등록</span></td>
+                  <td><span class="tag plan" data-ko="예정" data-en="Planned">예정</span></td>
+                </tr>
+                <tr>
+                  <td><span class="fname">Excel</span><br><span class="ext">.xlsx</span></td>
+                  <td><span class="ext" data-ko="핸들러 등록" data-en="Handler registered">핸들러 등록</span></td>
+                  <td><span class="tag plan" data-ko="예정" data-en="Planned">예정</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="pipeline-wrap" data-reveal>
+            <p class="panel-label" data-ko="문서 한 건이 강화되기까지" data-en="How one document gets enriched">문서 한 건이 강화되기까지</p>
+            <div class="pipeline">
+              <div class="pstep"><span class="pn">01</span><div><h4 data-ko="감지 · 검증" data-en="Detect · validate">감지 · 검증</h4><p data-ko="확장자·매직·크기로 포맷 핸들러를 고릅니다." data-en="Pick a format handler by extension, magic and size.">확장자·매직·크기로 포맷 핸들러를 고릅니다.</p></div></div>
+              <div class="pstep"><span class="pn">02</span><div><h4 data-ko="복호화 훅 (선택)" data-en="Decrypt hook (optional)">복호화 훅 (선택)</h4><p data-ko="활성화 시 MIP 등 암호화 문서를 복호화합니다." data-en="Decrypts MIP and other encrypted docs when enabled.">활성화 시 MIP 등 암호화 문서를 복호화합니다.</p></div></div>
+              <div class="pstep"><span class="pn">03</span><div><h4 data-ko="읽기" data-en="Read">읽기</h4><p data-ko="포맷에 맞는 엔진으로 내용을 엽니다." data-en="Open the content with the engine that fits the format.">포맷에 맞는 엔진으로 내용을 엽니다.</p><div class="split"><span class="v">PPT·PDF → 페이지 이미지</span><span class="h">HWP → rhwp 파싱</span></div></div></div>
+              <div class="pstep k"><span class="pn">04</span><div><h4 data-ko="분석 · 구조화" data-en="Analyze · structure">분석 · 구조화</h4><p data-ko="strict JSON 스키마로 표·도형·흐름을 구조화합니다." data-en="Structure tables, shapes and flow into a strict JSON schema.">strict JSON 스키마로 표·도형·흐름을 구조화합니다.</p></div></div>
+              <div class="pstep"><span class="pn">05</span><div><h4 data-ko="강화 · 색인" data-en="Enrich · index">강화 · 색인</h4><p data-ko="허용 태그 HTML로 렌더링해 externalItem으로 게시합니다." data-en="Render to allow-listed HTML and publish as an externalItem.">허용 태그 HTML로 렌더링해 externalItem으로 게시합니다.</p></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
 
   <!-- FOOTER -->
   <footer>
-    <div class="wrap foot-inner">
-      <div>
-        <div class="brand" style="margin-bottom:10px"><span class="logo">🍱</span><div>CrewMeal</div></div>
-        <p class="disclaimer" data-ko="이 프로젝트는 개념 증명(PoC)이며 공개 엔드포인트를 사용할 수 있으므로 민감 문서를 입력하지 마세요. MIT 라이선스로 배포됩니다." data-en="This project is a proof-of-concept and may use public endpoints — do not feed it sensitive documents. Released under the MIT License.">이 프로젝트는 개념 증명(PoC)이며 공개 엔드포인트를 사용할 수 있으므로 민감 문서를 입력하지 마세요. MIT 라이선스로 배포됩니다.</p>
+    <div class="wrap">
+      <div class="foot-grid">
+        <div class="foot-brand">
+          <a class="brand" href="#top" aria-label="CrewMeal home">
+            <svg class="mark" viewBox="0 0 40 40" aria-hidden="true">
+              <rect x="4" y="10" width="32" height="20" rx="6" style="fill:var(--ink)"/>
+              <rect x="8" y="14" width="11" height="12" rx="3" style="fill:var(--vision)"/>
+              <rect x="21" y="14" width="11" height="12" rx="3" style="fill:var(--persimmon)"/>
+              <rect x="11" y="31.5" width="18" height="3" rx="1.5" style="fill:var(--ink)"/>
+            </svg>
+            <span><b>CrewMeal</b></span>
+          </a>
+          <p data-ko="개념 증명(PoC)이며 공개 엔드포인트를 사용할 수 있으므로 민감 문서는 입력하지 마세요. MIT 라이선스로 배포됩니다." data-en="A proof-of-concept that may use public endpoints — do not feed it sensitive documents. Released under the MIT License.">개념 증명(PoC)이며 공개 엔드포인트를 사용할 수 있으므로 민감 문서는 입력하지 마세요. MIT 라이선스로 배포됩니다.</p>
+        </div>
+        <nav class="foot-links" aria-label="links">
+          <a href="https://github.com/microsoft/CrewMeal" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 1.5A10.5 10.5 0 0 0 8.68 22c.53.1.72-.23.72-.5v-1.9c-2.94.64-3.56-1.26-3.56-1.26-.48-1.22-1.17-1.55-1.17-1.55-.96-.66.07-.64.07-.64 1.06.07 1.62 1.09 1.62 1.09.94 1.62 2.47 1.15 3.07.88.1-.68.37-1.15.67-1.42-2.35-.27-4.82-1.18-4.82-5.23 0-1.16.41-2.1 1.09-2.84-.11-.27-.47-1.35.1-2.8 0 0 .89-.29 2.91 1.08a10 10 0 0 1 5.3 0c2.02-1.37 2.9-1.08 2.9-1.08.58 1.45.22 2.53.11 2.8.68.74 1.09 1.68 1.09 2.84 0 4.06-2.48 4.95-4.84 5.22.38.33.72.97.72 1.96v2.9c0 .28.19.61.73.5A10.5 10.5 0 0 0 12 1.5Z"/></svg>
+            <span data-ko="CrewMeal 저장소" data-en="CrewMeal repository">CrewMeal 저장소</span>
+          </a>
+          <a href="https://github.com/edwardkim/rhwp" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 1.5A10.5 10.5 0 0 0 8.68 22c.53.1.72-.23.72-.5v-1.9c-2.94.64-3.56-1.26-3.56-1.26-.48-1.22-1.17-1.55-1.17-1.55-.96-.66.07-.64.07-.64 1.06.07 1.62 1.09 1.62 1.09.94 1.62 2.47 1.15 3.07.88.1-.68.37-1.15.67-1.42-2.35-.27-4.82-1.18-4.82-5.23 0-1.16.41-2.1 1.09-2.84-.11-.27-.47-1.35.1-2.8 0 0 .89-.29 2.91 1.08a10 10 0 0 1 5.3 0c2.02-1.37 2.9-1.08 2.9-1.08.58 1.45.22 2.53.11 2.8.68.74 1.09 1.68 1.09 2.84 0 4.06-2.48 4.95-4.84 5.22.38.33.72.97.72 1.96v2.9c0 .28.19.61.73.5A10.5 10.5 0 0 0 12 1.5Z"/></svg>
+            <span data-ko="rhwp — HWP 엔진" data-en="rhwp — the HWP engine">rhwp — HWP 엔진</span>
+          </a>
+          <a href="#engines">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            <span data-ko="두 엔진 다시 보기" data-en="Back to the two engines">두 엔진 다시 보기</span>
+          </a>
+        </nav>
       </div>
-      <div>
-        <p>© <span id="year">2026</span> Microsoft Corporation · MIT License</p>
-        <p>
-          <a href="https://github.com/microsoft/CrewMeal" target="_blank" rel="noopener">GitHub</a> ·
-          <a href="https://github.com/microsoft/CrewMeal/blob/main/SECURITY.md" target="_blank" rel="noopener">Security</a> ·
-          <a href="https://github.com/microsoft/CrewMeal/blob/main/CODE_OF_CONDUCT.md" target="_blank" rel="noopener">Code of Conduct</a>
-        </p>
+      <div class="foot-meta">
+        <span>© <span id="year">2026</span> Microsoft Corporation · MIT License</span>
+        <span class="crew" data-ko="Microsoft Korea 에서 만들었습니다." data-en="Made at Microsoft Korea.">Microsoft Korea 에서 만들었습니다.</span>
       </div>
     </div>
   </footer>
 
-  <div class="lightbox" id="lightbox"><img src="" alt="" /></div>
+  <div class="lightbox" id="lightbox" aria-hidden="true"><img src="" alt="" /></div>
 
   <script src="./app.js"></script>
 </body>
