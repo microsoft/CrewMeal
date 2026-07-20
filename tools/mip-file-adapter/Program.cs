@@ -26,6 +26,7 @@ using Microsoft.Identity.Client;
 using Microsoft.InformationProtection;
 using Microsoft.InformationProtection.Exceptions;
 using Microsoft.InformationProtection.File;
+using Microsoft.InformationProtection.Protection;
 
 namespace CrewMeal.Mip.Adapter;
 
@@ -47,6 +48,8 @@ internal sealed class AdapterOptions
     public string? ClientId;
     public string? Identity;
     public string? ActualName;
+    public string? ProtectFor;
+    public string? Rights;
 
     public static AdapterOptions Parse(string[] args)
     {
@@ -76,6 +79,12 @@ internal sealed class AdapterOptions
                 case "--name":
                 case "--actual-name":
                     options.ActualName = RequireValue(args, ref i, arg);
+                    break;
+                case "--protect-for":
+                    options.ProtectFor = RequireValue(args, ref i, arg);
+                    break;
+                case "--rights":
+                    options.Rights = RequireValue(args, ref i, arg);
                     break;
                 case "-h":
                 case "--help":
@@ -108,8 +117,15 @@ internal sealed class AdapterOptions
     }
 
     public const string Usage =
-        "Usage: crewmeal-mip-adapter unprotect --in <input> --out <output> "
-        + "--token-file <token> [--client-id <guid>] [--identity <upn>] [--name <original-filename>]";
+        "Usage:\n"
+        + "  crewmeal-mip-adapter unprotect --in <input> --out <output> "
+        + "[--token-file <token>] [--client-id <guid>] [--identity <upn>] [--name <original-filename>]\n"
+        + "  crewmeal-mip-adapter protect   --in <input> --out <output> "
+        + "--protect-for <email[,email...]> [--rights <role>] [--client-id <guid>] [--name <filename>]\n"
+        + "\n"
+        + "'protect' applies ad-hoc RMS protection (for generating real test files; "
+        + "requires the Content.Writer app role). 'unprotect' removes it (requires "
+        + "Content.SuperUser).";
 }
 
 internal sealed class UsageException : Exception
@@ -198,65 +214,30 @@ internal sealed class AutoConsentDelegate : IConsentDelegate
     public Consent GetUserConsent(string url) => Consent.AcceptAlways;
 }
 
-internal static class Program
+/// <summary>
+/// Owns the MIP context / file profile / file engine for one adapter invocation.
+/// Encapsulates app-only credential wiring, native SDK init, and cleanup so the
+/// subcommands share identical engine setup.
+/// </summary>
+internal sealed class MipSession : IAsyncDisposable
 {
     private const string ApplicationName = "CrewMeal MIP Adapter";
     private const string ApplicationVersion = "1.0.0";
 
-    private static async Task<int> Main(string[] args)
-    {
-        AdapterOptions options;
-        try
-        {
-            options = AdapterOptions.Parse(args);
-        }
-        catch (UsageException ex)
-        {
-            Console.Error.WriteLine(ex.Message);
-            return ExitCodes.UsageError;
-        }
+    private readonly MipContext _mipContext;
+    private readonly IFileProfile _profile;
 
-        try
-        {
-            switch (options.Subcommand)
-            {
-                case "unprotect":
-                    return await UnprotectAsync(options);
-                default:
-                    Console.Error.WriteLine(
-                        $"Unsupported subcommand: {options.Subcommand}\n\n{AdapterOptions.Usage}");
-                    return ExitCodes.UsageError;
-            }
-        }
-        catch (UsageException ex)
-        {
-            Console.Error.WriteLine(ex.Message);
-            return ExitCodes.UsageError;
-        }
-        catch (AccessDeniedException ex)
-        {
-            Console.Error.WriteLine(
-                "[adapter] access denied by Azure RMS. The service principal likely "
-                + "lacks the Content.SuperUser right, or super-user is not enabled for "
-                + $"the tenant. Details: {ex.Message}");
-            return ExitCodes.AccessDenied;
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"[adapter] {ex.GetType().Name}: {ex.Message}");
-            if (ex.InnerException is not null)
-            {
-                Console.Error.WriteLine($"[adapter] inner: {ex.InnerException.Message}");
-            }
-            return ExitCodes.Unexpected;
-        }
+    public IFileEngine Engine { get; }
+
+    private MipSession(MipContext mipContext, IFileProfile profile, IFileEngine engine)
+    {
+        _mipContext = mipContext;
+        _profile = profile;
+        Engine = engine;
     }
 
-    private static async Task<int> UnprotectAsync(AdapterOptions options)
+    public static async Task<MipSession> CreateAsync(AdapterOptions options)
     {
-        var inputPath = RequirePath(options.InputPath, "--in", mustExist: true);
-        var outputPath = RequirePath(options.OutputPath, "--out", mustExist: false);
-
         var clientId = options.ClientId
             ?? Environment.GetEnvironmentVariable("CREWMEAL_M365_CLIENT_ID");
         if (string.IsNullOrWhiteSpace(clientId))
@@ -264,12 +245,11 @@ internal static class Program
             throw new UsageException(
                 "Missing application (client) id. Pass --client-id or set "
                 + "CREWMEAL_M365_CLIENT_ID. It must match the Entra app registration "
-                + "whose service principal holds the RMS super-user right.");
+                + "whose service principal holds the required RMS rights.");
         }
 
         var tenantId = Environment.GetEnvironmentVariable("CREWMEAL_M365_TENANT_ID");
         var clientSecret = Environment.GetEnvironmentVariable("CREWMEAL_M365_CLIENT_SECRET");
-
         var identityEmail = options.Identity
             ?? Environment.GetEnvironmentVariable("CREWMEAL_MIP_ENGINE_IDENTITY");
 
@@ -316,27 +296,24 @@ internal static class Program
             appInfo, mipDataPath, Microsoft.InformationProtection.LogLevel.Error, false);
         var mipContext = MIP.CreateMipContext(mipConfiguration);
 
-        IFileProfile? profile = null;
-        IFileEngine? engine = null;
         try
         {
             // In-memory cache keeps this subprocess stateless: no on-disk profile
             // state to clean up between invocations.
             var profileSettings = new FileProfileSettings(
                 mipContext, CacheStorageType.InMemory, new AutoConsentDelegate());
-            profile = await MIP.LoadFileProfileAsync(profileSettings);
-
+            var profile = await MIP.LoadFileProfileAsync(profileSettings);
 
             var engineId = string.IsNullOrWhiteSpace(identityEmail)
                 ? "crewmeal-mip-adapter"
                 : identityEmail!;
-            var engineSettings = new FileEngineSettings(engineId, authDelegate, string.Empty, "en-US");
-
-            // A file engine requires either an Identity or a Cloud. App-only auth
-            // has no user identity, so pin the sovereign cloud (default Commercial;
-            // override via CREWMEAL_MIP_CLOUD, e.g. GccHigh / Dod).
-            engineSettings.Cloud = ResolveCloud();
-
+            var engineSettings = new FileEngineSettings(engineId, authDelegate, string.Empty, "en-US")
+            {
+                // A file engine requires either an Identity or a Cloud. App-only
+                // auth has no user identity, so pin the sovereign cloud (default
+                // Commercial; override via CREWMEAL_MIP_CLOUD, e.g. GccHigh / Dod).
+                Cloud = ResolveCloud(),
+            };
             if (!string.IsNullOrWhiteSpace(identityEmail))
             {
                 // Aids RMS service/region discovery; optional for super-user
@@ -344,60 +321,209 @@ internal static class Program
                 // licensing URL.
                 engineSettings.Identity = new Identity(identityEmail);
             }
-            engine = await profile.AddEngineAsync(engineSettings);
 
-            var actualName = string.IsNullOrWhiteSpace(options.ActualName)
-                ? inputPath
-                : options.ActualName!;
-            var handler = await engine.CreateFileHandlerAsync(inputPath, actualName, false);
+            var engine = await profile.AddEngineAsync(engineSettings);
+            return new MipSession(mipContext, profile, engine);
+        }
+        catch
+        {
+            mipContext.ShutDown();
+            throw;
+        }
+    }
 
-            if (handler.Protection is null)
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            await _profile.UnloadEngineAsync(Engine.Settings.EngineId);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[adapter] engine unload warning: {ex.Message}");
+        }
+        _mipContext.ShutDown();
+    }
+
+    private static Cloud ResolveCloud()
+    {
+        var name = Environment.GetEnvironmentVariable("CREWMEAL_MIP_CLOUD");
+        if (!string.IsNullOrWhiteSpace(name)
+            && Enum.TryParse<Cloud>(name, ignoreCase: true, out var parsed))
+        {
+            return parsed;
+        }
+        return Cloud.Commercial;
+    }
+}
+
+internal static class Program
+{
+    private static async Task<int> Main(string[] args)
+    {
+        AdapterOptions options;
+        try
+        {
+            options = AdapterOptions.Parse(args);
+        }
+        catch (UsageException ex)
+        {
+            Console.Error.WriteLine(ex.Message);
+            return ExitCodes.UsageError;
+        }
+
+        try
+        {
+            switch (options.Subcommand)
             {
-                // Not actually protected: pass the bytes through unchanged so the
-                // pipeline can continue. Detection upstream may have been broad.
-                Console.Error.WriteLine(
-                    "[adapter] input is not protected; copying through unchanged.");
-                File.Copy(inputPath, outputPath, overwrite: true);
-                return ExitCodes.Success;
+                case "unprotect":
+                    return await UnprotectAsync(options);
+                case "protect":
+                    return await ProtectAsync(options);
+                default:
+                    Console.Error.WriteLine(
+                        $"Unsupported subcommand: {options.Subcommand}\n\n{AdapterOptions.Usage}");
+                    return ExitCodes.UsageError;
             }
-
+        }
+        catch (UsageException ex)
+        {
+            Console.Error.WriteLine(ex.Message);
+            return ExitCodes.UsageError;
+        }
+        catch (AccessDeniedException ex)
+        {
             Console.Error.WriteLine(
-                "[adapter] protected content detected; removing protection as super-user.");
-            handler.RemoveProtection();
-
-            var committed = await handler.CommitAsync(outputPath);
-            if (!committed)
+                "[adapter] access denied by Azure RMS. The service principal likely "
+                + "lacks the Content.SuperUser right, or super-user is not enabled for "
+                + $"the tenant. Details: {ex.Message}");
+            return ExitCodes.AccessDenied;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[adapter] {ex.GetType().Name}: {ex.Message}");
+            if (ex.InnerException is not null)
             {
-                Console.Error.WriteLine(
-                    "[adapter] CommitAsync reported no changes written; unprotect failed.");
-                SafeDelete(outputPath);
-                return ExitCodes.OperationFailed;
+                Console.Error.WriteLine($"[adapter] inner: {ex.InnerException.Message}");
             }
+            return ExitCodes.Unexpected;
+        }
+    }
 
-            if (!File.Exists(outputPath) || new FileInfo(outputPath).Length == 0)
-            {
-                Console.Error.WriteLine("[adapter] output file missing or empty after commit.");
-                return ExitCodes.OperationFailed;
-            }
+    private static async Task<int> UnprotectAsync(AdapterOptions options)
+    {
+        var inputPath = RequirePath(options.InputPath, "--in", mustExist: true);
+        var outputPath = RequirePath(options.OutputPath, "--out", mustExist: false);
 
-            Console.Error.WriteLine("[adapter] unprotect succeeded.");
+        await using var session = await MipSession.CreateAsync(options);
+
+        var actualName = string.IsNullOrWhiteSpace(options.ActualName)
+            ? inputPath
+            : options.ActualName!;
+        var handler = await session.Engine.CreateFileHandlerAsync(inputPath, actualName, false);
+
+        if (handler.Protection is null)
+        {
+            // Not actually protected: pass the bytes through unchanged so the
+            // pipeline can continue. Detection upstream may have been broad.
+            Console.Error.WriteLine(
+                "[adapter] input is not protected; copying through unchanged.");
+            File.Copy(inputPath, outputPath, overwrite: true);
             return ExitCodes.Success;
         }
-        finally
+
+        Console.Error.WriteLine(
+            "[adapter] protected content detected; removing protection as super-user.");
+        handler.RemoveProtection();
+
+        var committed = await handler.CommitAsync(outputPath);
+        if (!committed)
         {
-            if (profile is not null && engine is not null)
-            {
-                try
-                {
-                    await profile.UnloadEngineAsync(engine.Settings.EngineId);
-                }
-                catch (Exception ex)
-                {
-                    Console.Error.WriteLine($"[adapter] engine unload warning: {ex.Message}");
-                }
-            }
-            mipContext.ShutDown();
+            Console.Error.WriteLine(
+                "[adapter] CommitAsync reported no changes written; unprotect failed.");
+            SafeDelete(outputPath);
+            return ExitCodes.OperationFailed;
         }
+
+        if (!File.Exists(outputPath) || new FileInfo(outputPath).Length == 0)
+        {
+            Console.Error.WriteLine("[adapter] output file missing or empty after commit.");
+            return ExitCodes.OperationFailed;
+        }
+
+        Console.Error.WriteLine("[adapter] unprotect succeeded.");
+        return ExitCodes.Success;
+    }
+
+    private static async Task<int> ProtectAsync(AdapterOptions options)
+    {
+        var inputPath = RequirePath(options.InputPath, "--in", mustExist: true);
+        var outputPath = RequirePath(options.OutputPath, "--out", mustExist: false);
+
+        var protectFor = options.ProtectFor
+            ?? Environment.GetEnvironmentVariable("CREWMEAL_MIP_PROTECT_FOR");
+        if (string.IsNullOrWhiteSpace(protectFor))
+        {
+            throw new UsageException(
+                "'protect' requires --protect-for <email[,email...]> (or "
+                + "CREWMEAL_MIP_PROTECT_FOR): the user(s)/group(s) granted rights on "
+                + "the protected file.");
+        }
+
+        var users = protectFor
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToList();
+        if (users.Count == 0)
+        {
+            throw new UsageException("--protect-for did not contain any recipients.");
+        }
+        var role = MapRole(options.Rights);
+
+        await using var session = await MipSession.CreateAsync(options);
+
+        var actualName = string.IsNullOrWhiteSpace(options.ActualName)
+            ? inputPath
+            : options.ActualName!;
+        var handler = await session.Engine.CreateFileHandlerAsync(inputPath, actualName, false);
+
+        // Ad-hoc protection: grant <role> to the named recipients. This produces a
+        // genuinely RMS-encrypted file suitable for exercising the unprotect path.
+        var userRoles = new List<UserRoles> { new UserRoles(users, new List<string> { role }) };
+        var descriptor = new ProtectionDescriptor(userRoles);
+
+        Console.Error.WriteLine(
+            $"[adapter] applying ad-hoc protection ({role}) for: {string.Join(", ", users)}");
+        handler.SetProtection(descriptor, new ProtectionSettings());
+
+        var committed = await handler.CommitAsync(outputPath);
+        if (!committed)
+        {
+            Console.Error.WriteLine(
+                "[adapter] CommitAsync reported no changes written; protect failed.");
+            SafeDelete(outputPath);
+            return ExitCodes.OperationFailed;
+        }
+
+        if (!File.Exists(outputPath) || new FileInfo(outputPath).Length == 0)
+        {
+            Console.Error.WriteLine("[adapter] output file missing or empty after commit.");
+            return ExitCodes.OperationFailed;
+        }
+
+        Console.Error.WriteLine("[adapter] protect succeeded.");
+        return ExitCodes.Success;
+    }
+
+    private static string MapRole(string? rights)
+    {
+        return (rights?.Trim().ToLowerInvariant()) switch
+        {
+            "viewer" => Roles.Viewer,
+            "reviewer" => Roles.Reviewer,
+            "author" or "coauthor" or "co-author" => Roles.Author,
+            null or "" or "coowner" or "co-owner" or "owner" => Roles.CoOwner,
+            _ => Roles.CoOwner,
+        };
     }
 
     private static string RequirePath(string? value, string name, bool mustExist)
@@ -411,17 +537,6 @@ internal static class Program
             throw new UsageException($"File for {name} does not exist: {value}");
         }
         return value;
-    }
-
-    private static Cloud ResolveCloud()
-    {
-        var name = Environment.GetEnvironmentVariable("CREWMEAL_MIP_CLOUD");
-        if (!string.IsNullOrWhiteSpace(name)
-            && Enum.TryParse<Cloud>(name, ignoreCase: true, out var parsed))
-        {
-            return parsed;
-        }
-        return Cloud.Commercial;
     }
 
     private static void SafeDelete(string path)

@@ -170,8 +170,20 @@ class SubprocessMipSdkRunner:
         token = self._acquire_token()
         with tempfile.TemporaryDirectory(prefix="crewmeal-mip-") as workspace:
             work = Path(workspace)
-            in_path = work / "input.bin"
-            out_path = work / "output.bin"
+            # The MIP File SDK selects a format-specific protection handler from
+            # the file *extension*: an Office file protected with a sensitivity
+            # label is an OLE/CFB container that still carries its ``.pptx`` (etc.)
+            # extension, and the SDK only recognises the embedded protection when
+            # the path keeps that extension. Naming the temp input ``input.bin``
+            # makes the SDK treat it as an unknown/unprotected blob and copy it
+            # through still-encrypted. So preserve the original document's suffix
+            # (this is also harmless for the bundled reference CLI, which keys off
+            # ``--in`` regardless of name).
+            suffix = Path(filename).suffix
+            if not suffix or len(suffix) > 16 or any(c in suffix for c in "/\\"):
+                suffix = ".bin"
+            in_path = work / f"input{suffix}"
+            out_path = work / f"output{suffix}"
             token_path = work / "token.txt"
             in_path.write_bytes(data)
             token_path.write_text(token, encoding="utf-8")

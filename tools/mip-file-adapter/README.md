@@ -11,13 +11,33 @@ for `CREWMEAL_MIP_SDK_CLI` — the real replacement for the bundled reference to
 ```
 crewmeal-mip-adapter unprotect --in <input> --out <output> --token-file <token> \
     [--client-id <guid>] [--identity <upn>] [--name <original-filename>]
+
+crewmeal-mip-adapter protect   --in <input> --out <output> \
+    --protect-for <email[,email...]> [--rights <role>] [--client-id <guid>] \
+    [--name <filename>]
 ```
 
-* exit `0` → success; the unprotected bytes are written to `<output>`.
+* exit `0` → success; the (un)protected bytes are written to `<output>`.
 * nonzero → failure; `stderr` explains why (`2` usage, `3` access denied,
   `4` operation failed, `5` unexpected).
 
-If the input is not actually protected, the bytes are copied through unchanged.
+If the input is not actually protected, `unprotect` copies the bytes through
+unchanged. `protect` applies ad-hoc RMS protection (roles: `owner`/`coowner`
+(default), `author`/`coauthor`, `reviewer`, `viewer`) and exists mainly to
+generate genuine RMS-encrypted files for exercising the decrypt path — it needs
+the `Content.Writer` app role (see below).
+
+### File extension matters
+
+The MIP File SDK selects its format handler from the **file extension**: an
+Office document protected with a sensitivity label is an OLE/CFB container that
+keeps its original `.pptx`/`.docx`/… extension, and the SDK only detects the
+embedded protection when the input path carries that extension. A generic name
+like `input.bin` is treated as an unknown/unprotected blob and copied through
+still-encrypted. The adapter therefore uses the `--in` path's extension (or
+`--name`, if given) as the logical file name. CrewMeal's seam
+(`mip_sdk.py`) names its temp input with the original document's suffix for
+exactly this reason.
 
 ## Authentication (unattended, app-only)
 
@@ -61,9 +81,21 @@ az ad app permission add --id <clientId> --api 870c4f2e-85b6-4d43-bdda-6ed9a579b
 az ad app permission admin-consent --id <clientId>
 ```
 
-`Content.SuperUser` covers **consumption** (decryption). To *create* protected
-content (e.g. to generate test files) the app additionally needs
-`Content.Writer` — not required for CrewMeal's decrypt-only workload.
+`Content.SuperUser` covers **consumption** (decryption) — all CrewMeal needs at
+runtime. To *create* protected content (e.g. to generate real test files with the
+`protect` subcommand) the app additionally needs `Content.Writer`
+(`006e763d-a822-41fc-8df5-8d3d7fe20022`) on the same RMS API:
+
+```bash
+az ad app permission add --id <clientId> --api 00000012-0000-0000-c000-000000000000 \
+    --api-permissions 006e763d-a822-41fc-8df5-8d3d7fe20022=Role
+az ad app permission admin-consent --id <clientId>
+```
+
+> Verified end-to-end against a live tenant (2026-07): `protect` produced a real
+> RMS-encrypted `.pptx` (OLE/CFB, `D0CF11E0`) and `unprotect` recovered the
+> original OOXML as super-user — both through this adapter and through CrewMeal's
+> Python seam (`mip_preflight --sample`).
 
 ## Build
 
