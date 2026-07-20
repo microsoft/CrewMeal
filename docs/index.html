@@ -362,8 +362,8 @@
                 </tr>
                 <tr>
                   <td><span class="fname" data-ko="MIP 민감도 레이블 암호화 문서" data-en="MIP sensitivity-label encrypted documents">MIP 민감도 레이블 암호화 문서</span></td>
-                  <td><span class="ext" data-ko="복호화 연동" data-en="Decryptor integration">복호화 연동</span></td>
-                  <td><span class="tag plan" data-ko="구현 예정" data-en="Planned">구현 예정</span></td>
+                  <td><span class="ext" data-ko="MIP File SDK 연동" data-en="MIP File SDK">MIP File SDK 연동</span></td>
+                  <td><span class="tag ok" data-ko="구현됨" data-en="Live">구현됨</span></td>
                 </tr>
                 <tr>
                   <td><span class="fname" data-ko="서드파티 DRM 암호화 문서" data-en="Third-party DRM encrypted documents">서드파티 DRM 암호화 문서</span></td>
@@ -378,7 +378,7 @@
             <p class="panel-label" data-ko="문서 한 건이 강화되기까지" data-en="How one document gets enriched">문서 한 건이 강화되기까지</p>
             <div class="pipeline">
               <div class="pstep"><span class="pn">01</span><div><h4 data-ko="감지 · 검증" data-en="Detect · validate">감지 · 검증</h4><p data-ko="확장자·매직·크기로 포맷 핸들러를 고릅니다." data-en="Pick a format handler by extension, magic and size.">확장자·매직·크기로 포맷 핸들러를 고릅니다.</p></div></div>
-              <div class="pstep"><span class="pn">02</span><div><h4 data-ko="복호화 훅 (선택)" data-en="Decrypt hook (optional)">복호화 훅 (선택)</h4><p data-ko="활성화 시 MIP 등 암호화 문서를 복호화합니다." data-en="Decrypts MIP and other encrypted docs when enabled.">활성화 시 MIP 등 암호화 문서를 복호화합니다.</p></div></div>
+              <div class="pstep"><span class="pn">02</span><div><h4 data-ko="복호화 훅 (선택)" data-en="Decrypt hook (optional)">복호화 훅 (선택)</h4><p data-ko="활성화 시 RMS 슈퍼유저 권한으로 MIP 암호화 문서를 복호화하며, 포털이 테넌트 준비 상태를 먼저 점검합니다." data-en="When enabled, MIP-encrypted docs are decrypted with RMS super-user rights, after the portal checks tenant readiness.">활성화 시 RMS 슈퍼유저 권한으로 MIP 암호화 문서를 복호화하며, 포털이 테넌트 준비 상태를 먼저 점검합니다.</p></div></div>
               <div class="pstep"><span class="pn">03</span><div><h4 data-ko="읽기" data-en="Read">읽기</h4><p data-ko="포맷에 맞는 엔진으로 내용을 엽니다." data-en="Open the content with the engine that fits the format.">포맷에 맞는 엔진으로 내용을 엽니다.</p><div class="split"><span class="v">PPT·PDF → 페이지 이미지</span><span class="h">HWP → rhwp 파싱</span></div></div></div>
               <div class="pstep k"><span class="pn">04</span><div><h4 data-ko="분석 · 구조화" data-en="Analyze · structure">분석 · 구조화</h4><p data-ko="strict JSON 스키마로 표·도형·흐름을 구조화합니다." data-en="Structure tables, shapes and flow into a strict JSON schema.">strict JSON 스키마로 표·도형·흐름을 구조화합니다.</p></div></div>
               <div class="pstep"><span class="pn">05</span><div><h4 data-ko="대상별 렌더링 · 게시" data-en="Target rendering · publish">대상별 렌더링 · 게시</h4><p data-ko="컬럼에는 Markdown, Connector에는 HTML로 게시합니다." data-en="Publish Markdown to the column or HTML through the Connector.">컬럼에는 Markdown, Connector에는 HTML로 게시합니다.</p></div></div>
