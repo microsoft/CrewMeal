@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.42.1.51946",
-      "templateHash": "18288698427745716621"
+      "templateHash": "7616563280496427180"
     }
   },
   "parameters": {
@@ -131,6 +131,20 @@
       "type": "string",
       "metadata": {
         "description": "Microsoft 365 connection ID."
+      }
+    },
+    "mipSdkCli": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "MIP File SDK CLI command for decrypting MIP-protected documents. Empty disables MIP decryption. The M365 service principal must be an Azure RMS super user for unattended decryption."
+      }
+    },
+    "mipRmsScope": {
+      "type": "string",
+      "defaultValue": "https://aadrm.com/.default",
+      "metadata": {
+        "description": "Azure RMS OAuth scope requested for the MIP SDK app-only token."
       }
     },
     "ingestTenantId": {
@@ -3068,6 +3082,12 @@
           "m365ConnectionId": {
             "value": "[parameters('m365ConnectionId')]"
           },
+          "mipSdkCli": {
+            "value": "[parameters('mipSdkCli')]"
+          },
+          "mipRmsScope": {
+            "value": "[parameters('mipRmsScope')]"
+          },
           "ingestTenantId": {
             "value": "[parameters('ingestTenantId')]"
           },
@@ -3112,7 +3132,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.42.1.51946",
-              "templateHash": "15475178653265107986"
+              "templateHash": "2084540671634491837"
             }
           },
           "parameters": {
@@ -3216,6 +3236,20 @@
               "type": "string",
               "metadata": {
                 "description": "Microsoft 365 connection ID."
+              }
+            },
+            "mipSdkCli": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "MIP File SDK CLI command for decrypting MIP-protected documents (e.g. a wrapper around the Microsoft MIP File SDK). Empty disables MIP decryption. The M365 service principal must be an Azure RMS super user for unattended decryption to work."
+              }
+            },
+            "mipRmsScope": {
+              "type": "string",
+              "defaultValue": "https://aadrm.com/.default",
+              "metadata": {
+                "description": "Azure RMS OAuth scope requested for the MIP SDK app-only token."
               }
             },
             "ingestTenantId": {
@@ -3654,7 +3688,7 @@
                     {
                       "name": "web",
                       "image": "[parameters('containerImage')]",
-                      "env": "[concat(createArray(createObject('name', 'AZURE_CLIENT_ID', 'value', reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('managedIdentityName')), '2023-01-31').clientId), createObject('name', 'DATABASE_URL', 'secretRef', 'database-url'), createObject('name', 'CREWMEAL_ARTIFACT_BACKEND', 'value', 'database'), createObject('name', 'CREWMEAL_ARTIFACT_DIR', 'value', '/tmp/crewmeal-artifacts'), createObject('name', 'CREWMEAL_M365_TENANT_ID', 'value', parameters('m365TenantId')), createObject('name', 'CREWMEAL_M365_CLIENT_ID', 'value', parameters('m365ClientId')), createObject('name', 'CREWMEAL_M365_CLIENT_SECRET', 'secretRef', 'm365-client-secret'), createObject('name', 'CREWMEAL_M365_SITE_ID', 'value', parameters('m365SiteId')), createObject('name', 'CREWMEAL_M365_DRIVE_ID', 'value', parameters('m365DriveId')), createObject('name', 'CREWMEAL_M365_LIST_ID', 'value', parameters('m365ListId')), createObject('name', 'CREWMEAL_M365_SITE_URL', 'value', parameters('m365SiteUrl')), createObject('name', 'CREWMEAL_M365_CONNECTION_ID', 'value', parameters('m365ConnectionId')), createObject('name', 'SLIDE_IMAGE_MODEL', 'value', parameters('slideImageModel')), createObject('name', 'SLIDE_IMAGE_DEPLOYMENT', 'value', parameters('slideImageDeployment')), createObject('name', 'CREWMEAL_PRICE_MODEL_LABEL', 'value', parameters('priceModelLabel')), createObject('name', 'CREWMEAL_PRICE_INPUT_USD_PER_M', 'value', parameters('priceInputUsdPerMillion')), createObject('name', 'CREWMEAL_PRICE_OUTPUT_USD_PER_M', 'value', parameters('priceOutputUsdPerMillion'))), createArray(createObject('name', 'APP_ROLE', 'value', 'web'), createObject('name', 'PORT', 'value', '8000'), createObject('name', 'CREWMEAL_WEB_BASE_URL', 'value', format('https://{0}.{1}', variables('webAppName'), reference(resourceId('Microsoft.App/managedEnvironments', variables('containerAppsEnvironmentName')), '2024-03-01').defaultDomain)), createObject('name', 'CREWMEAL_ADMIN_KEY', 'secretRef', 'admin-key'), createObject('name', 'CREWMEAL_WEB_SESSION_SECRET', 'secretRef', 'session-secret'), createObject('name', 'CREWMEAL_INGEST_TENANT_ID', 'value', parameters('ingestTenantId')), createObject('name', 'CREWMEAL_INGEST_AUDIENCE', 'value', parameters('ingestAudience')), createObject('name', 'CREWMEAL_INGEST_ALLOWED_APP_IDS', 'value', parameters('ingestAllowedAppIds')), createObject('name', 'CREWMEAL_INGEST_ALLOWED_ORIGINS', 'value', parameters('ingestAllowedOrigins')), createObject('name', 'CREWMEAL_INGEST_REQUIRE_AUTH', 'value', parameters('ingestRequireAuth'))))]"
+                      "env": "[concat(createArray(createObject('name', 'AZURE_CLIENT_ID', 'value', reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('managedIdentityName')), '2023-01-31').clientId), createObject('name', 'DATABASE_URL', 'secretRef', 'database-url'), createObject('name', 'CREWMEAL_ARTIFACT_BACKEND', 'value', 'database'), createObject('name', 'CREWMEAL_ARTIFACT_DIR', 'value', '/tmp/crewmeal-artifacts'), createObject('name', 'CREWMEAL_M365_TENANT_ID', 'value', parameters('m365TenantId')), createObject('name', 'CREWMEAL_M365_CLIENT_ID', 'value', parameters('m365ClientId')), createObject('name', 'CREWMEAL_M365_CLIENT_SECRET', 'secretRef', 'm365-client-secret'), createObject('name', 'CREWMEAL_M365_SITE_ID', 'value', parameters('m365SiteId')), createObject('name', 'CREWMEAL_M365_DRIVE_ID', 'value', parameters('m365DriveId')), createObject('name', 'CREWMEAL_M365_LIST_ID', 'value', parameters('m365ListId')), createObject('name', 'CREWMEAL_M365_SITE_URL', 'value', parameters('m365SiteUrl')), createObject('name', 'CREWMEAL_M365_CONNECTION_ID', 'value', parameters('m365ConnectionId')), createObject('name', 'CREWMEAL_MIP_SDK_CLI', 'value', parameters('mipSdkCli')), createObject('name', 'CREWMEAL_MIP_RMS_SCOPE', 'value', parameters('mipRmsScope')), createObject('name', 'SLIDE_IMAGE_MODEL', 'value', parameters('slideImageModel')), createObject('name', 'SLIDE_IMAGE_DEPLOYMENT', 'value', parameters('slideImageDeployment')), createObject('name', 'CREWMEAL_PRICE_MODEL_LABEL', 'value', parameters('priceModelLabel')), createObject('name', 'CREWMEAL_PRICE_INPUT_USD_PER_M', 'value', parameters('priceInputUsdPerMillion')), createObject('name', 'CREWMEAL_PRICE_OUTPUT_USD_PER_M', 'value', parameters('priceOutputUsdPerMillion'))), createArray(createObject('name', 'APP_ROLE', 'value', 'web'), createObject('name', 'PORT', 'value', '8000'), createObject('name', 'CREWMEAL_WEB_BASE_URL', 'value', format('https://{0}.{1}', variables('webAppName'), reference(resourceId('Microsoft.App/managedEnvironments', variables('containerAppsEnvironmentName')), '2024-03-01').defaultDomain)), createObject('name', 'CREWMEAL_ADMIN_KEY', 'secretRef', 'admin-key'), createObject('name', 'CREWMEAL_WEB_SESSION_SECRET', 'secretRef', 'session-secret'), createObject('name', 'CREWMEAL_INGEST_TENANT_ID', 'value', parameters('ingestTenantId')), createObject('name', 'CREWMEAL_INGEST_AUDIENCE', 'value', parameters('ingestAudience')), createObject('name', 'CREWMEAL_INGEST_ALLOWED_APP_IDS', 'value', parameters('ingestAllowedAppIds')), createObject('name', 'CREWMEAL_INGEST_ALLOWED_ORIGINS', 'value', parameters('ingestAllowedOrigins')), createObject('name', 'CREWMEAL_INGEST_REQUIRE_AUTH', 'value', parameters('ingestRequireAuth')), createObject('name', 'CREWMEAL_STATUS_REQUIRE_AUTH', 'value', 'true')))]"
                     }
                   ],
                   "scale": {
@@ -3702,7 +3736,7 @@
                     {
                       "name": "worker",
                       "image": "[parameters('containerImage')]",
-                      "env": "[concat(createArray(createObject('name', 'AZURE_CLIENT_ID', 'value', reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('managedIdentityName')), '2023-01-31').clientId), createObject('name', 'DATABASE_URL', 'secretRef', 'database-url'), createObject('name', 'CREWMEAL_ARTIFACT_BACKEND', 'value', 'database'), createObject('name', 'CREWMEAL_ARTIFACT_DIR', 'value', '/tmp/crewmeal-artifacts'), createObject('name', 'CREWMEAL_M365_TENANT_ID', 'value', parameters('m365TenantId')), createObject('name', 'CREWMEAL_M365_CLIENT_ID', 'value', parameters('m365ClientId')), createObject('name', 'CREWMEAL_M365_CLIENT_SECRET', 'secretRef', 'm365-client-secret'), createObject('name', 'CREWMEAL_M365_SITE_ID', 'value', parameters('m365SiteId')), createObject('name', 'CREWMEAL_M365_DRIVE_ID', 'value', parameters('m365DriveId')), createObject('name', 'CREWMEAL_M365_LIST_ID', 'value', parameters('m365ListId')), createObject('name', 'CREWMEAL_M365_SITE_URL', 'value', parameters('m365SiteUrl')), createObject('name', 'CREWMEAL_M365_CONNECTION_ID', 'value', parameters('m365ConnectionId')), createObject('name', 'SLIDE_IMAGE_MODEL', 'value', parameters('slideImageModel')), createObject('name', 'SLIDE_IMAGE_DEPLOYMENT', 'value', parameters('slideImageDeployment')), createObject('name', 'CREWMEAL_PRICE_MODEL_LABEL', 'value', parameters('priceModelLabel')), createObject('name', 'CREWMEAL_PRICE_INPUT_USD_PER_M', 'value', parameters('priceInputUsdPerMillion')), createObject('name', 'CREWMEAL_PRICE_OUTPUT_USD_PER_M', 'value', parameters('priceOutputUsdPerMillion'))), createArray(createObject('name', 'APP_ROLE', 'value', 'worker'), createObject('name', 'CONTENTUNDERSTANDING_ENDPOINT', 'value', parameters('contentUnderstandingEndpoint')), createObject('name', 'CONTENTUNDERSTANDING_ANALYZER_ID', 'value', 'prebuilt-documentSearch'), createObject('name', 'CONTENTUNDERSTANDING_API_VERSION', 'value', '2025-11-01'), createObject('name', 'CONTENTUNDERSTANDING_GPT_DEPLOYMENT', 'value', parameters('contentUnderstandingGptDeployment')), createObject('name', 'CONTENTUNDERSTANDING_EMBEDDING_DEPLOYMENT', 'value', parameters('contentUnderstandingEmbeddingDeployment')), createObject('name', 'SLIDE_IMAGE_MAX_WORKERS', 'value', string(parameters('slideImageMaxWorkers')))))]"
+                      "env": "[concat(createArray(createObject('name', 'AZURE_CLIENT_ID', 'value', reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('managedIdentityName')), '2023-01-31').clientId), createObject('name', 'DATABASE_URL', 'secretRef', 'database-url'), createObject('name', 'CREWMEAL_ARTIFACT_BACKEND', 'value', 'database'), createObject('name', 'CREWMEAL_ARTIFACT_DIR', 'value', '/tmp/crewmeal-artifacts'), createObject('name', 'CREWMEAL_M365_TENANT_ID', 'value', parameters('m365TenantId')), createObject('name', 'CREWMEAL_M365_CLIENT_ID', 'value', parameters('m365ClientId')), createObject('name', 'CREWMEAL_M365_CLIENT_SECRET', 'secretRef', 'm365-client-secret'), createObject('name', 'CREWMEAL_M365_SITE_ID', 'value', parameters('m365SiteId')), createObject('name', 'CREWMEAL_M365_DRIVE_ID', 'value', parameters('m365DriveId')), createObject('name', 'CREWMEAL_M365_LIST_ID', 'value', parameters('m365ListId')), createObject('name', 'CREWMEAL_M365_SITE_URL', 'value', parameters('m365SiteUrl')), createObject('name', 'CREWMEAL_M365_CONNECTION_ID', 'value', parameters('m365ConnectionId')), createObject('name', 'CREWMEAL_MIP_SDK_CLI', 'value', parameters('mipSdkCli')), createObject('name', 'CREWMEAL_MIP_RMS_SCOPE', 'value', parameters('mipRmsScope')), createObject('name', 'SLIDE_IMAGE_MODEL', 'value', parameters('slideImageModel')), createObject('name', 'SLIDE_IMAGE_DEPLOYMENT', 'value', parameters('slideImageDeployment')), createObject('name', 'CREWMEAL_PRICE_MODEL_LABEL', 'value', parameters('priceModelLabel')), createObject('name', 'CREWMEAL_PRICE_INPUT_USD_PER_M', 'value', parameters('priceInputUsdPerMillion')), createObject('name', 'CREWMEAL_PRICE_OUTPUT_USD_PER_M', 'value', parameters('priceOutputUsdPerMillion'))), createArray(createObject('name', 'APP_ROLE', 'value', 'worker'), createObject('name', 'CONTENTUNDERSTANDING_ENDPOINT', 'value', parameters('contentUnderstandingEndpoint')), createObject('name', 'CONTENTUNDERSTANDING_ANALYZER_ID', 'value', 'prebuilt-documentSearch'), createObject('name', 'CONTENTUNDERSTANDING_API_VERSION', 'value', '2025-11-01'), createObject('name', 'CONTENTUNDERSTANDING_GPT_DEPLOYMENT', 'value', parameters('contentUnderstandingGptDeployment')), createObject('name', 'CONTENTUNDERSTANDING_EMBEDDING_DEPLOYMENT', 'value', parameters('contentUnderstandingEmbeddingDeployment')), createObject('name', 'SLIDE_IMAGE_MAX_WORKERS', 'value', string(parameters('slideImageMaxWorkers')))))]"
                     }
                   ],
                   "scale": {

@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from urllib.parse import quote
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
@@ -22,10 +24,12 @@ from crewmeal.search_enhancement.web.auth import TokenValidator
 from crewmeal.search_enhancement.web.config import WebConfig
 from crewmeal.search_enhancement.web.routers import (
     admin,
+    auth_sso,
     health,
     ingest,
     status as status_routes,
 )
+from crewmeal.search_enhancement.web.security import LoginRequired
 
 _PACKAGE_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = _PACKAGE_DIR / "templates"
@@ -116,7 +120,11 @@ def create_app(
         SessionMiddleware,
         secret_key=config.session_secret,
         same_site="lax",
-        https_only=False,
+        # Mark the session cookie Secure on HTTPS deployments (production) so the
+        # admin key and sign-in identity never ride an insecure connection; keep it
+        # relaxed for local http dev. SameSite=Lax already blocks cross-site POSTs
+        # from carrying the cookie, which mitigates CSRF on the status actions.
+        https_only=config.secure_cookies,
     )
     if config.ingest_allowed_origins:
         # The SPFx command calls POST /api/requests from the SharePoint page
@@ -148,9 +156,28 @@ def create_app(
 
     app.include_router(health.router)
     app.include_router(ingest.router)
+    app.include_router(auth_sso.router)
     app.include_router(status_routes.router)
     app.include_router(admin.login_router)
     app.include_router(admin.router)
+
+    @app.exception_handler(LoginRequired)
+    async def _handle_login_required(
+        request: Request, exc: LoginRequired
+    ) -> RedirectResponse | JSONResponse:
+        # Top-level navigations (loading the status page) get bounced to sign-in
+        # and returned to ``next`` afterwards. Browser ``fetch``/XHR (which set
+        # ``Sec-Fetch-Dest: empty``) and any non-GET get a 401 so the polling JS
+        # can reload the page into the sign-in flow instead of injecting the login
+        # HTML into a fragment.
+        wants_redirect = (
+            request.method == "GET"
+            and request.headers.get("sec-fetch-dest") != "empty"
+        )
+        if wants_redirect:
+            login_url = "/auth/login?next=" + quote(exc.next_url, safe="")
+            return RedirectResponse(login_url, status_code=303)
+        return JSONResponse({"detail": "Sign-in required."}, status_code=401)
 
     @app.get("/", include_in_schema=False)
     def index() -> dict[str, str]:

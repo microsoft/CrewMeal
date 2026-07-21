@@ -525,6 +525,10 @@ resource webApp 'Microsoft.App/containerApps@2024-03-01' = {
               name: 'CREWMEAL_INGEST_REQUIRE_AUTH'
               value: ingestRequireAuth
             }
+            {
+              name: 'CREWMEAL_STATUS_REQUIRE_AUTH'
+              value: 'true'
+            }
           ])
         }
       ]
