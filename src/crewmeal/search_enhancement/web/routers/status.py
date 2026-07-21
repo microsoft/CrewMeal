@@ -22,10 +22,17 @@ from crewmeal.search_enhancement.web.dependencies import (
     get_repository,
     get_templates,
 )
-from crewmeal.search_enhancement.web.security import get_document_for_token
+from crewmeal.search_enhancement.web.security import (
+    get_document_for_token,
+    require_user,
+)
 from crewmeal.search_enhancement.web.viewmodels import build_status_view, run_in_flight
 
-router = APIRouter(prefix="/s", tags=["status"])
+# Every status surface (view, polled partials, and the destructive actions) is
+# gated by ``require_user``; it is a no-op unless status-page sign-in is enabled.
+router = APIRouter(
+    prefix="/s", tags=["status"], dependencies=[Depends(require_user)]
+)
 
 # The extracted-HTML preview is untrusted content rendered in a sandboxed iframe;
 # lock it down so it cannot script, navigate, or exfiltrate.

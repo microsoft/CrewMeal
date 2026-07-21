@@ -226,6 +226,23 @@ Validation also corrected the Bicep resource-group name to the existing `rg-crew
 | Cumulative dashboard | Fleet-wide admin dashboard still shows the intended cumulative mixed GPT-5.2/Luna estimate |
 | Live RBAC | Resource-scoped ACR Pull, Storage Blob Data Contributor, Key Vault Secrets User, Cognitive Services OpenAI User, and PostgreSQL Contributor checks all passed |
 
+### Status-page Entra SSO hardening — follow-up change
+
+Security follow-up (separate from the Luna rollout): the anonymous user status page
+`/s/{token}` is placed behind **Entra ID SSO** (OpenID Connect authorization-code via MSAL).
+A signed-in tenant user **and** a valid token are now both required to view or act
+(rerun/comment/remove). The existing M365 app registration and credentials
+(`CREWMEAL_M365_TENANT_ID/CLIENT_ID/CLIENT_SECRET`) are reused.
+
+| Item | Detail |
+|------|--------|
+| New env var | `CREWMEAL_STATUS_REQUIRE_AUTH` — added to the web container in `infra/modules/platform.bicep` and `infra/main.json`, defaulting to `true` in production |
+| SSO credential override (optional) | `CREWMEAL_STATUS_SSO_TENANT_ID/CLIENT_ID/CLIENT_SECRET` (falls back to `CREWMEAL_M365_*`) |
+| **Manual prerequisite (1-time)** | In the reused M365 app registration, add a **Web redirect URI** `{SERVICE_WEB_URI}/auth/callback` and enable **ID token** issuance. Without it the callback fails with `AADSTS50011`. |
+| Failure mode | If `CREWMEAL_STATUS_REQUIRE_AUTH=true` but no SSO credentials resolve, the web app fails startup with `ConfigurationError` |
+| Authorization scope | Any signed-in tenant user + valid token; per-document SharePoint ACLs are not checked |
+| CSRF | No explicit CSRF tokens added; `SameSite=Lax` session cookie + mandatory authenticated session already block the cross-site forgery vector |
+
 ---
 
 ## 10. Files to Modify

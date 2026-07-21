@@ -141,7 +141,12 @@
       fetch("/s/" + encodeURIComponent(token) + "/progress", {
         headers: { "Accept": "text/html" }, cache: "no-store"
       })
-        .then(function (r) { return r.ok ? r.text() : null; })
+        .then(function (r) {
+          // The sign-in session expired mid-view: reload so the top-level
+          // navigation is redirected to the sign-in flow.
+          if (r.status === 401) { window.location.reload(); return null; }
+          return r.ok ? r.text() : null;
+        })
         .then(function (html) {
           if (html) { container.innerHTML = html; }
           if (!terminal()) { setTimeout(poll, 3000); }
