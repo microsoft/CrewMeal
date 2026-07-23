@@ -198,8 +198,9 @@ class PresentationProcessor:
             )
         if corrections and not page_images:
             raise ProcessingFidelityError(
-                "Tuning corrections cannot be applied to a semantic-only HWP/HWPX "
-                "document because no visual-analysis pages were selected."
+                "Tuning corrections cannot be applied because no visual-analysis "
+                "pages were selected; every page was covered by semantic "
+                "extraction and skipped Vision."
             )
 
         reporter.stage(
@@ -325,6 +326,7 @@ def _merge_slide(
         return semantic
     return replace(
         semantic,
+        title=semantic.title or visual.title,
         summary=visual.summary or semantic.summary,
         facts=tuple(dict.fromkeys((*semantic.facts, *visual.facts))),
         sections=_merge_sections(semantic.sections, visual.sections),
