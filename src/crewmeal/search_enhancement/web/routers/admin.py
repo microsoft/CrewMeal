@@ -26,7 +26,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 
 from crewmeal.search_enhancement.artifact_store import ArtifactStore, artifact_path
-from crewmeal.config import AppConfig
+from crewmeal.config import AppConfig, normalize_analysis_tier
 from crewmeal.search_enhancement.formats import (
     all_handlers,
     enabled_extensions,
@@ -36,6 +36,11 @@ from crewmeal.search_enhancement.formats import (
 from crewmeal.search_enhancement.vision_model import (
     VISION_SETTING_KEYS,
     vision_model_fields,
+)
+from crewmeal.search_enhancement.analysis_tier import (
+    ANALYSIS_OCR_KEY,
+    ANALYSIS_TIER_KEY,
+    analysis_tier_status,
 )
 from crewmeal.search_enhancement.decryption import (
     all_providers as all_decryption_providers,
@@ -338,12 +343,12 @@ def _build_settings_context(
     mip_configured = MipSdkConfig.from_environment().is_configured
     tenant_id, client_id = _config_service_principal_ids()
     mip_health = health.get("mip")
+    app_config = AppConfig.from_environment()
     return {
         "settings": all_settings,
         "formats": format_status(all_settings),
-        "vision_fields": vision_model_fields(
-            AppConfig.from_environment(), all_settings
-        ),
+        "vision_fields": vision_model_fields(app_config, all_settings),
+        "analysis_tier": analysis_tier_status(app_config, all_settings),
         "decryption": decryption_status(
             all_settings,
             configured={"mip": mip_configured},
@@ -550,6 +555,28 @@ def admin_settings_decryption_save(
             decryption_setting_key(provider.provider_id),
             provider.provider_id in checked,
         )
+    return RedirectResponse(
+        "/admin/settings?saved=1", status_code=status.HTTP_303_SEE_OTHER
+    )
+
+
+@router.post("/settings/analysis")
+async def admin_settings_analysis_save(
+    request: Request,
+    repository: SearchEnhancementRepository = Depends(get_repository),
+) -> RedirectResponse:
+    """Persist the analysis quality tier and OCR toggle.
+
+    ``tier`` is a normalized value (``vision`` / ``text_ocr``); an unknown value
+    is ignored so a malformed post never corrupts the setting. The OCR checkbox
+    only arrives in the form when checked, so its absence means "off".
+    """
+
+    form = await request.form()
+    tier = normalize_analysis_tier(form.get(ANALYSIS_TIER_KEY))
+    if tier is not None:
+        repository.set_setting(ANALYSIS_TIER_KEY, tier)
+    repository.set_setting(ANALYSIS_OCR_KEY, ANALYSIS_OCR_KEY in form)
     return RedirectResponse(
         "/admin/settings?saved=1", status_code=status.HTTP_303_SEE_OTHER
     )

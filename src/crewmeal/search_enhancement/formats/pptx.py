@@ -21,6 +21,8 @@ from crewmeal.search_enhancement.formats.base import (
     ProcessingFidelityError,
 )
 from crewmeal.search_enhancement.geometry_facts import geometry_facts_by_slide
+from crewmeal.search_enhancement.ocr import build_ocr_engine
+from crewmeal.search_enhancement.pptx_low_tier import extract_low_tier_slides
 from crewmeal.search_enhancement.pptx_semantic import extract_semantic_slides
 from crewmeal.search_enhancement.progress import ProgressReporter, Stage
 from crewmeal.source import (
@@ -65,6 +67,14 @@ class PptxHandler:
         )
         source_seconds = time.perf_counter() - source_started
 
+        if config.low_tier_enabled:
+            return self._prepare_low_tier(
+                data,
+                source_manifest=source_manifest,
+                source_seconds=source_seconds,
+                config=config,
+                reporter=reporter,
+            )
         if config.pptx_semantic_text_slides:
             return self._prepare_semantic_first(
                 data,
@@ -79,6 +89,66 @@ class PptxHandler:
             source_seconds=source_seconds,
             config=config,
             reporter=reporter,
+        )
+
+    def _prepare_low_tier(
+        self,
+        data: bytes,
+        *,
+        source_manifest: SourceManifest,
+        source_seconds: float,
+        config: AppConfig,
+        reporter: ProgressReporter,
+    ) -> PreparedDocument:
+        """No-Vision tier: structured OOXML extraction + local image OCR.
+
+        Produces a fully-populated ``semantic_slides`` for *every* slide and an
+        empty ``page_images`` map, so the processor's semantic-first path returns
+        a pure text result -- no LibreOffice conversion, no render, no Vision, no
+        LLM tokens. OCR of embedded raster images runs on CPU when enabled and a
+        model is available; otherwise text/tables/charts are still extracted.
+        """
+
+        reporter.stage(Stage.CONVERTING, message="저품질 텍스트+OCR 추출")
+        extraction_started = time.perf_counter()
+        ocr_engine = None
+        if config.pptx_ocr_enabled:
+            ocr_engine = build_ocr_engine(
+                rec_model_path=config.pptx_ocr_rec_model_path,
+                rec_keys_path=config.pptx_ocr_rec_keys_path,
+            )
+        slides = extract_low_tier_slides(data, ocr=ocr_engine)
+        extraction_seconds = time.perf_counter() - extraction_started
+
+        slide_count = source_manifest.slide_count
+        if len(slides) != slide_count:
+            raise ProcessingFidelityError(
+                "Low-tier extraction changed the presentation slide count."
+            )
+
+        reporter.stage(
+            Stage.RENDERING,
+            message="저품질 티어: Vision 렌더링 건너뜀",
+            detail={"total": 0},
+        )
+        renderer_manifest = RendererManifest(
+            page_count=slide_count,
+            texts_by_page=dict(source_manifest.texts_by_slide),
+            links_by_page=dict(source_manifest.links_by_slide),
+            page_images={},
+            render_dpi=config.slide_image_render_dpi,
+        )
+        return PreparedDocument(
+            source_manifest=source_manifest,
+            renderer_manifest=renderer_manifest,
+            geometry_by_page={},
+            stage_timings={
+                "sourceInspectionSeconds": source_seconds,
+                "conversionSeconds": 0.0,
+                "lowTierExtractionSeconds": extraction_seconds,
+                "renderingSeconds": 0.0,
+            },
+            semantic_slides=slides,
         )
 
     def _prepare_visual_first(

@@ -87,3 +87,58 @@ def test_luna_slide_image_model_is_supported(
     monkeypatch.setenv("SLIDE_IMAGE_MODEL", "gpt-5.6-luna")
 
     assert AppConfig.from_environment().slide_image_model == "gpt-5.6-luna"
+
+
+def test_analysis_tier_environment_accepts_korean_alias(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("PPTX_ANALYSIS_TIER", "저품질")
+
+    config = AppConfig.from_environment()
+
+    assert config.pptx_analysis_tier == "text_ocr"
+    assert config.low_tier_enabled is True
+
+
+def test_analysis_tier_environment_rejects_unknown_value(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("PPTX_ANALYSIS_TIER", "medium")
+
+    with pytest.raises(ConfigurationError, match="PPTX_ANALYSIS_TIER"):
+        AppConfig.from_environment()
+
+
+def test_ocr_enabled_environment_is_parsed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("PPTX_OCR_ENABLED", "0")
+
+    assert AppConfig.from_environment().pptx_ocr_enabled is False
+
+
+def test_resolve_ocr_model_paths_from_model_dir(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    (tmp_path / "rec.onnx").write_bytes(b"onnx")
+    (tmp_path / "dict.txt").write_text("keys", encoding="utf-8")
+    monkeypatch.delenv("PPTX_OCR_REC_MODEL", raising=False)
+    monkeypatch.delenv("PPTX_OCR_REC_KEYS", raising=False)
+    monkeypatch.setenv("PPTX_OCR_MODEL_DIR", str(tmp_path))
+
+    config = AppConfig.from_environment()
+
+    assert config.pptx_ocr_rec_model_path == tmp_path / "rec.onnx"
+    assert config.pptx_ocr_rec_keys_path == tmp_path / "dict.txt"
+
+
+def test_resolve_ocr_model_paths_absent_when_unset(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for name in ("PPTX_OCR_REC_MODEL", "PPTX_OCR_REC_KEYS", "PPTX_OCR_MODEL_DIR"):
+        monkeypatch.delenv(name, raising=False)
+
+    config = AppConfig.from_environment()
+
+    assert config.pptx_ocr_rec_model_path is None
+    assert config.pptx_ocr_rec_keys_path is None

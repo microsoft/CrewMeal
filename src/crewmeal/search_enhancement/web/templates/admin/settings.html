@@ -140,6 +140,30 @@
 </div>
 
 <div class="card">
+  <h2 style="margin-top:0;">분석 품질 티어</h2>
+  <p class="muted">문서 분석 방식을 선택합니다. <strong>고품질</strong>은 모든 슬라이드를 이미지로 렌더링해 비전 AI로 분석합니다(가장 정확하지만 LLM 토큰 비용 발생). <strong>저품질</strong>은 LibreOffice·비전을 건너뛰고 OOXML에서 텍스트·표·차트를 추출하고 이미지 내 글자는 OCR로 회수합니다(CPU만 사용, LLM 토큰 0). 텍스트·스크린샷 중심 문서에 강력하며, 다이어그램·아키텍처 문서는 고품질이 유리합니다. (워커 재시작 후 적용)</p>
+  <form method="post" action="/admin/settings/analysis">
+    <label for="analysis-tier">분석 티어</label>
+    <select id="analysis-tier" name="{{ 'analysis.tier' }}">
+      {% for opt in analysis_tier.tiers %}
+      <option value="{{ opt.value }}" {% if opt.value == analysis_tier.tier %}selected{% endif %}>{{ opt.label }}</option>
+      {% endfor %}
+    </select>
+    <p class="muted" style="margin:0.2rem 0 0.8rem;">저품질 선택 시 아래 OCR 설정이 적용됩니다.</p>
+    <label style="display:flex; align-items:center; gap:0.5rem;">
+      <input type="checkbox" name="{{ 'analysis.ocr.enabled' }}" value="1" {% if analysis_tier.ocr_enabled %}checked{% endif %} />
+      임베디드 이미지 OCR 사용 (저품질 티어)
+    </label>
+    {% if analysis_tier.ocr_model_configured %}
+    <p class="muted" style="margin:0.4rem 0 0.8rem;"><span class="badge ok">한국어 OCR 모델</span> <code>{{ analysis_tier.ocr_model_path }}</code></p>
+    {% else %}
+    <p class="muted" style="margin:0.4rem 0 0.8rem;"><span class="badge">한국어 OCR 모델 미설정</span> 기본 OCR 모델은 한글을 읽지 못합니다. 환경변수 <code>PPTX_OCR_REC_MODEL</code>·<code>PPTX_OCR_REC_KEYS</code>(또는 <code>PPTX_OCR_MODEL_DIR</code>)로 한국어 인식 모델을 지정하세요.</p>
+    {% endif %}
+    <div style="margin-top: 1rem;"><button class="btn" type="submit">분석 티어 저장</button></div>
+  </form>
+</div>
+
+<div class="card">
   <h2 style="margin-top:0;">이미지 분석 모델</h2>
   <p class="muted">페이지 이미지를 분석하는 비전 LLM을 교체합니다. 비용 절감을 위해 배포/모델 ID·엔드포인트·추론 강도를 바꿀 수 있습니다. 빈 값은 환경 변수 기본값을 사용합니다.</p>
   <form method="post" action="/admin/settings/vision">

@@ -32,6 +32,7 @@ from crewmeal.search_enhancement.progress import (
 from crewmeal.search_enhancement.structured_analysis import (
     StructuredSlideAnalysisService,
 )
+from crewmeal.search_enhancement.analysis_tier import AnalysisTierSettings
 from crewmeal.search_enhancement.vision_model import VisionModelSettings
 
 __all__ = [
@@ -62,12 +63,16 @@ class PresentationProcessor:
         *,
         analysis_service: StructuredSlideAnalysisService | None = None,
         vision_model: VisionModelSettings | None = None,
+        analysis_tier: AnalysisTierSettings | None = None,
         decryption_settings: Mapping[str, Any] | None = None,
         mip_runner: MipSdkRunner | None = None,
     ) -> None:
         self._config = config
         self._analysis_service = analysis_service
         self._vision_model = vision_model
+        # Admin-selected analysis quality tier (vision vs no-Vision text+OCR).
+        # ``None`` keeps the config/environment default (typically vision).
+        self._analysis_tier = analysis_tier
         # Snapshot of admin decryption toggles (``decryption.<id>.enabled``),
         # read when the worker starts. Empty/None means every provider is off.
         self._decryption_settings = decryption_settings
@@ -75,6 +80,24 @@ class PresentationProcessor:
         # ``None`` means MIP decryption, if enabled, fails loudly instead of
         # silently passing an encrypted payload through.
         self._mip_runner = mip_runner
+
+    def _effective_config(self) -> AppConfig:
+        """Config with the admin tier overlaid onto env/config defaults.
+
+        The tier only changes how ``prepare`` extracts (which is why it is
+        overlaid here rather than baked into ``AppConfig.from_environment``): the
+        worker resolves it from the admin settings store at startup and passes it
+        in, so a portal toggle takes effect without a redeploy.
+        """
+
+        tier = self._analysis_tier
+        if tier is None:
+            return self._config
+        return replace(
+            self._config,
+            pptx_analysis_tier=tier.tier,
+            pptx_ocr_enabled=tier.ocr_enabled,
+        )
 
     def decrypt_source(
         self,
@@ -120,20 +143,27 @@ class PresentationProcessor:
 
         source_bytes = self.decrypt_source(source_bytes, filename=source_name)
 
+        run_config = self._effective_config()
         handler = detect_handler(source_name)
         handler.validate(
             source_bytes,
             filename=source_name,
-            max_bytes=self._config.max_upload_bytes,
+            max_bytes=run_config.max_upload_bytes,
         )
         prepared = handler.prepare(
             source_bytes,
             source_name=source_name,
-            config=self._config,
+            config=run_config,
             reporter=reporter,
         )
         source_manifest = prepared.source_manifest
         renderer_manifest = prepared.renderer_manifest
+
+        # Vision-tuning corrections only apply to the Vision path. The no-Vision
+        # low tier renders nothing, so silently drop them rather than failing the
+        # document on the "corrections but no visual pages" guard below.
+        if run_config.low_tier_enabled:
+            corrections = None
 
         if prepared.semantic_slides is not None:
             analysis = self._analyze_semantic_document(
