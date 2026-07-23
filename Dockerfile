@@ -103,6 +103,38 @@ RUN if [ -n "$MIP_SDK_VERSION" ]; then \
         echo "MIP SDK not fetched (no MIP_SDK_VERSION build-arg); MIP decryption stays disabled until CREWMEAL_MIP_SDK_CLI is configured." ; \
     fi
 
+# Optional: provision the low (no-Vision) analysis tier's OCR. This installs the
+# CPU-only OCR engine (rapidocr-onnxruntime + its numpy/opencv/Pillow deps) and
+# fetches a Korean recognition model, because the engine's bundled model reads
+# Chinese/English only. Kept out of the default image (heavy wheels) and off
+# unless requested. When absent, the low tier still extracts text/tables/charts;
+# only embedded-image OCR is skipped.
+#
+#   docker build --build-arg ENABLE_LOW_TIER_OCR=1 \
+#                --build-arg OCR_REC_URL=https://huggingface.co/monkt/paddleocr-onnx/resolve/main/languages/korean/rec.onnx \
+#                --build-arg OCR_KEYS_URL=https://huggingface.co/monkt/paddleocr-onnx/resolve/main/languages/korean/dict.txt \
+#                --build-arg OCR_REC_SHA256=<hex> --build-arg OCR_KEYS_SHA256=<hex> .
+ARG ENABLE_LOW_TIER_OCR=""
+ARG OCR_REC_URL=""
+ARG OCR_KEYS_URL=""
+ARG OCR_REC_SHA256=""
+ARG OCR_KEYS_SHA256=""
+ENV PPTX_OCR_MODEL_DIR=/opt/ocr/korean
+COPY scripts/fetch_ocr_model.py ./scripts/fetch_ocr_model.py
+RUN if [ -n "$ENABLE_LOW_TIER_OCR" ]; then \
+        pip install ".[ocr]" && \
+        if [ -n "$OCR_REC_URL" ]; then \
+            python scripts/fetch_ocr_model.py \
+                --rec-url "$OCR_REC_URL" --rec-sha256 "$OCR_REC_SHA256" \
+                --keys-url "$OCR_KEYS_URL" --keys-sha256 "$OCR_KEYS_SHA256" \
+                --dest "$PPTX_OCR_MODEL_DIR" ; \
+        else \
+            echo "Low-tier OCR engine installed, but no Korean model fetched (no OCR_REC_URL); Korean image text will not be read until PPTX_OCR_MODEL_DIR is populated." ; \
+        fi ; \
+    else \
+        echo "Low-tier OCR not provisioned (no ENABLE_LOW_TIER_OCR build-arg); the text_ocr tier runs text-only extraction." ; \
+    fi
+
 # Role-branching entrypoint. Strip any CR characters so the script runs even if
 # it was checked out with Windows (CRLF) line endings.
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh

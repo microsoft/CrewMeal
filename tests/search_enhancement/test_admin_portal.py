@@ -541,6 +541,46 @@ def test_vision_model_settings_roundtrip(tmp_path: Path) -> None:
     assert settings["vision.reasoning_effort"] == "low"
 
 
+def test_settings_page_shows_analysis_tier_card(tmp_path: Path) -> None:
+    app, _, _ = _build(tmp_path)
+    client = TestClient(app)
+
+    page = client.get("/admin/settings", headers=AUTH)
+
+    assert page.status_code == 200
+    assert "분석 품질 티어" in page.text
+    assert 'name="analysis.tier"' in page.text
+    assert 'name="analysis.ocr.enabled"' in page.text
+
+
+def test_analysis_tier_settings_roundtrip(tmp_path: Path) -> None:
+    app, repository, _ = _build(tmp_path)
+    client = TestClient(app)
+
+    saved = client.post(
+        "/admin/settings/analysis",
+        data={"analysis.tier": "text_ocr", "analysis.ocr.enabled": "1"},
+        headers=AUTH,
+        follow_redirects=False,
+    )
+    assert saved.status_code == 303
+
+    settings = repository.get_all_settings()
+    assert settings["analysis.tier"] == "text_ocr"
+    assert settings["analysis.ocr.enabled"] is True
+
+    # Unchecked OCR box is absent from the form -> stored as off.
+    client.post(
+        "/admin/settings/analysis",
+        data={"analysis.tier": "vision"},
+        headers=AUTH,
+        follow_redirects=False,
+    )
+    settings = repository.get_all_settings()
+    assert settings["analysis.tier"] == "vision"
+    assert settings["analysis.ocr.enabled"] is False
+
+
 def test_settings_page_shows_decryption_card(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
