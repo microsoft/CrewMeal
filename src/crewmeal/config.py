@@ -87,6 +87,12 @@ class AppConfig:
     slide_image_model: str = DEFAULT_SLIDE_IMAGE_MODEL
     rhwp_path: Path | None = None
     rhwp_timeout_seconds: int = DEFAULT_RHWP_TIMEOUT_SECONDS
+    # Prototype: when enabled, PowerPoint slides that are unambiguously linear
+    # text (only layout placeholders, no pictures/charts/tables/connectors/
+    # groups) are extracted straight from OOXML and skip the Vision model. Only
+    # the remaining visual slides are rendered and analyzed. Off keeps the
+    # byte-for-byte legacy behavior where every slide goes through Vision.
+    pptx_semantic_text_slides: bool = False
 
     @classmethod
     def from_environment(cls) -> "AppConfig":
@@ -123,6 +129,10 @@ class AppConfig:
             rhwp_timeout_seconds=_positive_int_environment(
                 "RHWP_TIMEOUT_SECONDS",
                 DEFAULT_RHWP_TIMEOUT_SECONDS,
+            ),
+            pptx_semantic_text_slides=_bool_environment(
+                "PPTX_SEMANTIC_TEXT_SLIDES",
+                default=False,
             ),
         )
 
@@ -163,6 +173,20 @@ def _positive_int_environment(name: str, default: int) -> int:
     if value <= 0:
         raise ConfigurationError(f"{name} must be a positive integer.")
     return value
+
+
+def _bool_environment(name: str, *, default: bool) -> bool:
+    raw_value = os.getenv(name)
+    if raw_value is None:
+        return default
+    normalized = raw_value.strip().casefold()
+    if normalized in {"1", "true", "yes", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "off", ""}:
+        return False
+    raise ConfigurationError(
+        f"{name} must be a boolean (true/false, 1/0, yes/no, on/off)."
+    )
 
 
 def _slide_image_model_environment() -> str:
