@@ -18,6 +18,14 @@ payload가 없는 HWP 페이지만 선택적으로 렌더링·분석합니다. �
 > 배포됩니다 — <https://microsoft.github.io/CrewMeal/>. 프로젝트 저장소는
 > <https://github.com/microsoft/CrewMeal> 입니다.
 
+> 🚀 **처음 도입·테스트하시나요?** 고객사 환경에서 설치·구성·테스트를 단계별로
+> 따라 할 수 있는 안내서를 별도로 제공합니다 —
+> [**설치 · 구성 · 테스트 가이드**](docs/install-and-test-guide.md)
+> (웹 버전: <https://microsoft.github.io/CrewMeal/install-and-test-guide.html> —
+> 복사 버튼·진행 체크·PDF 저장 지원, 파일 하나로 오프라인 열람 가능).
+> Azure·Microsoft 365 없이 30분 만에 결과를 확인하는 로컬 체험 경로부터
+> 전체 SharePoint·Copilot 연동까지 순서대로 담았습니다.
+
 ## CrewMeal 확장 기능
 
 | 기능 | 상태 | 설명 |
@@ -183,6 +191,10 @@ skip합니다.
 `1004da59-37b1-4a22-80e1-019cc29ce8f1`의 `eastus2` 배포를 전제로 하며, PostgreSQL만
 구독 정책상 offer가 제한되지 않는 `centralus`에 둡니다(`postgresLocation` 파라미터).
 공개 endpoint를 사용하므로 민감 문서를 입력하지 마세요.
+
+> 💡 처음 도입하는 조직이라면 준비물 확인부터 배포·검증까지 순서대로 정리한
+> [설치 · 구성 · 테스트 가이드](docs/install-and-test-guide.md)를 함께 보세요.
+> Azure 없이 로컬에서 먼저 결과를 확인하는 경로(트랙 A)도 포함되어 있습니다.
 
 ## 로컬 설치
 
