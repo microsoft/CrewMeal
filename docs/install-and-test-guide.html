@@ -1,0 +1,1397 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CrewMeal 설치 · 구성 · 테스트 가이드</title>
+<meta name="description" content="CrewMeal을 고객사 환경에서 설치·구성·테스트하기 위한 단계별 가이드. 로컬 30분 체험(트랙 A), Azure 배포(트랙 B), SharePoint·Copilot 연동(트랙 C)." />
+<meta name="color-scheme" content="light" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect x='4' y='10' width='32' height='20' rx='6' fill='%2322261f'/%3E%3Crect x='8' y='14' width='11' height='12' rx='3' fill='%232e6fb0'/%3E%3Crect x='21' y='14' width='11' height='12' rx='3' fill='%23c63f27'/%3E%3C/svg%3E" />
+<style>
+/* ============================================================
+   CrewMeal 설치·구성·테스트 가이드 — 단일 파일 문서
+   외부 리소스 없음(오프라인 열람 가능) · 인쇄/PDF 지원
+   ============================================================ */
+:root{
+  --paper:#f2f5ef; --card:#ffffff; --card-2:#f8faf6;
+  --ink:#1f2620; --soft:#5b6357; --faint:#858d80;
+  --line:#dbe2d6; --line-2:#eaefe6;
+
+  --brand:#c63f27; --brand-ink:#ad3520; --brand-tint:#fbece7;
+  --blue:#2e6fb0; --blue-ink:#255d95; --blue-tint:#eaf1f8;
+  --green:#17603a; --green-tint:#dff0e5;
+  --amber:#8a5b00; --amber-tint:#fdf1d8;
+
+  --mono:ui-monospace,"Cascadia Mono","Cascadia Code",Consolas,"D2Coding",monospace;
+  --sans:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,
+         "Segoe UI","Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",sans-serif;
+
+  --nav-w:286px;
+  --radius:14px; --radius-sm:9px;
+  --shadow:0 10px 30px rgba(31,38,32,.09);
+  --shadow-sm:0 2px 8px rgba(31,38,32,.07);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--sans); font-size:16px; line-height:1.72;
+  word-break:keep-all; overflow-wrap:anywhere;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:var(--brand-ink); text-decoration:none}
+a:hover{text-decoration:underline; text-underline-offset:2px}
+:focus-visible{outline:2px solid var(--brand); outline-offset:2px; border-radius:4px}
+
+/* ---------- 좌측 목차 ---------- */
+.side{
+  position:fixed; inset:0 auto 0 0; width:var(--nav-w); z-index:40;
+  background:var(--card); border-right:1px solid var(--line);
+  display:flex; flex-direction:column;
+}
+.side-head{padding:18px 20px 14px; border-bottom:1px solid var(--line-2)}
+.logo{display:flex; align-items:center; gap:10px; color:var(--ink)}
+.logo:hover{text-decoration:none}
+.logo svg{width:30px; height:30px; flex:none}
+.logo b{font-size:15px; letter-spacing:-.01em; display:block; line-height:1.2}
+.logo span{font-size:11.5px; color:var(--soft); font-weight:600}
+.bar{margin-top:14px; height:6px; border-radius:99px; background:var(--line-2); overflow:hidden}
+.bar i{display:block; height:100%; width:0; border-radius:99px; background:var(--green); transition:width .3s ease}
+.bar-txt{margin-top:6px; font-size:11.5px; color:var(--soft); display:flex; justify-content:space-between}
+.bar-txt button{
+  border:0; background:none; padding:0; color:var(--faint); font:inherit; font-size:11.5px;
+  cursor:pointer; text-decoration:underline; text-underline-offset:2px;
+}
+.bar-txt button:hover{color:var(--brand-ink)}
+
+.toc{overflow-y:auto; padding:10px 12px 28px; flex:1}
+.toc a{
+  display:flex; align-items:center; gap:8px; padding:7px 10px; margin:1px 0;
+  border-radius:8px; color:var(--soft); font-size:13.6px; font-weight:600; line-height:1.4;
+}
+.toc a:hover{background:var(--card-2); color:var(--ink); text-decoration:none}
+.toc a.on{background:var(--brand-tint); color:var(--brand-ink)}
+.toc a .n{
+  font-family:var(--mono); font-size:11px; font-weight:700; color:var(--faint);
+  min-width:16px; text-align:center; flex:none;
+}
+.toc a.on .n{color:var(--brand)}
+.toc .sub{padding-left:26px; font-size:12.8px; font-weight:500}
+.toc hr{border:0; border-top:1px solid var(--line-2); margin:10px 6px}
+
+/* ---------- 본문 ---------- */
+.main{margin-left:var(--nav-w); padding:0 clamp(16px,4vw,56px) 120px; max-width:1180px}
+.inner{max-width:840px}
+header.top{padding:56px 0 8px}
+.kicker{
+  display:inline-flex; align-items:center; gap:7px; font-size:12px; font-weight:700;
+  letter-spacing:.09em; text-transform:uppercase; color:var(--brand-ink);
+  background:var(--brand-tint); padding:5px 11px; border-radius:99px;
+}
+h1{
+  font-size:clamp(27px,2.1vw + 18px,40px); line-height:1.22; letter-spacing:-.025em;
+  margin:16px 0 12px; font-weight:800;
+}
+.lead{font-size:17px; color:var(--soft); margin:0 0 22px; max-width:60ch}
+.tools{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px}
+.tool{
+  display:inline-flex; align-items:center; gap:7px; padding:8px 14px; border-radius:99px;
+  border:1px solid var(--line); background:var(--card); color:var(--ink);
+  font:inherit; font-size:13.5px; font-weight:600; cursor:pointer;
+}
+.tool:hover{border-color:var(--ink); text-decoration:none}
+.tool svg{width:15px; height:15px}
+.tool.on{background:var(--ink); color:#fff; border-color:var(--ink)}
+
+h2{
+  font-size:clamp(22px,1vw + 18px,28px); line-height:1.3; letter-spacing:-.02em;
+  margin:0 0 6px; font-weight:800; scroll-margin-top:24px;
+}
+h3{font-size:18px; margin:34px 0 10px; font-weight:700; letter-spacing:-.01em; scroll-margin-top:24px}
+h4{font-size:15.5px; margin:24px 0 8px; font-weight:700}
+p{margin:0 0 14px}
+ul,ol{margin:0 0 14px; padding-left:22px}
+li{margin:5px 0}
+li::marker{color:var(--faint)}
+hr.rule{border:0; border-top:1px solid var(--line); margin:44px 0}
+
+section.doc{padding:34px 0 6px; scroll-margin-top:10px}
+.sec-head{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:18px}
+.sec-num{
+  font-family:var(--mono); font-size:13px; font-weight:700; color:#fff; background:var(--ink);
+  padding:3px 9px; border-radius:7px; letter-spacing:.02em;
+}
+.sec-sub{color:var(--soft); margin:-2px 0 22px; font-size:15.5px; max-width:62ch}
+
+/* 트랙 색 */
+.trk-a{--accent:var(--green); --accent-tint:var(--green-tint)}
+.trk-b{--accent:var(--blue-ink); --accent-tint:var(--blue-tint)}
+.trk-c{--accent:var(--brand-ink); --accent-tint:var(--brand-tint)}
+.trk-a .sec-num,.trk-b .sec-num,.trk-c .sec-num{background:var(--accent)}
+.chip{
+  display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:700;
+  padding:3px 10px; border-radius:99px; background:var(--accent-tint); color:var(--accent);
+  align-self:flex-start; width:fit-content;
+}
+
+/* 카드 */
+.card{
+  background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+  padding:20px 22px; margin:0 0 16px; box-shadow:var(--shadow-sm);
+}
+.grid3{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-bottom:20px}
+.tcard{
+  background:var(--card); border:1px solid var(--line); border-top:4px solid var(--accent);
+  border-radius:var(--radius); padding:18px 18px 16px; box-shadow:var(--shadow-sm);
+  display:flex; flex-direction:column; gap:8px;
+}
+.tcard h4{margin:0; font-size:16px}
+.tcard p{margin:0; font-size:13.8px; color:var(--soft); flex:1}
+.tcard dl{margin:6px 0 0; display:grid; grid-template-columns:auto 1fr; gap:3px 10px; font-size:13px}
+.tcard dt{color:var(--faint); font-weight:600}
+.tcard dd{margin:0; font-weight:600}
+.tcard .go{
+  margin-top:10px; font-size:13.5px; font-weight:700; color:var(--accent);
+  display:inline-flex; align-items:center; gap:5px;
+}
+
+/* 단계 */
+.step{
+  display:grid; grid-template-columns:44px minmax(0,1fr); gap:0 16px;
+  padding:22px 0 6px; border-top:1px solid var(--line-2);
+}
+.step:first-of-type{border-top:0}
+.step .num{
+  grid-row:1/999; width:34px; height:34px; border-radius:50%; flex:none;
+  background:var(--accent-tint); color:var(--accent);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--mono); font-size:13px; font-weight:700; margin-top:2px;
+}
+.step > .body{min-width:0}
+.step h3{margin:0 0 10px; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+.step h3 .tag{
+  font-size:11.5px; font-weight:700; color:var(--soft); background:var(--card-2);
+  border:1px solid var(--line); padding:2px 8px; border-radius:99px;
+}
+.done{
+  margin-left:auto; display:inline-flex; align-items:center; gap:6px;
+  font-size:12.5px; font-weight:600; color:var(--faint); cursor:pointer; user-select:none;
+}
+.done input{width:16px; height:16px; accent-color:var(--green); cursor:pointer; margin:0}
+.step.is-done > .num{background:var(--green); color:#fff}
+.step.is-done > .num::after{content:"✓"; font-size:15px}
+.step.is-done > .num span{display:none}
+.step.is-done .done{color:var(--green)}
+
+/* 코드 */
+.codewrap{position:relative; margin:0 0 14px}
+pre{
+  margin:0; padding:16px 60px 16px 18px; border-radius:var(--radius-sm);
+  background:#1f2620; color:#e8eee6; overflow-x:auto;
+  font-family:var(--mono); font-size:13.2px; line-height:1.65; tab-size:2;
+}
+pre .c{color:#9db393}          /* 주석 */
+pre .v{color:#8fc4f0}          /* 변수 */
+pre .s{color:#f0b8a6}          /* 문자열 */
+.copy{
+  position:absolute; top:9px; right:9px; padding:5px 10px; border-radius:7px;
+  border:1px solid rgba(232,238,230,.22); background:rgba(232,238,230,.08); color:#e8eee6;
+  font:inherit; font-size:11.5px; font-weight:600; cursor:pointer; line-height:1.6;
+}
+.copy:hover{background:rgba(232,238,230,.18)}
+.copy.ok{background:#2f7a52; border-color:#2f7a52; color:#fff}
+code{
+  font-family:var(--mono); font-size:.88em; background:var(--card-2);
+  border:1px solid var(--line-2); padding:1px 5px; border-radius:5px; white-space:nowrap;
+}
+pre code{background:none; border:0; padding:0; white-space:pre; font-size:1em}
+
+/* 콜아웃 */
+.note{
+  border-left:4px solid var(--accent,var(--blue)); background:var(--card);
+  border-radius:0 var(--radius-sm) var(--radius-sm) 0; padding:14px 18px; margin:0 0 16px;
+  box-shadow:var(--shadow-sm); font-size:14.8px;
+}
+.note > :last-child{margin-bottom:0}
+.note b.hd{display:block; margin-bottom:3px}
+.note.ok{border-color:var(--green); background:var(--green-tint)}
+.note.warn{border-color:#d99b1a; background:var(--amber-tint)}
+.note.tip{border-color:var(--blue); background:var(--blue-tint)}
+.note.stop{border-color:var(--brand); background:var(--brand-tint)}
+
+/* 표 */
+.tw{overflow-x:auto; margin:0 0 18px; border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--card)}
+table{border-collapse:collapse; width:100%; font-size:14.4px; min-width:460px}
+th,td{padding:10px 14px; text-align:left; vertical-align:top; border-bottom:1px solid var(--line-2)}
+th{background:var(--card-2); font-weight:700; font-size:13px; color:var(--soft); white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td code{white-space:normal}
+.tw table.chk td:first-child{width:38px; text-align:center}
+.tw table.chk input{width:17px; height:17px; accent-color:var(--green); cursor:pointer}
+tr.is-done td{color:var(--faint)}
+tr.is-done td:nth-child(3){text-decoration:line-through}
+
+/* 잡다 */
+.kv{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; font-size:14.5px; margin:0 0 14px}
+.kv dt{font-weight:700; color:var(--soft)}
+.kv dd{margin:0}
+.top-link{
+  position:fixed; right:22px; bottom:22px; z-index:30; width:42px; height:42px; border-radius:50%;
+  border:1px solid var(--line); background:var(--card); color:var(--ink); box-shadow:var(--shadow);
+  display:none; align-items:center; justify-content:center; cursor:pointer; font-size:17px;
+}
+.top-link.show{display:flex}
+.burger{
+  position:fixed; top:12px; left:12px; z-index:60; width:42px; height:42px; border-radius:11px;
+  border:1px solid var(--line); background:var(--card); color:var(--ink); box-shadow:var(--shadow-sm);
+  display:none; align-items:center; justify-content:center; cursor:pointer;
+}
+.scrim{position:fixed; inset:0; background:rgba(31,38,32,.42); z-index:35; display:none}
+.scrim.show{display:block}
+footer.end{
+  margin-top:56px; padding-top:22px; border-top:1px solid var(--line);
+  color:var(--soft); font-size:13.5px; display:flex; flex-wrap:wrap; gap:8px 24px; justify-content:space-between;
+}
+
+/* 트랙 필터 */
+body.only-a .hide-a,body.only-b .hide-b,body.only-c .hide-c{display:none}
+
+/* 반응형 */
+@media (max-width:1080px){ .grid3{grid-template-columns:1fr} }
+@media (max-width:900px){
+  .side{transform:translateX(-100%); transition:transform .22s ease; box-shadow:var(--shadow)}
+  .side.open{transform:none}
+  .main{margin-left:0; padding-top:8px}
+  .burger{display:flex}
+  header.top{padding-top:64px}
+  .step{grid-template-columns:1fr; gap:0}
+  .step .num{grid-row:auto; margin-bottom:8px}
+  .done{margin-left:0}
+}
+
+/* 인쇄 / PDF */
+@media print{
+  :root{--paper:#fff}
+  body{font-size:11.6pt; line-height:1.55}
+  .side,.burger,.tools,.top-link,.copy,.scrim,.done{display:none !important}
+  .main{margin:0; padding:0; max-width:none}
+  .inner{max-width:none}
+  body.only-a .hide-a,body.only-b .hide-b,body.only-c .hide-c{display:revert}
+  section.doc{page-break-inside:auto}
+  h2,h3{page-break-after:avoid}
+  .card,.note,.tw,.codewrap,.step{page-break-inside:avoid}
+  pre{background:#f4f6f2; color:#1f2620; border:1px solid #d9e0d5; padding:10px 12px; font-size:9.6pt; white-space:pre-wrap}
+  pre .c{color:#5b7a4f} pre .v{color:#255d95} pre .s{color:#a8442a}
+  a{color:var(--ink); text-decoration:none}
+  a[href^="http"]::after{content:" (" attr(href) ")"; font-size:8.6pt; color:#666; word-break:break-all}
+  .toc a::after{content:none}
+  section.doc{border-top:1px solid #ddd}
+}
+</style>
+</head>
+<body>
+
+<button class="burger" type="button" id="burger" aria-label="목차 열기">
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+</button>
+<div class="scrim" id="scrim"></div>
+
+<!-- ================= 목차 ================= -->
+<aside class="side" id="side">
+  <div class="side-head">
+    <a class="logo" href="#top">
+      <svg viewBox="0 0 40 40" aria-hidden="true">
+        <rect x="4" y="10" width="32" height="20" rx="6" fill="#1f2620"/>
+        <rect x="8" y="14" width="11" height="12" rx="3" fill="#2e6fb0"/>
+        <rect x="21" y="14" width="11" height="12" rx="3" fill="#c63f27"/>
+        <rect x="11" y="31.5" width="18" height="3" rx="1.5" fill="#1f2620"/>
+      </svg>
+      <span><b>CrewMeal</b><span>설치 · 구성 · 테스트 가이드</span></span>
+    </a>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="bar-txt">
+      <span id="bartext">0 / 0 단계 완료</span>
+      <button type="button" id="reset">초기화</button>
+    </div>
+  </div>
+  <nav class="toc" id="toc">
+    <a href="#s0"><span class="n">0</span>시작하기 · 트랙 고르기</a>
+    <a href="#s1"><span class="n">1</span>트랙 A — 내 PC에서 30분</a>
+    <a class="sub" href="#a1">A-1 ~ A-4 · 설치와 실행</a>
+    <a class="sub" href="#a5">A-5 ~ A-8 · 업로드와 확인</a>
+    <a href="#s2"><span class="n">2</span>트랙 B — Azure 배포</a>
+    <a class="sub" href="#b1">B-1 ~ B-3 · 준비와 설정</a>
+    <a class="sub" href="#b4">B-4 ~ B-6 · 배포와 검증</a>
+    <a href="#s3"><span class="n">3</span>트랙 C — SharePoint · Copilot</a>
+    <a class="sub" href="#c1">C-1 ~ C-4 · 사이트와 권한</a>
+    <a class="sub" href="#c5">C-5 ~ C-9 · 게시와 실사용</a>
+    <hr />
+    <a href="#s4"><span class="n">4</span>테스트 시나리오 15</a>
+    <a href="#s5"><span class="n">5</span>환경 변수 총정리</a>
+    <a href="#s6"><span class="n">6</span>문제 해결</a>
+    <a href="#s7"><span class="n">7</span>비용 관리와 정리</a>
+    <a href="#s8"><span class="n">8</span>보안 · 데이터 취급</a>
+    <a href="#s9"><span class="n">9</span>도움 요청</a>
+    <hr />
+    <a href="https://microsoft.github.io/CrewMeal/" target="_blank" rel="noopener"><span class="n">↗</span>CrewMeal 소개 사이트</a>
+    <a href="https://github.com/microsoft/CrewMeal" target="_blank" rel="noopener"><span class="n">↗</span>GitHub 저장소</a>
+  </nav>
+</aside>
+
+<!-- ================= 본문 ================= -->
+<div class="main">
+<div class="inner">
+<span id="top"></span>
+
+<header class="top">
+  <span class="kicker">고객사 PoC · 단계별 안내</span>
+  <h1>CrewMeal 설치 · 구성 · 테스트 가이드</h1>
+  <p class="lead">
+    CrewMeal을 <b>처음 접하는 담당자</b>가 위에서부터 순서대로 따라 하기만 하면
+    설치 · 구성 · 테스트를 끝낼 수 있도록 만든 문서입니다.
+    모든 명령은 <b>Windows PowerShell</b> 기준이며, 코드 상자의
+    <b>복사</b> 버튼을 눌러 그대로 붙여 넣으면 됩니다.
+  </p>
+  <div class="tools">
+    <button class="tool" type="button" data-filter="all">전체 보기</button>
+    <button class="tool" type="button" data-filter="a">트랙 A만</button>
+    <button class="tool" type="button" data-filter="b">트랙 B만</button>
+    <button class="tool" type="button" data-filter="c">트랙 C만</button>
+    <button class="tool" type="button" id="print">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg>
+      인쇄 · PDF 저장
+    </button>
+  </div>
+  <p style="font-size:13.6px;color:var(--faint);margin:0">
+    이 파일 하나만 있으면 인터넷 없이도 볼 수 있습니다. 체크한 진행 상황은 이 브라우저에 저장됩니다.
+  </p>
+</header>
+
+<hr class="rule" />
+
+<!-- ============ 0. 트랙 고르기 ============ -->
+<section class="doc" id="s0">
+  <div class="sec-head"><span class="sec-num">0</span><h2>먼저 트랙을 고르세요</h2></div>
+  <p class="sec-sub">
+    CrewMeal 테스트는 세 단계로 나뉩니다. <b>A → B → C 순서</b>를 권장합니다.
+    트랙 A는 혼자서 바로 할 수 있고, 트랙 C는 <b>트랙 B의 배포 주소가 있어야</b> 진행할 수 있습니다.
+  </p>
+
+  <div class="grid3">
+    <div class="tcard trk-a">
+      <span class="chip">트랙 A</span>
+      <h4>내 PC에서 30분 체험</h4>
+      <p>문서를 넣으면 검색용 콘텐츠가 실제로 만들어지는지 눈으로 확인합니다.</p>
+      <dl>
+        <dt>필요</dt><dd>PC 1대 + Python</dd>
+        <dt>시간</dt><dd>약 30분</dd>
+        <dt>비용</dt><dd>0원</dd>
+      </dl>
+      <a class="go" href="#s1">트랙 A 시작 →</a>
+    </div>
+    <div class="tcard trk-b">
+      <span class="chip">트랙 B</span>
+      <h4>고객사 Azure에 배포</h4>
+      <p>그림·차트를 해석하는 고품질 AI 비전 분석을 켜고 서버로 운영합니다.</p>
+      <dl>
+        <dt>필요</dt><dd>Azure 구독(소유자)</dd>
+        <dt>시간</dt><dd>반나절</dd>
+        <dt>비용</dt><dd>사용량 과금</dd>
+      </dl>
+      <a class="go" href="#s2">트랙 B 시작 →</a>
+    </div>
+    <div class="tcard trk-c">
+      <span class="chip">트랙 C</span>
+      <h4>SharePoint · Copilot 연동</h4>
+      <p>라이브러리에서 버튼 한 번 → Copilot이 그 내용을 근거로 답하는 전 과정.</p>
+      <dl>
+        <dt>필요</dt><dd>M365 테넌트 관리자</dd>
+        <dt>시간</dt><dd>1일</dd>
+        <dt>비용</dt><dd>사용량 과금</dd>
+      </dl>
+      <a class="go" href="#s3">트랙 C 시작 →</a>
+    </div>
+  </div>
+
+  <div class="note ok">
+    <b class="hd">✅ 우선 결과물만 빨리 보고 싶다면 → 트랙 A만 하세요.</b>
+    Azure 구독도, Microsoft 365 계정도, 관리자 승인도 필요 없습니다.
+  </div>
+
+  <div class="note stop">
+    <b class="hd">⚠️ PoC 공통 주의</b>
+    이 구성은 개념검증(PoC)용으로 공개 엔드포인트를 사용합니다.
+    <b>실제 기밀 문서를 넣지 마세요.</b> 테스트에는 비민감 문서만 사용합니다.
+  </div>
+
+  <p style="font-size:14px;color:var(--soft)">
+    제품 개요와 아키텍처는
+    <a href="https://github.com/microsoft/CrewMeal" target="_blank" rel="noopener">GitHub 저장소</a>와
+    <a href="https://microsoft.github.io/CrewMeal/" target="_blank" rel="noopener">소개 사이트</a>를 참고하세요.
+  </p>
+</section>
+
+<hr class="rule hide-b hide-c" />
+
+<!-- ============ 1. 트랙 A ============ -->
+<section class="doc trk-a hide-b hide-c" id="s1">
+  <div class="sec-head">
+    <span class="sec-num">1</span><h2>트랙 A — 내 PC에서 30분 체험</h2><span class="chip">약 30분 · 비용 0원</span>
+  </div>
+  <p class="sec-sub">
+    Azure도 Microsoft 365도 없이 <b>PC 한 대에서</b> 문서를 넣고 결과를 확인합니다.
+    AI 비전 모델을 쓰지 않는 <b>저품질(텍스트+OCR) 티어</b>로 동작하므로
+    비용이 전혀 들지 않고 LibreOffice 설치도 필요 없습니다.
+  </p>
+
+  <div class="step" id="a1">
+    <span class="num"><span>A1</span></span>
+    <div class="body">
+      <h3>준비물 확인 <label class="done"><input type="checkbox" data-step="a1" /> 완료</label></h3>
+      <div class="tw"><table>
+        <thead><tr><th>항목</th><th>필요 버전</th><th>확인 명령</th></tr></thead>
+        <tbody>
+          <tr><td>Python</td><td>3.11 이상 (3.12 권장)</td><td><code>python --version</code></td></tr>
+          <tr><td>Git</td><td>아무 최신 버전</td><td><code>git --version</code></td></tr>
+        </tbody>
+      </table></div>
+      <p>
+        없다면 <a href="https://www.python.org/downloads/" target="_blank" rel="noopener">python.org</a>와
+        <a href="https://git-scm.com/downloads" target="_blank" rel="noopener">git-scm.com</a>에서 설치하세요.
+        Python 설치 시 <b>“Add python.exe to PATH”</b> 체크를 꼭 켜세요.
+      </p>
+    </div>
+  </div>
+
+  <div class="step">
+    <span class="num"><span>A2</span></span>
+    <div class="body">
+      <h3>소스 코드 받기 <label class="done"><input type="checkbox" data-step="a2" /> 완료</label></h3>
+      <div class="codewrap"><pre><code>cd $HOME
+git clone https://github.com/microsoft/CrewMeal.git
+cd CrewMeal</code></pre></div>
+      <div class="note ok">
+        <b class="hd">✅ 확인</b>
+        <code>dir</code> 을 쳤을 때 <code>README.md</code>, <code>src</code>, <code>scripts</code> 폴더가 보이면 성공.
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <span class="num"><span>A3</span></span>
+    <div class="body">
+      <h3>파이썬 환경 만들기 <span class="tag">2~5분</span> <label class="done"><input type="checkbox" data-step="a3" /> 완료</label></h3>
+      <div class="codewrap"><pre><code>python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install -e ".[dev]"</code></pre></div>
+      <p>마지막 줄에 <code>Successfully installed ... crewmeal-0.1.0 ...</code> 이 나오면 성공입니다.</p>
+      <div class="note ok">
+        <b class="hd">✅ 확인</b>
+        아래 명령이 <code>366 passed</code> 같은 결과로 끝나면 설치가 정상입니다.
+      </div>
+      <div class="codewrap"><pre><code>.\.venv\Scripts\python.exe -m pytest -q</code></pre></div>
+    </div>
+  </div>
+
+  <div class="step">
+    <span class="num"><span>A4</span></span>
+    <div class="body">
+      <h3>웹 서버 실행 <span class="tag">터미널 1번</span> <label class="done"><input type="checkbox" data-step="a4" /> 완료</label></h3>
+      <p><b>PowerShell 창을 하나 열고</b> 아래를 통째로 붙여 넣습니다.</p>
+      <div class="codewrap"><pre><code>cd $HOME\CrewMeal
+<span class="v">$env:CREWMEAL_ADMIN_KEY</span>          = <span class="s">"local-admin-key"</span>
+<span class="v">$env:CREWMEAL_WEB_SESSION_SECRET</span>  = <span class="s">"local-session-secret"</span>
+<span class="v">$env:CREWMEAL_INGEST_REQUIRE_AUTH</span> = <span class="s">"false"</span>
+<span class="v">$env:CREWMEAL_STATUS_REQUIRE_AUTH</span> = <span class="s">"false"</span>
+.\.venv\Scripts\python.exe -m uvicorn crewmeal.search_enhancement.web:create_app_from_env `
+  --factory --host 127.0.0.1 --port 8000</code></pre></div>
+      <p>
+        <code>Uvicorn running on http://127.0.0.1:8000</code> 이 보이면 실행 중입니다.
+        <b>이 창은 끄지 말고 그대로 두세요.</b>
+      </p>
+      <div class="note ok">
+        <b class="hd">✅ 확인</b>
+        브라우저에서 <a href="http://127.0.0.1:8000/healthz">http://127.0.0.1:8000/healthz</a> 를 열면
+        <code>{"status":"ok"}</code> 가 보입니다.
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="a5">
+    <span class="num"><span>A5</span></span>
+    <div class="body">
+      <h3>문서 올리기 <label class="done"><input type="checkbox" data-step="a5" /> 완료</label></h3>
+      <ol>
+        <li>브라우저에서 <a href="http://127.0.0.1:8000/admin">http://127.0.0.1:8000/admin</a> 접속</li>
+        <li>관리자 키에 <code>local-admin-key</code> 입력 후 로그인</li>
+        <li>상단 메뉴에서 <b>시연 업로드</b>(<code>/admin/tryout</code>) 클릭</li>
+        <li>테스트용 <code>.pptx</code> 파일을 선택하고 업로드</li>
+      </ol>
+      <p>
+        업로드하면 자동으로 <b>상태 페이지</b>(<code>/s/...</code>)로 이동합니다.
+        이때 상태는 <b>대기(Queued)</b> 입니다 — 아직 처리할 워커를 켜지 않았기 때문입니다.
+      </p>
+      <div class="note tip">
+        <b class="hd">💡 팁</b>
+        손에 든 PPT가 없다면 PowerPoint에서 슬라이드 2~3장짜리 아무 파일이나 만들어 쓰세요.
+        표·차트가 있으면 결과가 더 잘 보입니다.
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <span class="num"><span>A6</span></span>
+    <div class="body">
+      <h3>워커 실행해서 처리하기 <span class="tag">터미널 2번</span> <label class="done"><input type="checkbox" data-step="a6" /> 완료</label></h3>
+      <p>
+        <b>새 PowerShell 창을 하나 더 열고</b> 아래를 통째로 붙여 넣습니다.
+        아래 M365 값은 <b>의미 없는 더미 값</b>입니다. 게시 대상이 아직 선택되지 않은
+        상태(<code>unset</code>)이므로 워커는 SharePoint에 접속하지 않습니다.
+      </p>
+      <div class="codewrap"><pre><code>cd $HOME\CrewMeal
+<span class="v">$env:CREWMEAL_M365_TENANT_ID</span>     = <span class="s">"00000000-0000-0000-0000-000000000000"</span>
+<span class="v">$env:CREWMEAL_M365_CLIENT_ID</span>     = <span class="s">"00000000-0000-0000-0000-000000000000"</span>
+<span class="v">$env:CREWMEAL_M365_CLIENT_SECRET</span> = <span class="s">"local-dummy"</span>
+<span class="v">$env:CREWMEAL_M365_SITE_ID</span>       = <span class="s">"local-dummy-site"</span>
+<span class="v">$env:CREWMEAL_M365_DRIVE_ID</span>      = <span class="s">"local-dummy-drive"</span>
+<span class="v">$env:CREWMEAL_M365_LIST_ID</span>       = <span class="s">"local-dummy-list"</span>
+<span class="v">$env:CREWMEAL_M365_SITE_URL</span>      = <span class="s">"https://localhost/sites/local"</span>
+
+<span class="c"># 비용 0원 · AI 호출 없음 (저품질 텍스트 티어)</span>
+<span class="v">$env:PPTX_ANALYSIS_TIER</span> = <span class="s">"text_ocr"</span>
+<span class="v">$env:PPTX_OCR_ENABLED</span>   = <span class="s">"false"</span>
+
+.\.venv\Scripts\python.exe -m crewmeal.search_enhancement.cli once --verbose</code></pre></div>
+      <div class="note ok">
+        <b class="hd">✅ 확인</b>
+        마지막에 <code>Processed 0 command(s) and 1 job(s).</code> 가 보이면 문서 1건을 처리한 것입니다.
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <span class="num"><span>A7</span></span>
+    <div class="body">
+      <h3>결과 확인 <label class="done"><input type="checkbox" data-step="a7" /> 완료</label></h3>
+      <p>
+        A-5에서 열렸던 상태 페이지로 돌아갑니다. 이 페이지는 3초마다 스스로 갱신되므로
+        그냥 두고 보면 됩니다(수동 새로고침도 가능).
+      </p>
+      <div class="tw"><table>
+        <thead><tr><th>보이는 것</th><th>의미</th></tr></thead>
+        <tbody>
+          <tr><td><b>완료</b> 배지</td><td>처리 성공</td></tr>
+          <tr><td>「진행 상황」 타임라인 8단계</td><td>작업 시작 → 원본 다운로드 → 파일 검증 → 문서 변환·추출 → 페이지 렌더링 → 콘텐츠 분석 → HTML 생성 → 완료</td></tr>
+          <tr><td>「추출된 HTML 미리보기」</td><td>실제로 만들어진 검색용 콘텐츠 (<b>새 창에서 열기 ↗</b> 로 크게 보기)</td></tr>
+        </tbody>
+      </table></div>
+      <div class="note ok">
+        <b class="hd">✅ 합격 기준</b>
+        추출된 HTML 안에 원본 슬라이드의 <b>제목 · 문장 · 표 내용이 그대로 들어 있으면</b> 정상입니다.
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <span class="num"><span>A8</span></span>
+    <div class="body">
+      <h3>트랙 A 정리 <label class="done"><input type="checkbox" data-step="a8" /> 완료</label></h3>
+      <ul>
+        <li>터미널 1(웹)에서 <code>Ctrl + C</code> 를 눌러 서버를 끕니다.</li>
+        <li>로컬 데이터는 <code>.crewmeal\search-enhancement.db</code> 파일 하나에만 저장됩니다.
+            지우고 싶으면 폴더째 삭제하세요.</li>
+      </ul>
+      <div class="codewrap"><pre><code>Remove-Item -Recurse -Force .crewmeal</code></pre></div>
+      <div class="note warn">
+        <b class="hd">📌 트랙 A의 한계</b>
+        저품질 티어는 AI 비전 모델을 쓰지 않으므로 그림 · 차트 · 다이어그램의
+        <b>의미 설명은 생성되지 않습니다.</b> 간트차트 해석, 도표 요약 등
+        CrewMeal의 핵심 가치를 보려면 트랙 B로 넘어가세요.
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="rule hide-a hide-c" />
+
+<!-- ============ 2. 트랙 B ============ -->
+<section class="doc trk-b hide-a hide-c" id="s2">
+  <div class="sec-head">
+    <span class="sec-num">2</span><h2>트랙 B — 고객사 Azure 구독에 배포</h2><span class="chip">반나절</span>
+  </div>
+  <p class="sec-sub">
+    여기서부터 <b>고품질(AI 비전) 분석</b>이 켜집니다.
+    웹 앱과 워커가 Azure Container Apps에서 24시간 돌아갑니다.
+  </p>
+
+  <div class="step" id="b1">
+    <span class="num"><span>B1</span></span>
+    <div class="body">
+      <h3>준비물 · 쿼터 확인 <label class="done"><input type="checkbox" data-step="b1" /> 완료</label></h3>
+      <div class="tw"><table>
+        <thead><tr><th>항목</th><th>요구 사항</th></tr></thead>
+        <tbody>
+          <tr><td>Azure 구독</td><td><b>소유자(Owner)</b> 또는 리소스 생성 + <code>Microsoft.Authorization/roleAssignments/write</code> 권한</td></tr>
+          <tr><td>Azure CLI</td><td>2.60 이상 — <code>az version</code></td></tr>
+          <tr><td>Azure Developer CLI</td><td><b>1.28.0 이상</b> — <code>azd version</code></td></tr>
+          <tr><td>리전</td><td><b>eastus2</b> (템플릿에 고정, 아래 참고)</td></tr>
+          <tr><td>모델 쿼터</td><td>eastus2 GlobalStandard 기준 <b>1,150K TPM</b> 여유</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>설치 명령:</p>
+      <div class="codewrap"><pre><code>winget install Microsoft.AzureCLI
+winget install Microsoft.Azd</code></pre></div>
+
+      <div class="note warn">
+        <b class="hd">⚠️ 리전 고정</b>
+        <code>infra/main.bicep</code>의 <code>location</code> 파라미터는 현재
+        <code>@allowed(['eastus2'])</code> 로 제한되어 있습니다. 다른 리전에 배포하려면 이 목록에
+        원하는 리전을 추가해야 하고, 해당 리전에 GPT-5.6 Luna 모델이 제공되는지 먼저 확인해야 합니다.
+        PostgreSQL은 별도로 <code>centralus</code> 에 만들어집니다(<code>postgresLocation</code> 파라미터로 변경 가능).
+      </div>
+
+      <p><b>쿼터 확인</b> — 부족하면 <code>azd up</code> 이 실패합니다.</p>
+      <div class="codewrap"><pre><code>az login
+az account set --subscription <span class="s">"&lt;고객사 구독 ID&gt;"</span>
+az cognitiveservices usage list --location eastus2 `
+  --query <span class="s">"[?contains(name.value,'GlobalStandard')].{name:name.value,used:currentValue,limit:limit}"</span> -o table</code></pre></div>
+
+      <p>배포되는 모델 4종과 기본 용량:</p>
+      <div class="tw"><table>
+        <thead><tr><th>배포 이름</th><th>모델</th><th>용량(TPM)</th><th>용도</th></tr></thead>
+        <tbody>
+          <tr><td><code>gpt-5-6-luna-test</code></td><td>gpt-5.6-luna</td><td>500K</td><td><b>운영 기본</b> 슬라이드 분석</td></tr>
+          <tr><td><code>gpt-5-2</code></td><td>gpt-5.2</td><td>500K</td><td>폴백</td></tr>
+          <tr><td><code>gpt-5-mini</code></td><td>gpt-5-mini</td><td>100K</td><td>비교용</td></tr>
+          <tr><td><code>text-embedding-3-large</code></td><td>임베딩</td><td>50K</td><td>예비</td></tr>
+        </tbody>
+      </table></div>
+      <p>
+        쿼터가 모자라면 <code>infra/modules/foundry.bicep</code>의
+        <code>gptCapacity</code>, <code>lunaCapacity</code>, <code>embeddingCapacity</code> 값을
+        낮추세요 (예: 각각 100, 100, 10).
+      </p>
+    </div>
+  </div>
+
+  <div class="step">
+    <span class="num"><span>B2</span></span>
+    <div class="body">
+      <h3>Microsoft 365 앱 등록 만들기 <label class="done"><input type="checkbox" data-step="b2" /> 완료</label></h3>
+      <p>
+        Azure 배포에는 M365 앱의 <b>테넌트 ID / 클라이언트 ID / 시크릿</b>이 필요합니다.
+        SharePoint 연동을 아직 안 하더라도 값 자체는 있어야 합니다.
+      </p>
+      <ol>
+        <li><a href="https://entra.microsoft.com" target="_blank" rel="noopener">Entra 관리 센터</a> → <b>앱 등록</b> → <b>새 등록</b></li>
+        <li>이름: <code>crewmeal-poc</code>, 지원되는 계정 유형: <b>이 조직 디렉터리의 계정만</b></li>
+        <li>만들고 나서 <b>개요</b> 화면에서 다음 두 값을 메모합니다.
+          <ul>
+            <li>애플리케이션(클라이언트) ID → <code>CREWMEAL_M365_CLIENT_ID</code></li>
+            <li>디렉터리(테넌트) ID → <code>CREWMEAL_M365_TENANT_ID</code></li>
+          </ul>
+        </li>
+        <li><b>인증서 및 암호</b> → <b>새 클라이언트 암호</b> → 값 복사 → <code>CREWMEAL_M365_CLIENT_SECRET</code><br />
+          <span style="color:var(--brand-ink);font-weight:600">이 화면을 벗어나면 다시 볼 수 없습니다.</span></li>
+        <li><b>API 권한</b> → <b>권한 추가</b> → <b>Microsoft Graph</b> → <b>애플리케이션 권한</b>에서 다음을 추가합니다.</li>
+      </ol>
+      <div class="tw"><table>
+        <thead><tr><th>권한</th><th>필수 여부</th></tr></thead>
+        <tbody>
+          <tr><td><code>Sites.Selected</code></td><td>✅ 필수</td></tr>
+          <tr><td><code>ExternalConnection.ReadWrite.OwnedBy</code></td><td>Copilot 커넥터 방식일 때만</td></tr>
+          <tr><td><code>ExternalItem.ReadWrite.OwnedBy</code></td><td>Copilot 커넥터 방식일 때만</td></tr>
+        </tbody>
+      </table></div>
+      <ol start="6">
+        <li>같은 화면에서 <b>SharePoint</b> → <b>애플리케이션 권한</b> → <code>Sites.Selected</code> 도 추가</li>
+        <li><b>관리자 동의 부여</b> 버튼을 눌러 동의 처리 (상태가 모두 초록색 체크가 되어야 함)</li>
+      </ol>
+      <div class="note tip">
+        <b class="hd">🔐 최소 권한</b>
+        <code>Sites.Selected</code>는 “관리자가 지정한 사이트에만” 접근하는 최소 권한입니다.
+        테넌트 전체 문서에 접근하지 않습니다.
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <span class="num"><span>B3</span></span>
+    <div class="body">
+      <h3>배포 값 설정 <label class="done"><input type="checkbox" data-step="b3" /> 완료</label></h3>
+      <p>
+        SharePoint 사이트를 아직 안 만들었다면 site / drive / list 값은 임시로
+        <code>pending</code> 을 넣고, 트랙 C에서 실제 값으로 바꾸면 됩니다.
+      </p>
+      <div class="codewrap"><pre><code>cd $HOME\CrewMeal
+azd auth login
+azd env new poc
+azd env set AZURE_SUBSCRIPTION_ID <span class="s">"&lt;고객사 구독 ID&gt;"</span>
+azd env set AZURE_LOCATION        <span class="s">"eastus2"</span>
+
+<span class="c"># 새로 만들 비밀 값 — 직접 정하세요</span>
+<span class="c">#   ※ POSTGRES_ADMIN_PASSWORD 는 DB 접속 문자열에 들어가므로</span>
+<span class="c">#     @ : / ? # 같은 문자를 쓰지 말고 영문·숫자·하이픈만 사용하세요.</span>
+azd env set POSTGRES_ADMIN_PASSWORD     <span class="s">"Crewmeal-Poc-2026-Strong"</span>
+azd env set CREWMEAL_ADMIN_KEY          <span class="s">"&lt;관리자 포털 접속 키&gt;"</span>
+azd env set CREWMEAL_WEB_SESSION_SECRET <span class="s">"&lt;임의의 긴 문자열&gt;"</span>
+
+<span class="c"># B-2에서 만든 앱 값</span>
+azd env set CREWMEAL_M365_TENANT_ID     <span class="s">"&lt;테넌트 ID&gt;"</span>
+azd env set CREWMEAL_M365_CLIENT_ID     <span class="s">"&lt;클라이언트 ID&gt;"</span>
+azd env set CREWMEAL_M365_CLIENT_SECRET <span class="s">"&lt;클라이언트 시크릿&gt;"</span>
+
+<span class="c"># SharePoint 값 (트랙 C에서 확정 — 지금은 자리표시자)</span>
+azd env set CREWMEAL_M365_SITE_ID       <span class="s">"pending"</span>
+azd env set CREWMEAL_M365_DRIVE_ID      <span class="s">"pending"</span>
+azd env set CREWMEAL_M365_LIST_ID       <span class="s">"pending"</span>
+azd env set CREWMEAL_M365_SITE_URL      <span class="s">"pending"</span>
+azd env set CREWMEAL_M365_CONNECTION_ID <span class="s">"crewmealpoc"</span>
+
+<span class="c"># 초기 PoC는 Ingest 인증 없이 시작 (트랙 C에서 켭니다)</span>
+azd env set CREWMEAL_INGEST_REQUIRE_AUTH <span class="s">"false"</span>
+azd env set CREWMEAL_INGEST_AUDIENCE     <span class="s">"api://crewmeal-ingest"</span></code></pre></div>
+    </div>
+  </div>
+
+  <div class="step" id="b4">
+    <span class="num"><span>B4</span></span>
+    <div class="body">
+      <h3>배포 실행 <span class="tag">15~25분</span> <label class="done"><input type="checkbox" data-step="b4" /> 완료</label></h3>
+      <div class="codewrap"><pre><code>azd up</code></pre></div>
+      <ul>
+        <li>인프라 생성 → 컨테이너 이미지 빌드 → 웹/워커 배포까지 자동으로 진행됩니다.</li>
+        <li>이미지는 <b>Azure Container Registry에서 원격 빌드</b>(<code>remoteBuild: true</code>)되므로
+            <b>PC에 Docker를 설치할 필요가 없습니다.</b></li>
+      </ul>
+      <p>만들어지는 주요 리소스:</p>
+      <div class="tw"><table>
+        <thead><tr><th>리소스</th><th>용도</th></tr></thead>
+        <tbody>
+          <tr><td>Microsoft Foundry (AIServices S0)</td><td>슬라이드 분석 모델 4종</td></tr>
+          <tr><td>Container Apps 환경 + 웹/워커 앱</td><td>서비스 실행</td></tr>
+          <tr><td>Container Registry (Standard)</td><td>컨테이너 이미지</td></tr>
+          <tr><td>PostgreSQL Flexible Server 16</td><td>상태 · 큐 · 산출물 저장</td></tr>
+          <tr><td>Storage / Key Vault</td><td>(정책 허용 시 사용)</td></tr>
+          <tr><td>Log Analytics</td><td>로그</td></tr>
+          <tr><td>사용자 할당 관리 ID</td><td>키 없는 인증</td></tr>
+        </tbody>
+      </table></div>
+      <div class="note ok">
+        <b class="hd">✅ 확인</b>
+        완료 메시지의 <code>SERVICE_WEB_URI</code> 를 복사해 둡니다.
+      </div>
+      <div class="codewrap"><pre><code>azd env get-values | Select-String <span class="s">"SERVICE_WEB_URI"</span></code></pre></div>
+    </div>
+  </div>
+
+  <div class="step">
+    <span class="num"><span>B5</span></span>
+    <div class="body">
+      <h3>배포 직후 1회 수동 작업 <span class="tag">필수</span> <label class="done"><input type="checkbox" data-step="b5" /> 완료</label></h3>
+      <div class="note stop">
+        <b class="hd">⚠️ 건너뛰면 로그인이 안 됩니다</b>
+        상태 페이지 로그인(Entra SSO)이 동작하려면 앱 등록에 <b>리디렉션 URI</b>를 추가해야 합니다.
+        하지 않으면 로그인 시 <code>AADSTS50011</code> 오류가 납니다.
+      </div>
+      <ol>
+        <li>Entra 관리 센터 → <b>앱 등록</b> → <code>crewmeal-poc</code> → <b>인증</b></li>
+        <li><b>플랫폼 추가</b> → <b>웹</b></li>
+        <li>리디렉션 URI에 아래를 입력 (B-4에서 복사한 주소 사용)
+          <div class="codewrap" style="margin-top:8px"><pre><code>https://&lt;SERVICE_WEB_URI 호스트&gt;/auth/callback</code></pre></div>
+        </li>
+        <li><b>암시적 허용 및 하이브리드 흐름</b> 에서 <b>ID 토큰</b> 체크 → 저장</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="step">
+    <span class="num"><span>B6</span></span>
+    <div class="body">
+      <h3>배포 검증 <label class="done"><input type="checkbox" data-step="b6" /> 완료</label></h3>
+      <div class="codewrap"><pre><code><span class="v">$web</span> = (azd env get-values | Select-String <span class="s">"SERVICE_WEB_URI"</span>).ToString().Split(<span class="s">'='</span>)[1].Trim(<span class="s">'"'</span>)
+Invoke-WebRequest <span class="s">"$web/healthz"</span> -UseBasicParsing | Select-Object -ExpandProperty Content
+Invoke-WebRequest <span class="s">"$web/readyz"</span>  -UseBasicParsing | Select-Object -ExpandProperty Content</code></pre></div>
+      <p>
+        둘 다 <code>{"status":"ok"}</code> / <code>{"status":"ready"}</code> 가 나와야 합니다.
+        (<code>readyz</code> 는 데이터베이스 연결까지 확인합니다.)
+      </p>
+      <h4>고품질 분석 실제 확인</h4>
+      <ol>
+        <li>브라우저에서 <code>{SERVICE_WEB_URI}/admin</code> 접속 → <code>CREWMEAL_ADMIN_KEY</code> 로 로그인</li>
+        <li><b>설정</b> 화면에서 「이미지 분석 모델」 카드가 <code>gpt-5.6-luna</code> / <code>gpt-5-6-luna-test</code> 로 표시되는지 확인</li>
+        <li><b>시연 업로드</b>에서 그림 · 차트가 있는 PPT를 업로드</li>
+        <li>상태 페이지에서 <b>완료</b> 까지 진행되는지 확인</li>
+        <li>추출된 HTML에 <b>그림/차트에 대한 설명 문장</b>이 들어 있으면 성공</li>
+      </ol>
+      <div class="note ok">
+        <b class="hd">✅ 트랙 B 합격 기준</b>
+        차트가 들어간 슬라이드에서 “무엇을 나타내는 그래프인지” 문장으로 설명이 생성됨.
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="rule hide-a hide-b" />
+
+<!-- ============ 3. 트랙 C ============ -->
+<section class="doc trk-c hide-a hide-b" id="s3">
+  <div class="sec-head">
+    <span class="sec-num">3</span><h2>트랙 C — SharePoint · Copilot 연동</h2><span class="chip">1일</span>
+  </div>
+  <p class="sec-sub">
+    사용자가 SharePoint 문서 라이브러리에서 <b>파일을 선택하고 버튼 한 번</b>으로
+    검색강화를 요청하고, 결과가 Microsoft Search / Copilot에 반영되는 전체 흐름입니다.
+  </p>
+
+  <div class="step" id="c1">
+    <span class="num"><span>C1</span></span>
+    <div class="body">
+      <h3>테스트 사이트와 라이브러리 준비 <label class="done"><input type="checkbox" data-step="c1" /> 완료</label></h3>
+      <ol>
+        <li>SharePoint에서 <b>팀 사이트</b>를 새로 만듭니다 (예: <code>crewmeal-test</code>).</li>
+        <li>기본 <b>문서(Documents)</b> 라이브러리를 사용합니다.</li>
+        <li>비민감 테스트 문서(PPTX/PDF) 5~10개를 업로드합니다.</li>
+        <li>라이브러리에 <b>하이퍼링크 열</b>을 하나 수동으로 추가합니다.
+          <ul>
+            <li>열 추가 → 종류 <b>하이퍼링크</b> → 이름 <code>CrewmealSearchStatusLink</code></li>
+          </ul>
+        </li>
+      </ol>
+      <div class="note warn">
+        <b class="hd">⚠️ 자동 생성되지 않는 열</b>
+        <code>CrewmealSearchStatusLink</code> 는 스크립트가 만들어 주지 않습니다.
+        SPFx 명령이 상태 페이지 링크를 여기에 기록하므로 <b>반드시 수동으로</b> 추가하세요.
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <span class="num"><span>C2</span></span>
+    <div class="body">
+      <h3>사이트 / 드라이브 / 목록 ID 조회 <label class="done"><input type="checkbox" data-step="c2" /> 완료</label></h3>
+      <div class="codewrap"><pre><code>Install-Module Microsoft.Graph.Authentication -Scope CurrentUser   <span class="c"># 최초 1회</span>
+Import-Module Microsoft.Graph.Authentication
+Connect-MgGraph -Scopes <span class="s">"Sites.Read.All"</span> -UseDeviceCode -NoWelcome
+
+<span class="v">$hostName</span> = <span class="s">"contoso.sharepoint.com"</span>     <span class="c"># 고객사 도메인으로 변경</span>
+<span class="v">$sitePath</span> = <span class="s">"crewmeal-test"</span>              <span class="c"># 사이트 경로로 변경</span>
+
+<span class="v">$site</span> = Invoke-MgGraphRequest -Method GET `
+  -Uri <span class="s">"https://graph.microsoft.com/v1.0/sites/${hostName}:/sites/${sitePath}"</span>
+<span class="v">$drives</span> = Invoke-MgGraphRequest -Method GET `
+  -Uri <span class="s">"https://graph.microsoft.com/v1.0/sites/$($site.id)/drives"</span>
+<span class="v">$drive</span> = <span class="v">$drives</span>.value | Where-Object { <span class="v">$_</span>.name -in @(<span class="s">"Documents"</span>, <span class="s">"문서"</span>) } | Select-Object -First 1
+<span class="v">$list</span> = Invoke-MgGraphRequest -Method GET `
+  -Uri <span class="s">"https://graph.microsoft.com/v1.0/sites/$($site.id)/drives/$($drive.id)/list"</span>
+
+[pscustomobject]@{
+  SITE_ID  = <span class="v">$site</span>.id
+  DRIVE_ID = <span class="v">$drive</span>.id
+  LIST_ID  = <span class="v">$list</span>.id
+  SITE_URL = <span class="v">$site</span>.webUrl
+} | Format-List</code></pre></div>
+      <p>출력된 4개 값을 메모합니다.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <span class="num"><span>C3</span></span>
+    <div class="body">
+      <h3>사용자 환경 변수 설정 <span class="tag">스크립트용</span> <label class="done"><input type="checkbox" data-step="c3" /> 완료</label></h3>
+      <div class="note stop">
+        <b class="hd">⚠️ 여기서 가장 많이 막힙니다</b>
+        <code>scripts\*.ps1</code> 은 <b>사용자(User) 범위 환경 변수</b>를 읽습니다.
+        <code>$env:</code> 로만 설정하면 스크립트가 값을 찾지 못합니다.
+      </div>
+      <div class="codewrap"><pre><code><span class="v">$vars</span> = @{
+  CREWMEAL_M365_TENANT_ID     = <span class="s">"&lt;테넌트 ID&gt;"</span>
+  CREWMEAL_M365_CLIENT_ID     = <span class="s">"&lt;클라이언트 ID&gt;"</span>
+  CREWMEAL_M365_CLIENT_SECRET = <span class="s">"&lt;클라이언트 시크릿&gt;"</span>
+  CREWMEAL_M365_SITE_ID       = <span class="s">"&lt;C-2의 SITE_ID&gt;"</span>
+  CREWMEAL_M365_DRIVE_ID      = <span class="s">"&lt;C-2의 DRIVE_ID&gt;"</span>
+  CREWMEAL_M365_LIST_ID       = <span class="s">"&lt;C-2의 LIST_ID&gt;"</span>
+  CREWMEAL_M365_SITE_URL      = <span class="s">"&lt;C-2의 SITE_URL&gt;"</span>
+  CREWMEAL_M365_CONNECTION_ID = <span class="s">"crewmealpoc"</span>
+}
+foreach (<span class="v">$k</span> in <span class="v">$vars</span>.Keys) {
+  [Environment]::SetEnvironmentVariable(<span class="v">$k</span>, <span class="v">$vars</span>[<span class="v">$k</span>], <span class="s">"User"</span>)
+  Set-Item -Path <span class="s">"Env:$k"</span> -Value <span class="v">$vars</span>[<span class="v">$k</span>]
+}</code></pre></div>
+      <p>설정 후 <b>PowerShell 창을 새로 열어야</b> 값이 반영됩니다.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <span class="num"><span>C4</span></span>
+    <div class="body">
+      <h3>앱에 대상 사이트 권한 부여 <span class="tag">사이트 관리자 1회</span> <label class="done"><input type="checkbox" data-step="c4" /> 완료</label></h3>
+      <div class="codewrap"><pre><code>cd $HOME\CrewMeal
+.\scripts\grant_test_site_permission.ps1</code></pre></div>
+      <p>장치 코드 로그인이 뜨면 <b>사이트 관리자 계정</b>으로 로그인합니다.</p>
+      <div class="note ok">
+        <b class="hd">✅ 확인</b>
+        출력에 <code>roles: write</code> 가 나오면 성공입니다.
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="c5">
+    <span class="num"><span>C5</span></span>
+    <div class="body">
+      <h3>게시 방식 선택 <label class="done"><input type="checkbox" data-step="c5" /> 완료</label></h3>
+      <p>
+        관리자 포털 <code>{SERVICE_WEB_URI}/admin/settings</code> → <b>검색 콘텐츠 게시 방식</b>
+        카드에서 하나를 고릅니다. <b>새 설치는 선택 전까지 아무 곳에도 게시하지 않습니다.</b>
+      </p>
+      <div class="tw"><table>
+        <thead><tr><th>방식</th><th>장점</th><th>단점</th><th>추천</th></tr></thead>
+        <tbody>
+          <tr><td><b>SharePoint 컬럼</b></td><td>원본 문서의 권한(ACL)을 그대로 사용, 설정 단순</td><td>컬럼당 63,999자 제한</td><td>⭐ 처음 테스트에 권장</td></tr>
+          <tr><td><b>Copilot 커넥터</b></td><td>길이 여유(HTML 3MB), 별도 색인</td><td>커넥터 권한 · 관리센터 설정 필요</td><td>대규모 검토 시</td></tr>
+        </tbody>
+      </table></div>
+
+      <h4>C-5-a. SharePoint 컬럼 방식</h4>
+      <div class="codewrap"><pre><code>cd $HOME\CrewMeal
+.\scripts\provision_test_library_admin.ps1</code></pre></div>
+      <p>
+        이 스크립트는 라이브러리에 상태 열들을 만들고, 작업 중에만 앱 권한을
+        <code>fullcontrol</code> 로 올렸다가 <b>끝나면 반드시 <code>write</code> 로 되돌립니다.</b>
+      </p>
+      <p>
+        검색 콘텐츠 컬럼(<code>CrewmealSearchContent</code>) 연결과 상태 열 서식은 SharePoint가
+        앱 전용 토큰을 허용하지 않아 <b>사이트 소유자 세션</b>이 필요합니다. 위임 토큰이 있다면 아래처럼 적용합니다.
+      </p>
+      <div class="codewrap"><pre><code><span class="v">$env:CREWMEAL_M365_SHAREPOINT_ACCESS_TOKEN</span> = <span class="s">"&lt;위임 SharePoint 액세스 토큰&gt;"</span>
+.\.venv\Scripts\python.exe .\scripts\configure_test_library.py `
+  --apply-content-column --apply-formatting</code></pre></div>
+
+      <h4>C-5-b. Copilot 커넥터 방식</h4>
+      <div class="codewrap"><pre><code>cd $HOME\CrewMeal
+.\.venv\Scripts\python.exe .\scripts\configure_copilot_connection.py</code></pre></div>
+      <p>
+        그리고 <b>Microsoft 365 관리 센터 → 검색 및 인텔리전스 → 사용자 지정 →
+        세로 항목 → All → 커넥터 결과 관리</b> 에서 해당 커넥터의 인라인 결과를
+        <b>활성화</b>해야 Copilot이 항목을 참조합니다.
+      </p>
+    </div>
+  </div>
+
+  <div class="step">
+    <span class="num"><span>C6</span></span>
+    <div class="body">
+      <h3>문서 형식 켜기 <label class="done"><input type="checkbox" data-step="c6" /> 완료</label></h3>
+      <p><code>/admin/settings</code> → <b>문서 형식 지원</b> 카드에서 테스트할 형식을 체크합니다.</p>
+      <div class="tw"><table>
+        <thead><tr><th>형식</th><th>상태</th><th>추가 준비물</th></tr></thead>
+        <tbody>
+          <tr><td>PPTX</td><td>✅</td><td>서버 이미지에 LibreOffice 포함</td></tr>
+          <tr><td>PDF</td><td>✅</td><td>없음</td></tr>
+          <tr><td>HWP / HWPX</td><td>✅</td><td>서버 이미지에 rhwp 0.7.19 포함</td></tr>
+          <tr><td>DOCX / XLSX</td><td>🧩 구조만</td><td>아직 켤 수 없음</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <div class="step">
+    <span class="num"><span>C7</span></span>
+    <div class="body">
+      <h3>SharePoint 명령(SPFx) 배포 <label class="done"><input type="checkbox" data-step="c7" /> 완료</label></h3>
+      <p><b>1. 설정 값 치환</b> — 아래 파일의 자리표시자를 실제 값으로 바꿉니다.</p>
+      <div class="tw"><table>
+        <thead><tr><th>파일</th><th>바꿀 값</th></tr></thead>
+        <tbody>
+          <tr><td><code>sharepoint\search-enhancement-command\src\extensions\searchEnhancement\SearchEnhancementCommandSet.manifest.json</code></td><td><code>apiBaseUrl</code>, <code>apiResource</code></td></tr>
+          <tr><td><code>sharepoint\search-enhancement-command\sharepoint\assets\elements.xml</code></td><td><code>apiBaseUrl</code>, <code>apiResource</code></td></tr>
+          <tr><td><code>sharepoint\search-enhancement-command\config\package-solution.json</code></td><td><code>webApiPermissionRequests.resource</code></td></tr>
+        </tbody>
+      </table></div>
+      <ul>
+        <li><code>apiBaseUrl</code> = 트랙 B의 <code>SERVICE_WEB_URI</code></li>
+        <li><code>apiResource</code> = Ingest용 앱 등록의 App ID URI (예: <code>api://crewmeal-ingest</code>)</li>
+      </ul>
+
+      <p><b>2. 패키지 빌드</b> (Node.js <b>22.14 이상 23 미만</b> 필요)</p>
+      <div class="codewrap"><pre><code>cd $HOME\CrewMeal\sharepoint\search-enhancement-command
+npm install
+npm run build
+npm run test:unit</code></pre></div>
+      <p>결과물: <code>sharepoint\solution\search-enhancement-command.sppkg</code></p>
+
+      <p><b>3. App Catalog 업로드</b> → 앱을 <b>테스트 사이트에만</b> 설치 (테넌트 전체 배포는 사용하지 않습니다.)</p>
+      <p><b>4.</b> <b>SharePoint 관리 센터 → 고급 → API 액세스</b> 에서 SPFx가 요청한 권한을 <b>승인</b>합니다.</p>
+      <p><b>5. CORS / 인증 설정</b> — SPFx는 SharePoint 페이지에서 API를 호출하므로 허용 오리진이 필요합니다.</p>
+      <div class="codewrap"><pre><code>cd $HOME\CrewMeal
+azd env set CREWMEAL_INGEST_ALLOWED_ORIGINS <span class="s">"https://contoso.sharepoint.com"</span>
+azd env set CREWMEAL_INGEST_REQUIRE_AUTH    <span class="s">"true"</span>
+azd env set CREWMEAL_INGEST_AUDIENCE        <span class="s">"api://crewmeal-ingest"</span>
+azd env set CREWMEAL_INGEST_ALLOWED_APP_IDS <span class="s">"&lt;SPFx가 사용하는 앱 ID&gt;"</span>
+azd env set CREWMEAL_M365_SITE_ID   <span class="s">"&lt;C-2의 SITE_ID&gt;"</span>
+azd env set CREWMEAL_M365_DRIVE_ID  <span class="s">"&lt;C-2의 DRIVE_ID&gt;"</span>
+azd env set CREWMEAL_M365_LIST_ID   <span class="s">"&lt;C-2의 LIST_ID&gt;"</span>
+azd env set CREWMEAL_M365_SITE_URL  <span class="s">"&lt;C-2의 SITE_URL&gt;"</span>
+azd up</code></pre></div>
+    </div>
+  </div>
+
+  <div class="step">
+    <span class="num"><span>C8</span></span>
+    <div class="body">
+      <h3>실사용 테스트 <label class="done"><input type="checkbox" data-step="c8" /> 완료</label></h3>
+      <ol>
+        <li>SharePoint 문서 라이브러리에서 <b>PPT 파일 1개</b>를 선택합니다.</li>
+        <li>명령 모음에 <b>「코파일럿을 위해 검색강화」</b> 버튼이 나타납니다.</li>
+      </ol>
+      <div class="tw"><table>
+        <thead><tr><th>문서 상태</th><th>보이는 버튼</th></tr></thead>
+        <tbody>
+          <tr><td>미등록</td><td>코파일럿을 위해 검색강화</td></tr>
+          <tr><td>실패 / 원본 갱신됨</td><td>검색강화 다시 시도</td></tr>
+          <tr><td>대기 · 처리 · 완료</td><td>검색강화 삭제</td></tr>
+        </tbody>
+      </table></div>
+      <ol start="3">
+        <li>버튼을 누르면 상태 열이 <code>Queued</code> → <code>Processing</code> → <code>Ready</code> 로 바뀝니다.</li>
+        <li><code>CrewmealSearchStatusLink</code> 열의 링크를 눌러 진행 상황을 실시간 확인합니다.</li>
+      </ol>
+      <div class="note tip">
+        <b class="hd">💡 버튼이 안 보인다면</b>
+        버튼은 <b>편집 권한이 있는 사용자가 지원 문서 1개만 선택했을 때</b> 나타납니다.
+        여러 개를 선택하면 보이지 않습니다.
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <span class="num"><span>C9</span></span>
+    <div class="body">
+      <h3>검색 · Copilot 반영 확인 <label class="done"><input type="checkbox" data-step="c9" /> 완료</label></h3>
+      <p>컬럼 방식은 SharePoint 검색 인덱스에 반영되어야 Copilot이 참조합니다.</p>
+      <ol>
+        <li>라이브러리 <b>설정 → 고급 설정 → 문서 라이브러리 다시 인덱싱</b> 실행</li>
+        <li>인덱싱은 수 분~수 시간 걸립니다 (테넌트 상황에 따라 다름).</li>
+        <li>생성된 검색 콘텐츠에만 존재하는 <b>고유 문자열(canary)</b> 로 Microsoft Search를 검색해
+            원본 문서가 결과에 나오는지 확인합니다.</li>
+        <li><code>/admin/settings</code> → <b>컬럼 검색 준비</b> 카드에 canary와 원본 URL을 기록합니다.</li>
+        <li>같은 문서(또는 라이브러리)로 범위를 지정한 Copilot에게 질문해서 canary 내용을 근거로 답하는지 확인합니다.</li>
+      </ol>
+      <div class="note ok">
+        <b class="hd">✅ 트랙 C 합격 기준</b>
+        SharePoint 버튼 → 상태 <code>Ready</code> → 검색에서 canary 발견 →
+        범위 지정 Copilot이 강화된 내용을 근거로 답변.
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="rule" />
+
+<!-- ============ 4. 테스트 시나리오 ============ -->
+<section class="doc" id="s4">
+  <div class="sec-head"><span class="sec-num">4</span><h2>테스트 시나리오와 합격 기준</h2></div>
+  <p class="sec-sub">고객사 검증 회의에서 그대로 쓸 수 있는 체크리스트입니다. 체크 상태는 자동 저장됩니다.</p>
+  <div class="tw"><table class="chk">
+    <thead><tr><th></th><th>#</th><th>시나리오</th><th>조작</th><th>합격 기준</th><th>트랙</th></tr></thead>
+    <tbody>
+      <tr><td><input type="checkbox" data-step="t1" /></td><td>1</td><td>기본 텍스트 추출</td><td>텍스트 위주 PPT 업로드</td><td>원문 문장이 결과 HTML에 보존됨</td><td>A</td></tr>
+      <tr><td><input type="checkbox" data-step="t2" /></td><td>2</td><td>표 추출</td><td>표가 있는 PPT</td><td>표의 행/열 값이 누락 없이 재현</td><td>A</td></tr>
+      <tr><td><input type="checkbox" data-step="t3" /></td><td>3</td><td>차트 해석</td><td>막대/선 차트 슬라이드</td><td>그래프가 무엇을 뜻하는지 문장으로 설명</td><td>B</td></tr>
+      <tr><td><input type="checkbox" data-step="t4" /></td><td>4</td><td>간트차트</td><td>일정표 슬라이드</td><td>작업명·기간·순서가 문장으로 설명</td><td>B</td></tr>
+      <tr><td><input type="checkbox" data-step="t5" /></td><td>5</td><td>PDF 처리</td><td>스캔 아닌 PDF</td><td>페이지별 내용이 추출됨</td><td>B</td></tr>
+      <tr><td><input type="checkbox" data-step="t6" /></td><td>6</td><td>HWP/HWPX</td><td>한글 문서</td><td>본문·표·머리말/꼬리말 추출</td><td>B</td></tr>
+      <tr><td><input type="checkbox" data-step="t7" /></td><td>7</td><td>대용량</td><td>50장 이상 덱</td><td>실패 없이 완료, 소요 시간 기록</td><td>B</td></tr>
+      <tr><td><input type="checkbox" data-step="t8" /></td><td>8</td><td>재작업</td><td>상태 페이지 → 다시 실행</td><td>새 결과로 갱신</td><td>B</td></tr>
+      <tr><td><input type="checkbox" data-step="t9" /></td><td>9</td><td>피드백 반영</td><td>상태 페이지 → 코멘트 후 재작업</td><td>코멘트가 반영된 결과</td><td>B</td></tr>
+      <tr><td><input type="checkbox" data-step="t10" /></td><td>10</td><td>원본 무결성</td><td>처리 후 원본 다운로드</td><td><b>원본 파일이 변경되지 않음</b></td><td>C</td></tr>
+      <tr><td><input type="checkbox" data-step="t11" /></td><td>11</td><td>권한</td><td>권한 없는 사용자로 접근</td><td>상태 페이지 접근 차단</td><td>C</td></tr>
+      <tr><td><input type="checkbox" data-step="t12" /></td><td>12</td><td>삭제</td><td>검색강화 삭제</td><td>색인/컬럼에서 제거, 상태 <code>NotEnabled</code></td><td>C</td></tr>
+      <tr><td><input type="checkbox" data-step="t13" /></td><td>13</td><td>검색 반영</td><td>canary 검색</td><td>원본 문서가 결과에 노출</td><td>C</td></tr>
+      <tr><td><input type="checkbox" data-step="t14" /></td><td>14</td><td>Copilot 답변</td><td>범위 지정 질의</td><td>강화 내용을 근거로 답변</td><td>C</td></tr>
+      <tr><td><input type="checkbox" data-step="t15" /></td><td>15</td><td>비용 확인</td><td>관리자 대시보드</td><td>문서별 토큰·추정 비용 표시</td><td>B</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<hr class="rule" />
+
+<!-- ============ 5. 환경 변수 ============ -->
+<section class="doc" id="s5">
+  <div class="sec-head"><span class="sec-num">5</span><h2>환경 변수 총정리</h2></div>
+
+  <h3>필수</h3>
+  <div class="tw"><table>
+    <thead><tr><th>변수</th><th>설명</th><th>예시</th></tr></thead>
+    <tbody>
+      <tr><td><code>CREWMEAL_M365_TENANT_ID</code></td><td>Entra 테넌트 ID</td><td>GUID</td></tr>
+      <tr><td><code>CREWMEAL_M365_CLIENT_ID</code></td><td>앱 클라이언트 ID</td><td>GUID</td></tr>
+      <tr><td><code>CREWMEAL_M365_CLIENT_SECRET</code></td><td>앱 시크릿</td><td>(비밀)</td></tr>
+      <tr><td><code>CREWMEAL_M365_SITE_ID</code></td><td>SharePoint 사이트 ID</td><td><code>host,guid,guid</code></td></tr>
+      <tr><td><code>CREWMEAL_M365_DRIVE_ID</code></td><td>문서 라이브러리 드라이브 ID</td><td></td></tr>
+      <tr><td><code>CREWMEAL_M365_LIST_ID</code></td><td>목록 ID</td><td>GUID</td></tr>
+      <tr><td><code>CREWMEAL_M365_SITE_URL</code></td><td>사이트 URL</td><td><code>https://.../sites/...</code></td></tr>
+      <tr><td><code>CREWMEAL_ADMIN_KEY</code></td><td>관리자 포털 키</td><td>(비밀)</td></tr>
+      <tr><td><code>CREWMEAL_WEB_SESSION_SECRET</code></td><td>세션 서명 키</td><td>(비밀)</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>선택 / 튜닝</h3>
+  <div class="tw"><table>
+    <thead><tr><th>변수</th><th>기본값</th><th>설명</th></tr></thead>
+    <tbody>
+      <tr><td><code>PPTX_ANALYSIS_TIER</code></td><td><code>vision</code></td><td><code>vision</code>(고품질) / <code>text_ocr</code>(무비용)</td></tr>
+      <tr><td><code>PPTX_OCR_ENABLED</code></td><td><code>true</code></td><td>저품질 티어에서 이미지 OCR 사용</td></tr>
+      <tr><td><code>SLIDE_IMAGE_MODEL</code></td><td><code>gpt-5.6-luna</code></td><td><code>gpt-5.2</code>, <code>gpt-5-mini</code> 선택 가능</td></tr>
+      <tr><td><code>SLIDE_IMAGE_DEPLOYMENT</code></td><td><code>gpt-5-6-luna-test</code></td><td>Foundry 배포 이름</td></tr>
+      <tr><td><code>SLIDE_IMAGE_RENDER_DPI</code></td><td><code>144</code></td><td>페이지 렌더 해상도</td></tr>
+      <tr><td><code>SLIDE_IMAGE_MAX_WORKERS</code></td><td><code>2</code></td><td>동시 분석 슬라이드 수</td></tr>
+      <tr><td><code>CREWMEAL_INGEST_REQUIRE_AUTH</code></td><td><code>true</code></td><td>Ingest API 토큰 검증</td></tr>
+      <tr><td><code>CREWMEAL_STATUS_REQUIRE_AUTH</code></td><td>위 값과 동일</td><td>상태 페이지 Entra 로그인</td></tr>
+      <tr><td><code>CREWMEAL_INGEST_ALLOWED_ORIGINS</code></td><td>(없음)</td><td>CORS 허용 오리진(CSV)</td></tr>
+      <tr><td><code>CREWMEAL_ARTIFACT_BACKEND</code></td><td>자동</td><td><code>database</code> / <code>blob</code> / 로컬 파일</td></tr>
+      <tr><td><code>SOFFICE_PATH</code></td><td>자동 탐색</td><td>로컬 LibreOffice 경로</td></tr>
+      <tr><td><code>RHWP_PATH</code></td><td>자동 탐색</td><td>로컬 rhwp 경로</td></tr>
+      <tr><td><code>CREWMEAL_MIP_SDK_CLI</code></td><td>(없음)</td><td>MIP 복호화 CLI (README 참고)</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<hr class="rule" />
+
+<!-- ============ 6. 문제 해결 ============ -->
+<section class="doc" id="s6">
+  <div class="sec-head"><span class="sec-num">6</span><h2>문제 해결</h2></div>
+  <div class="tw"><table>
+    <thead><tr><th>증상</th><th>원인</th><th>해결</th></tr></thead>
+    <tbody>
+      <tr><td><code>ConfigurationError: Missing Microsoft 365 settings</code></td><td>워커 실행 창에 M365 변수 없음</td><td>같은 창에서 변수 설정 후 재실행 (트랙 A는 더미 값 사용)</td></tr>
+      <tr><td>웹 시작 시 <code>CREWMEAL_WEB_SESSION_SECRET must be set</code></td><td>인증 켠 상태에서 세션 키 없음</td><td>세션 시크릿 설정 또는 <code>CREWMEAL_INGEST_REQUIRE_AUTH=false</code></td></tr>
+      <tr><td>로그인 시 <code>AADSTS50011</code></td><td>리디렉션 URI 미등록</td><td>B-5 수행 (<code>{웹주소}/auth/callback</code> 추가 + ID 토큰 허용)</td></tr>
+      <tr><td>웹 앱이 기동 실패 (<code>ConfigurationError</code>)</td><td><code>CREWMEAL_STATUS_REQUIRE_AUTH=true</code> 인데 SSO 자격증명 없음</td><td>M365 변수 3종 설정 또는 해당 값을 <code>false</code></td></tr>
+      <tr><td>SPFx 버튼에서 <code>Failed to fetch</code></td><td>CORS 미설정</td><td><code>CREWMEAL_INGEST_ALLOWED_ORIGINS</code> 에 SharePoint 오리진 추가 후 재배포</td></tr>
+      <tr><td>Graph 403 오류</td><td>사이트 권한 미부여</td><td><code>scripts\grant_test_site_permission.ps1</code> 실행</td></tr>
+      <tr><td>스크립트가 “Missing user environment variable”</td><td><code>$env:</code> 로만 설정</td><td>C-3처럼 <b>User 범위</b>로 설정 후 새 창에서 실행</td></tr>
+      <tr><td><code>azd up</code> 이 쿼터 오류로 실패</td><td>모델 TPM 부족</td><td><code>infra/modules/foundry.bicep</code> 의 capacity 값 축소</td></tr>
+      <tr><td>리전 오류</td><td><code>location</code> 이 <code>eastus2</code> 로 고정</td><td><code>infra/main.bicep</code> 의 <code>@allowed</code> 목록 수정</td></tr>
+      <tr><td>상태가 계속 <code>Queued</code></td><td>워커 미실행</td><td>로컬은 <code>cli once</code>, Azure는 워커 앱 상태 확인</td></tr>
+      <tr><td>결과에 그림 설명이 없음</td><td>저품질 티어</td><td><code>/admin/settings</code> 에서 분석 티어를 <b>고품질</b>로 변경 후 재작업</td></tr>
+      <tr><td>한글 OCR이 깨짐</td><td>기본 OCR 모델은 한국어 미지원</td><td>로컬은 <code>PPTX_OCR_REC_MODEL</code>/<code>PPTX_OCR_REC_KEYS</code> 지정, 컨테이너는 <code>--build-arg ENABLE_LOW_TIER_OCR=1</code> 로 한국어 모델 포함해 빌드</td></tr>
+      <tr><td>MIP 문서 처리 실패</td><td>복호화 미구성</td><td>README 「MIP 복호화」 참고, 관리 포털의 준비 마법사로 점검</td></tr>
+      <tr><td>검색에 반영되지 않음</td><td>재인덱싱 안 함</td><td>라이브러리 설정에서 수동 재인덱싱 후 대기</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>로그 확인</h3>
+  <div class="codewrap"><pre><code><span class="c"># 웹 앱 로그</span>
+az containerapp logs show -g &lt;리소스그룹&gt; -n &lt;웹앱이름&gt; --tail 100
+<span class="c"># 워커 로그</span>
+az containerapp logs show -g &lt;리소스그룹&gt; -n &lt;워커앱이름&gt; --tail 100</code></pre></div>
+</section>
+
+<hr class="rule" />
+
+<!-- ============ 7. 비용 ============ -->
+<section class="doc" id="s7">
+  <div class="sec-head"><span class="sec-num">7</span><h2>비용 관리와 정리</h2></div>
+  <ul>
+    <li><b>문서별 추정 비용</b>은 관리자 대시보드와 상태 페이지에 표시됩니다.</li>
+    <li>비용을 아예 쓰지 않으려면 분석 티어를 <b>저품질(text_ocr)</b> 로 두세요.</li>
+    <li>PoC 구성은 야간 비용 절감을 위해 PostgreSQL이 자동 정지되고, 매일 아침
+        (한국시간 기준, 기본 07시) Logic App이 자동 재시작합니다.
+        워커는 DB 연결이 끊긴 동안 재시도하며 스스로 복구합니다.</li>
+  </ul>
+
+  <div class="note stop">
+    <b class="hd">⚠️ 테스트 종료 후 전체 삭제 — 되돌릴 수 없습니다</b>
+    아래 명령은 이 환경에서 만든 Azure 리소스를 <b>모두</b> 지웁니다.
+  </div>
+  <div class="codewrap"><pre><code>cd $HOME\CrewMeal
+azd down --purge --force</code></pre></div>
+
+  <p>추가 정리:</p>
+  <ul>
+    <li>SharePoint 테스트 사이트에서 앱 제거, App Catalog에서 패키지 삭제</li>
+    <li>Entra 앱 등록 삭제</li>
+    <li>커넥터 방식이었다면 Copilot 커넥터 연결 삭제</li>
+  </ul>
+</section>
+
+<hr class="rule" />
+
+<!-- ============ 8. 보안 ============ -->
+<section class="doc" id="s8">
+  <div class="sec-head"><span class="sec-num">8</span><h2>보안 · 데이터 취급</h2></div>
+  <p class="sec-sub">고객사 보안 검토에서 자주 나오는 질문에 대한 답입니다.</p>
+  <div class="card">
+    <ul style="margin:0">
+      <li>원본 문서는 <b>임시 폴더에만</b> 내려받고 처리 후 삭제합니다.</li>
+      <li>원본 파일 바이너리는 <b>수정하지 않습니다.</b></li>
+      <li>원본 문서 · PDF · PNG · HTML 본문과 비밀 값은 로컬 상태 DB에 저장하지 않습니다.</li>
+      <li>Azure OpenAI · Blob 접근은 <b>API 키 없이</b> 관리 ID(<code>DefaultAzureCredential</code>)로 인증합니다.</li>
+      <li>SharePoint 접근 권한은 <code>Sites.Selected</code> 로 <b>지정한 사이트에만</b> 부여됩니다.</li>
+      <li>컬럼 방식은 원본 문서의 권한을 그대로 따르므로 권한 복제가 없습니다.</li>
+      <li>PoC는 공개 엔드포인트를 사용하므로 <b>기밀 문서를 넣지 마세요.</b></li>
+    </ul>
+  </div>
+</section>
+
+<hr class="rule" />
+
+<!-- ============ 9. 도움 요청 ============ -->
+<section class="doc" id="s9">
+  <div class="sec-head"><span class="sec-num">9</span><h2>도움 요청 시 함께 보내주세요</h2></div>
+  <p class="sec-sub">문제가 해결되지 않으면 아래 정보를 정리해 전달해 주세요. 훨씬 빨리 원인을 찾을 수 있습니다.</p>
+  <ol>
+    <li>어느 트랙(A/B/C)의 몇 번 단계인지</li>
+    <li>실행한 명령과 화면에 나온 오류 메시지 전문</li>
+    <li><code>azd env get-values</code> 결과 (<b>비밀 값은 반드시 가리고</b>)</li>
+    <li>상태 페이지의 실패 단계 이름과 메시지</li>
+    <li>컨테이너 앱 로그 마지막 100줄</li>
+  </ol>
+</section>
+
+<footer class="end">
+  <span>CrewMeal — Copilot 검색 콘텐츠 강화 · MIT License</span>
+  <span>문서 최종 수정: 2026-07-25</span>
+</footer>
+
+</div><!-- /inner -->
+</div><!-- /main -->
+
+<button class="top-link" id="totop" type="button" aria-label="맨 위로">↑</button>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- 코드 복사 ---------- */
+  document.querySelectorAll(".codewrap").forEach(function(w){
+    var pre = w.querySelector("pre");
+    if(!pre) return;
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "copy"; b.textContent = "복사";
+    b.addEventListener("click", function(){
+      var text = pre.innerText;
+      var done = function(){
+        b.textContent = "복사됨 ✓"; b.classList.add("ok");
+        setTimeout(function(){ b.textContent = "복사"; b.classList.remove("ok"); }, 1600);
+      };
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(done, function(){ legacy(text, done); });
+      } else { legacy(text, done); }
+    });
+    w.appendChild(b);
+  });
+  function legacy(text, cb){
+    var ta = document.createElement("textarea");
+    ta.value = text; ta.setAttribute("readonly","");
+    ta.style.cssText = "position:fixed;top:-1000px;opacity:0";
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); cb(); } catch(e){}
+    document.body.removeChild(ta);
+  }
+
+  /* ---------- 진행 상황 저장 ---------- */
+  var KEY = "crewmeal-guide-progress";
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch(e){ state = {}; }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){} }
+
+  var boxes = document.querySelectorAll("input[type=checkbox][data-step]");
+  var fill = document.getElementById("barfill");
+  var btext = document.getElementById("bartext");
+
+  function paint(box){
+    var row = box.closest(".step") || box.closest("tr");
+    if(row) row.classList.toggle("is-done", box.checked);
+  }
+  function tally(){
+    var n = 0;
+    boxes.forEach(function(b){ if(b.checked) n++; });
+    if(fill) fill.style.width = (boxes.length ? (n / boxes.length) * 100 : 0) + "%";
+    if(btext) btext.textContent = n + " / " + boxes.length + " 단계 완료";
+  }
+  boxes.forEach(function(b){
+    var k = b.dataset.step;
+    b.checked = !!state[k];
+    paint(b);
+    b.addEventListener("change", function(){
+      state[k] = b.checked; save(); paint(b); tally();
+    });
+  });
+  tally();
+
+  var reset = document.getElementById("reset");
+  if(reset) reset.addEventListener("click", function(){
+    if(!confirm("체크한 진행 상황을 모두 지울까요?")) return;
+    state = {}; save();
+    boxes.forEach(function(b){ b.checked = false; paint(b); });
+    tally();
+  });
+
+  /* ---------- 트랙 필터 ---------- */
+  var tools = document.querySelectorAll(".tool[data-filter]");
+  function filter(v){
+    document.body.classList.remove("only-a","only-b","only-c");
+    if(v !== "all") document.body.classList.add("only-" + v);
+    tools.forEach(function(t){ t.classList.toggle("on", t.dataset.filter === v); });
+  }
+  tools.forEach(function(t){
+    t.addEventListener("click", function(){ filter(t.dataset.filter); window.scrollTo({top:0}); });
+  });
+  filter("all");
+
+  var pb = document.getElementById("print");
+  if(pb) pb.addEventListener("click", function(){ window.print(); });
+
+  /* ---------- 목차 하이라이트 ---------- */
+  var links = Array.prototype.slice.call(document.querySelectorAll('.toc a[href^="#"]'));
+  var targets = links.map(function(a){ return document.getElementById(a.getAttribute("href").slice(1)); });
+
+  function spy(){
+    var best = -1, bestTop = -1e9;
+    targets.forEach(function(el, i){
+      if(!el) return;
+      var top = el.getBoundingClientRect().top - 90;
+      if(top <= 0 && top > bestTop){ bestTop = top; best = i; }
+    });
+    links.forEach(function(a, i){ a.classList.toggle("on", i === best); });
+  }
+
+  /* ---------- 맨 위로 ---------- */
+  var toTop = document.getElementById("totop");
+  if(toTop) toTop.addEventListener("click", function(){ window.scrollTo({top:0, behavior:"smooth"}); });
+
+  var tick = false;
+  function onScroll(){
+    if(tick) return;
+    tick = true;
+    window.requestAnimationFrame(function(){
+      tick = false;
+      spy();
+      if(toTop) toTop.classList.toggle("show", window.scrollY > 700);
+    });
+  }
+  window.addEventListener("scroll", onScroll, {passive:true});
+  window.addEventListener("resize", onScroll);
+  onScroll();
+
+  /* ---------- 모바일 목차 ---------- */
+  var side = document.getElementById("side");
+  var scrim = document.getElementById("scrim");
+  var burger = document.getElementById("burger");
+  function drawer(open){
+    if(side) side.classList.toggle("open", open);
+    if(scrim) scrim.classList.toggle("show", open);
+  }
+  if(burger) burger.addEventListener("click", function(){ drawer(!side.classList.contains("open")); });
+  if(scrim) scrim.addEventListener("click", function(){ drawer(false); });
+  document.querySelectorAll(".toc a").forEach(function(a){
+    a.addEventListener("click", function(){ if(window.innerWidth <= 900) drawer(false); });
+  });
+})();
+</script>
+</body>
+</html>

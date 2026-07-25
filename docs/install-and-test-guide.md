@@ -6,6 +6,10 @@
 
 > 제품 개요·아키텍처는 [README](../README.md)와
 > [소개 사이트](https://microsoft.github.io/CrewMeal/)를 참고하세요.
+>
+> 💻 **웹(HTML) 버전**: <https://microsoft.github.io/CrewMeal/install-and-test-guide.html>
+> — 명령어 복사 버튼, 단계 진행 체크, 트랙별 보기, PDF 저장을 지원합니다.
+> `docs/install-and-test-guide.html` 파일 하나만 내려받으면 인터넷 없이도 열립니다.
 
 **목차**
 

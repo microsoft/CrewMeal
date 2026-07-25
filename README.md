@@ -20,7 +20,9 @@ payload가 없는 HWP 페이지만 선택적으로 렌더링·분석합니다. �
 
 > 🚀 **처음 도입·테스트하시나요?** 고객사 환경에서 설치·구성·테스트를 단계별로
 > 따라 할 수 있는 안내서를 별도로 제공합니다 —
-> [**설치 · 구성 · 테스트 가이드**](docs/install-and-test-guide.md).
+> [**설치 · 구성 · 테스트 가이드**](docs/install-and-test-guide.md)
+> (웹 버전: <https://microsoft.github.io/CrewMeal/install-and-test-guide.html> —
+> 복사 버튼·진행 체크·PDF 저장 지원, 파일 하나로 오프라인 열람 가능).
 > Azure·Microsoft 365 없이 30분 만에 결과를 확인하는 로컬 체험 경로부터
 > 전체 SharePoint·Copilot 연동까지 순서대로 담았습니다.
 
