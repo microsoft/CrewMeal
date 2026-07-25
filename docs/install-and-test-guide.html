@@ -316,22 +316,25 @@ body.only-a .hide-a,body.only-b .hide-b,body.only-c .hide-c{display:none}
   </div>
   <nav class="toc" id="toc">
     <a href="#s0"><span class="n">0</span>시작하기 · 트랙 고르기</a>
-    <a href="#s1"><span class="n">1</span>트랙 A — 내 PC에서 30분</a>
+    <a href="#s1"><span class="n">1</span>사전 준비 사항</a>
+    <a class="sub" href="#pre-sw">1-3 · 설치할 소프트웨어</a>
+    <a class="sub" href="#pre-check">1-6 ~ 1-8 · 문서 · 네트워크 · 점검</a>
+    <a href="#s2"><span class="n">2</span>트랙 A — 내 PC에서 30분</a>
     <a class="sub" href="#a1">A-1 ~ A-4 · 설치와 실행</a>
     <a class="sub" href="#a5">A-5 ~ A-8 · 업로드와 확인</a>
-    <a href="#s2"><span class="n">2</span>트랙 B — Azure 배포</a>
+    <a href="#s3"><span class="n">3</span>트랙 B — Azure 배포</a>
     <a class="sub" href="#b1">B-1 ~ B-3 · 준비와 설정</a>
     <a class="sub" href="#b4">B-4 ~ B-6 · 배포와 검증</a>
-    <a href="#s3"><span class="n">3</span>트랙 C — SharePoint · Copilot</a>
+    <a href="#s4"><span class="n">4</span>트랙 C — SharePoint · Copilot</a>
     <a class="sub" href="#c1">C-1 ~ C-4 · 사이트와 권한</a>
     <a class="sub" href="#c5">C-5 ~ C-9 · 게시와 실사용</a>
     <hr />
-    <a href="#s4"><span class="n">4</span>테스트 시나리오 15</a>
-    <a href="#s5"><span class="n">5</span>환경 변수 총정리</a>
-    <a href="#s6"><span class="n">6</span>문제 해결</a>
-    <a href="#s7"><span class="n">7</span>비용 관리와 정리</a>
-    <a href="#s8"><span class="n">8</span>보안 · 데이터 취급</a>
-    <a href="#s9"><span class="n">9</span>도움 요청</a>
+    <a href="#s5"><span class="n">5</span>테스트 시나리오 15</a>
+    <a href="#s6"><span class="n">6</span>환경 변수 총정리</a>
+    <a href="#s7"><span class="n">7</span>문제 해결</a>
+    <a href="#s8"><span class="n">8</span>비용 관리와 정리</a>
+    <a href="#s9"><span class="n">9</span>보안 · 데이터 취급</a>
+    <a href="#s10"><span class="n">10</span>도움 요청</a>
     <hr />
     <a href="https://microsoft.github.io/CrewMeal/" target="_blank" rel="noopener"><span class="n">↗</span>CrewMeal 소개 사이트</a>
     <a href="https://github.com/microsoft/CrewMeal" target="_blank" rel="noopener"><span class="n">↗</span>GitHub 저장소</a>
@@ -387,7 +390,7 @@ body.only-a .hide-a,body.only-b .hide-b,body.only-c .hide-c{display:none}
         <dt>시간</dt><dd>약 30분</dd>
         <dt>비용</dt><dd>0원</dd>
       </dl>
-      <a class="go" href="#s1">트랙 A 시작 →</a>
+      <a class="go" href="#s2">트랙 A 시작 →</a>
     </div>
     <div class="tcard trk-b">
       <span class="chip">트랙 B</span>
@@ -398,7 +401,7 @@ body.only-a .hide-a,body.only-b .hide-b,body.only-c .hide-c{display:none}
         <dt>시간</dt><dd>반나절</dd>
         <dt>비용</dt><dd>사용량 과금</dd>
       </dl>
-      <a class="go" href="#s2">트랙 B 시작 →</a>
+      <a class="go" href="#s3">트랙 B 시작 →</a>
     </div>
     <div class="tcard trk-c">
       <span class="chip">트랙 C</span>
@@ -409,7 +412,7 @@ body.only-a .hide-a,body.only-b .hide-b,body.only-c .hide-c{display:none}
         <dt>시간</dt><dd>1일</dd>
         <dt>비용</dt><dd>사용량 과금</dd>
       </dl>
-      <a class="go" href="#s3">트랙 C 시작 →</a>
+      <a class="go" href="#s4">트랙 C 시작 →</a>
     </div>
   </div>
 
@@ -431,12 +434,236 @@ body.only-a .hide-a,body.only-b .hide-b,body.only-c .hide-c{display:none}
   </p>
 </section>
 
+<hr class="rule" />
+
+<!-- ============ 1. 사전 준비 사항 ============ -->
+<section class="doc" id="s1">
+  <div class="sec-head"><span class="sec-num">1</span><h2>사전 준비 사항</h2></div>
+  <p class="sec-sub">
+    시작하기 전에 <b>미리 준비해 두어야 할 것</b>을 한곳에 모았습니다.
+    고른 트랙에 해당하는 것만 준비하면 됩니다. 표에서 <b>—</b> 는 필요 없다는 뜻입니다.
+  </p>
+
+  <div class="note ok">
+    <b class="hd">✅ 트랙 A만 해 본다면 준비물은 이게 전부입니다</b>
+    <b>PC 1대 · Python · Git · 테스트용 문서 몇 개.</b>
+    Azure 구독도, Microsoft 365 계정도, 결제 수단도, 관리자 승인도 필요 없습니다.
+    <a href="#s2">바로 트랙 A로 넘어가세요 →</a>
+  </div>
+
+  <h3>1-1. 한눈에 보는 준비물</h3>
+  <div class="tw"><table>
+    <thead>
+      <tr><th>준비물</th><th>A</th><th>B</th><th>C</th><th>비고</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>작업용 Windows PC (PowerShell)</td><td>✅</td><td>✅</td><td>✅</td><td>1대</td></tr>
+      <tr><td>Python 3.11 이상</td><td>✅</td><td>✅</td><td>✅</td><td>3.12 권장</td></tr>
+      <tr><td>Git</td><td>✅</td><td>✅</td><td>✅</td><td>소스 내려받기</td></tr>
+      <tr><td>비민감 테스트 문서</td><td>✅</td><td>✅</td><td>✅</td><td>5~10개</td></tr>
+      <tr><td>Azure 구독 (소유자)</td><td>—</td><td>✅</td><td>✅</td><td>결제 수단 등록됨</td></tr>
+      <tr><td>Azure CLI · Azure Developer CLI</td><td>—</td><td>✅</td><td>✅</td><td>배포 도구</td></tr>
+      <tr><td>Entra 앱 등록 + 관리자 동의 권한</td><td>—</td><td>✅</td><td>✅</td><td>앱 1개</td></tr>
+      <tr><td>eastus2 모델 쿼터 1,150K TPM</td><td>—</td><td>✅</td><td>✅</td><td>부족하면 배포 실패</td></tr>
+      <tr><td>Microsoft 365 테넌트</td><td>—</td><td>—</td><td>✅</td><td>테스트 사이트 생성 가능</td></tr>
+      <tr><td>SharePoint 앱 카탈로그</td><td>—</td><td>—</td><td>✅</td><td>없으면 먼저 생성</td></tr>
+      <tr><td>Node.js 22.14 이상 23 미만</td><td>—</td><td>—</td><td>✅</td><td>SPFx 빌드용</td></tr>
+      <tr><td>Microsoft 365 Copilot 라이선스</td><td>—</td><td>—</td><td>✅</td><td>마지막 검증 1건에만</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note tip">
+    <b class="hd">💡 Docker와 LibreOffice는 설치하지 않아도 됩니다</b>
+    컨테이너 이미지는 Azure에서 원격 빌드(<code>remoteBuild</code>)되므로 <b>로컬 Docker가 필요 없고</b>,
+    PPTX 변환용 LibreOffice와 한글 문서용 rhwp는 <b>서버 이미지에 이미 포함</b>되어 있습니다.
+    트랙 A는 AI를 쓰지 않는 저품질(텍스트+OCR) 티어로 도는 덕분에 둘 다 필요 없습니다.
+  </div>
+
+  <h3>1-2. 누가 참여해야 하나요</h3>
+  <p class="sec-sub" style="margin-bottom:16px">
+    한 사람이 모든 권한을 갖고 있다면 혼자서도 가능합니다. 보통은 아래 세 역할이 필요합니다.
+  </p>
+  <div class="grid3">
+    <div class="tcard trk-a">
+      <span class="chip">트랙 A</span>
+      <h4>테스트 실무 담당자</h4>
+      <p>문서를 준비하고 결과 품질을 평가하는 주 담당자입니다.</p>
+      <dl>
+        <dt>권한</dt><dd>본인 PC에 프로그램 설치</dd>
+        <dt>할 일</dt><dd>설치 · 실행 · 결과 확인</dd>
+        <dt>시간</dt><dd>약 30분</dd>
+      </dl>
+    </div>
+    <div class="tcard trk-b">
+      <span class="chip">트랙 B</span>
+      <h4>Azure 담당자</h4>
+      <p>고객사 구독에 리소스를 만들고 배포를 실행합니다.</p>
+      <dl>
+        <dt>권한</dt><dd>구독 소유자(Owner)</dd>
+        <dt>할 일</dt><dd>쿼터 확인 · <code>azd up</code></dd>
+        <dt>시간</dt><dd>반나절</dd>
+      </dl>
+    </div>
+    <div class="tcard trk-c">
+      <span class="chip">트랙 C</span>
+      <h4>Microsoft 365 관리자</h4>
+      <p>앱 동의와 SharePoint 설정을 처리합니다.</p>
+      <dl>
+        <dt>권한</dt><dd>테넌트 관리자 · 사이트 소유자</dd>
+        <dt>할 일</dt><dd>동의 · 앱 설치 · API 승인</dd>
+        <dt>시간</dt><dd>1일</dd>
+      </dl>
+    </div>
+  </div>
+
+  <h3 id="pre-sw">1-3. 설치할 소프트웨어</h3>
+  <div class="tw"><table>
+    <thead>
+      <tr><th>프로그램</th><th>필요 버전</th><th>필요한 트랙</th><th>확인 명령</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Python</td><td>3.11 이상 (3.12 권장)</td><td>A · B · C</td><td><code>python --version</code></td></tr>
+      <tr><td>Git</td><td>최신</td><td>A · B · C</td><td><code>git --version</code></td></tr>
+      <tr class="hide-a"><td>Azure CLI</td><td>2.60 이상</td><td>B · C</td><td><code>az version</code></td></tr>
+      <tr class="hide-a"><td>Azure Developer CLI</td><td>1.28.0 이상</td><td>B · C</td><td><code>azd version</code></td></tr>
+      <tr class="hide-a hide-b"><td>Node.js</td><td>22.14 이상 23 미만</td><td>C</td><td><code>node --version</code></td></tr>
+      <tr class="hide-a hide-b"><td>Microsoft.Graph.Authentication</td><td>최신</td><td>C</td><td>PowerShell 모듈</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>설치는 <b>winget</b>으로 한 번에 할 수 있습니다. 필요한 줄만 실행하세요.</p>
+  <div class="codewrap"><pre><code># 모든 트랙 공통
+winget install Python.Python.3.12
+winget install Git.Git
+
+# 트랙 B 이상
+winget install Microsoft.AzureCLI
+winget install Microsoft.Azd</code></pre></div>
+
+  <div class="note warn">
+    <b class="hd">⚠️ 두 가지만 주의하세요</b>
+    Python 설치 화면에서 <b>“Add python.exe to PATH”</b> 체크를 꼭 켜세요.
+    그리고 SPFx 빌드는 <b>Node.js 22.x</b>만 허용하므로, 최신 LTS가 23 이상이면 빌드가 거부됩니다.
+    <a href="https://nodejs.org/en/download" target="_blank" rel="noopener">nodejs.org</a>에서 22.x를 직접 받거나
+    <code>nvm-windows</code>로 버전을 전환해 사용하세요.
+  </div>
+
+  <p>설치가 끝났으면 아래로 한 번에 확인합니다. 필요한 줄에서 버전이 나오면 준비 완료입니다.</p>
+  <div class="codewrap"><pre><code>python --version
+git --version
+az version --output tsv 2&gt;$null
+azd version
+node --version</code></pre></div>
+
+  <h3 class="hide-a">1-4. Azure 쪽 준비 <span class="chip">트랙 B · C</span></h3>
+  <div class="hide-a">
+    <div class="tw"><table>
+      <thead><tr><th>항목</th><th>준비 내용</th></tr></thead>
+      <tbody>
+        <tr><td>구독 권한</td><td><b>소유자(Owner)</b> 또는 리소스 생성 + <code>Microsoft.Authorization/roleAssignments/write</code></td></tr>
+        <tr><td>결제</td><td>결제 수단이 등록된 유료 구독 (무료 평가판은 쿼터가 부족합니다)</td></tr>
+        <tr><td>리전</td><td><b>eastus2</b> — 템플릿에 고정. PostgreSQL만 <code>centralus</code>에 생성됩니다</td></tr>
+        <tr><td>모델 쿼터</td><td>eastus2 GlobalStandard 기준 <b>1,150K TPM</b> 여유 (부족하면 용량을 낮춰 배포)</td></tr>
+        <tr><td>Azure Policy</td><td>고객사 정책이 특정 리전·SKU·공용 엔드포인트를 막고 있지 않은지 미리 확인</td></tr>
+        <tr><td>Entra 앱</td><td>앱 등록 1개와 <b>관리자 동의</b>를 부여할 수 있는 권한</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note tip">
+      <b class="hd">💡 쿼터는 미리 확인해 두는 편이 좋습니다</b>
+      쿼터가 모자라면 배포가 중간에 실패합니다. 확인 명령과 대처법은
+      <a href="#s3">트랙 B의 B-1 단계</a>에 있습니다. 승인에 며칠 걸릴 수 있으니
+      부족하면 미리 증설을 신청하세요.
+    </div>
+  </div>
+
+  <h3 class="hide-a hide-b">1-5. Microsoft 365 쪽 준비 <span class="chip">트랙 C</span></h3>
+  <div class="hide-a hide-b">
+    <div class="tw"><table>
+      <thead><tr><th>항목</th><th>준비 내용</th></tr></thead>
+      <tbody>
+        <tr><td>테넌트 관리자</td><td>Entra 앱에 <b>관리자 동의</b>를 부여할 수 있는 계정</td></tr>
+        <tr><td>테스트 사이트</td><td>SharePoint 팀 사이트 1개 (예: <code>crewmeal-test</code>)와 문서 라이브러리</td></tr>
+        <tr><td>사이트 소유자</td><td>열 추가·앱 설치를 할 수 있는 권한 (앱 권한 부여 스크립트도 이 계정으로 실행)</td></tr>
+        <tr><td>앱 카탈로그</td><td>테넌트 앱 카탈로그가 있어야 SPFx 패키지를 올릴 수 있습니다. 없으면 먼저 생성하세요</td></tr>
+        <tr><td>API 액세스 승인</td><td>SharePoint 관리 센터 → 고급 → <b>API 액세스</b>에서 승인할 수 있는 권한</td></tr>
+        <tr><td>Copilot 라이선스</td><td>마지막 검증(범위 지정 Copilot 질의)에 필요합니다. 없으면 검색 반영까지만 확인</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note tip">
+      <b class="hd">💡 커넥터 방식을 쓸 때만 추가</b>
+      게시 방식으로 <b>Copilot 커넥터</b>를 고르면 Microsoft 365 관리 센터의
+      <b>검색 및 인텔리전스</b> 설정 권한이 추가로 필요합니다.
+      처음 테스트라면 권한이 단순한 <b>SharePoint 컬럼</b> 방식을 권장합니다.
+    </div>
+  </div>
+
+  <h3 id="pre-check">1-6. 테스트용 문서 준비</h3>
+  <p class="sec-sub" style="margin-bottom:16px">
+    아래 종류를 섞어서 <b>5~10개</b> 준비하면 뒤의 테스트 시나리오를 그대로 수행할 수 있습니다.
+  </p>
+  <div class="tw"><table>
+    <thead><tr><th>문서 종류</th><th>확인하는 것</th><th>필요한 트랙</th></tr></thead>
+    <tbody>
+      <tr><td>텍스트 위주 PPTX</td><td>원문 문장이 보존되는지</td><td>A</td></tr>
+      <tr><td>표가 들어간 PPTX</td><td>행·열 값이 누락 없이 재현되는지</td><td>A</td></tr>
+      <tr class="hide-a"><td>막대·선 차트 PPTX</td><td>그래프의 의미를 문장으로 설명하는지</td><td>B</td></tr>
+      <tr class="hide-a"><td>간트차트 · 일정표 PPTX</td><td>작업명·기간·순서를 설명하는지</td><td>B</td></tr>
+      <tr class="hide-a"><td>스캔이 아닌 PDF</td><td>페이지별 내용이 추출되는지</td><td>B</td></tr>
+      <tr class="hide-a"><td>HWP · HWPX 한글 문서</td><td>본문·표·머리말이 추출되는지</td><td>B</td></tr>
+      <tr class="hide-a"><td>50장 이상 대용량 덱</td><td>실패 없이 완료되는지, 소요 시간</td><td>B</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note stop">
+    <b class="hd">⚠️ 실제 기밀 문서는 넣지 마세요</b>
+    이 구성은 개념검증(PoC)용으로 공개 엔드포인트를 사용합니다.
+    사내 공개 자료, 이미 배포된 제안서, 샘플로 만든 문서처럼
+    <b>유출되어도 문제가 없는 문서</b>만 사용하세요.
+  </div>
+
+  <h3>1-7. 네트워크 · 방화벽</h3>
+  <p class="sec-sub" style="margin-bottom:16px">
+    사내망에서 아래 주소가 막혀 있으면 설치나 배포가 중간에 멈춥니다.
+    폐쇄망이라면 <b>미리 방화벽 예외를 신청</b>해 두세요.
+  </p>
+  <div class="tw"><table>
+    <thead><tr><th>접속 대상</th><th>용도</th><th>트랙</th></tr></thead>
+    <tbody>
+      <tr><td><code>github.com</code></td><td>소스 코드 내려받기</td><td>A · B · C</td></tr>
+      <tr><td><code>pypi.org</code>, <code>files.pythonhosted.org</code></td><td>파이썬 패키지 설치</td><td>A · B · C</td></tr>
+      <tr><td><code>127.0.0.1:8000</code></td><td>트랙 A 로컬 웹 서버 (외부 통신 아님)</td><td>A</td></tr>
+      <tr class="hide-a"><td><code>login.microsoftonline.com</code></td><td>Azure · Microsoft 365 로그인</td><td>B · C</td></tr>
+      <tr class="hide-a"><td><code>management.azure.com</code>, <code>portal.azure.com</code></td><td>Azure 배포와 관리</td><td>B · C</td></tr>
+      <tr class="hide-a"><td><code>graph.microsoft.com</code></td><td>SharePoint 정보 조회 · 게시</td><td>B · C</td></tr>
+      <tr class="hide-a"><td><code>*.azurecontainerapps.io</code></td><td>배포된 웹 앱과 상태 페이지</td><td>B · C</td></tr>
+      <tr class="hide-a hide-b"><td><code>*.sharepoint.com</code></td><td>테스트 사이트와 앱 카탈로그</td><td>C</td></tr>
+      <tr class="hide-a hide-b"><td><code>registry.npmjs.org</code></td><td>SPFx 패키지 빌드</td><td>C</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>1-8. 시작 전 최종 점검</h3>
+  <p class="sec-sub" style="margin-bottom:16px">
+    체크가 모두 켜지면 준비 완료입니다. 체크 상태는 이 브라우저에 저장됩니다.
+  </p>
+  <div class="tw"><table>
+    <thead><tr><th></th><th>점검 항목</th><th>트랙</th></tr></thead>
+    <tbody>
+      <tr><td><input type="checkbox" data-step="p1" /></td><td>어느 트랙까지 진행할지 정했다 (A / B / C)</td><td>공통</td></tr>
+      <tr><td><input type="checkbox" data-step="p2" /></td><td>Python과 Git이 설치되어 버전이 확인된다</td><td>공통</td></tr>
+      <tr><td><input type="checkbox" data-step="p3" /></td><td>비민감 테스트 문서를 5~10개 모았다</td><td>공통</td></tr>
+      <tr class="hide-a"><td><input type="checkbox" data-step="p4" /></td><td>Azure 구독 소유자 권한과 eastus2 쿼터를 확인했다</td><td>B · C</td></tr>
+      <tr class="hide-a hide-b"><td><input type="checkbox" data-step="p5" /></td><td>M365 테넌트 관리자와 테스트 사이트가 준비됐다</td><td>C</td></tr>
+      <tr class="hide-a hide-b"><td><input type="checkbox" data-step="p6" /></td><td>Node.js 22.x와 앱 카탈로그를 확인했다</td><td>C</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
 <hr class="rule hide-b hide-c" />
 
-<!-- ============ 1. 트랙 A ============ -->
-<section class="doc trk-a hide-b hide-c" id="s1">
+<!-- ============ 2. 트랙 A ============ -->
+<section class="doc trk-a hide-b hide-c" id="s2">
   <div class="sec-head">
-    <span class="sec-num">1</span><h2>트랙 A — 내 PC에서 30분 체험</h2><span class="chip">약 30분 · 비용 0원</span>
+    <span class="sec-num">2</span><h2>트랙 A — 내 PC에서 30분 체험</h2><span class="chip">약 30분 · 비용 0원</span>
   </div>
   <p class="sec-sub">
     Azure도 Microsoft 365도 없이 <b>PC 한 대에서</b> 문서를 넣고 결과를 확인합니다.
@@ -614,10 +841,10 @@ cd CrewMeal</code></pre></div>
 
 <hr class="rule hide-a hide-c" />
 
-<!-- ============ 2. 트랙 B ============ -->
-<section class="doc trk-b hide-a hide-c" id="s2">
+<!-- ============ 3. 트랙 B ============ -->
+<section class="doc trk-b hide-a hide-c" id="s3">
   <div class="sec-head">
-    <span class="sec-num">2</span><h2>트랙 B — 고객사 Azure 구독에 배포</h2><span class="chip">반나절</span>
+    <span class="sec-num">3</span><h2>트랙 B — 고객사 Azure 구독에 배포</h2><span class="chip">반나절</span>
   </div>
   <p class="sec-sub">
     여기서부터 <b>고품질(AI 비전) 분석</b>이 켜집니다.
@@ -835,10 +1062,10 @@ Invoke-WebRequest <span class="s">"$web/readyz"</span>  -UseBasicParsing | Selec
 
 <hr class="rule hide-a hide-b" />
 
-<!-- ============ 3. 트랙 C ============ -->
-<section class="doc trk-c hide-a hide-b" id="s3">
+<!-- ============ 4. 트랙 C ============ -->
+<section class="doc trk-c hide-a hide-b" id="s4">
   <div class="sec-head">
-    <span class="sec-num">3</span><h2>트랙 C — SharePoint · Copilot 연동</h2><span class="chip">1일</span>
+    <span class="sec-num">4</span><h2>트랙 C — SharePoint · Copilot 연동</h2><span class="chip">1일</span>
   </div>
   <p class="sec-sub">
     사용자가 SharePoint 문서 라이브러리에서 <b>파일을 선택하고 버튼 한 번</b>으로
@@ -1089,9 +1316,9 @@ azd up</code></pre></div>
 
 <hr class="rule" />
 
-<!-- ============ 4. 테스트 시나리오 ============ -->
-<section class="doc" id="s4">
-  <div class="sec-head"><span class="sec-num">4</span><h2>테스트 시나리오와 합격 기준</h2></div>
+<!-- ============ 5. 테스트 시나리오 ============ -->
+<section class="doc" id="s5">
+  <div class="sec-head"><span class="sec-num">5</span><h2>테스트 시나리오와 합격 기준</h2></div>
   <p class="sec-sub">고객사 검증 회의에서 그대로 쓸 수 있는 체크리스트입니다. 체크 상태는 자동 저장됩니다.</p>
   <div class="tw"><table class="chk">
     <thead><tr><th></th><th>#</th><th>시나리오</th><th>조작</th><th>합격 기준</th><th>트랙</th></tr></thead>
@@ -1117,9 +1344,9 @@ azd up</code></pre></div>
 
 <hr class="rule" />
 
-<!-- ============ 5. 환경 변수 ============ -->
-<section class="doc" id="s5">
-  <div class="sec-head"><span class="sec-num">5</span><h2>환경 변수 총정리</h2></div>
+<!-- ============ 6. 환경 변수 ============ -->
+<section class="doc" id="s6">
+  <div class="sec-head"><span class="sec-num">6</span><h2>환경 변수 총정리</h2></div>
 
   <h3>필수</h3>
   <div class="tw"><table>
@@ -1160,9 +1387,9 @@ azd up</code></pre></div>
 
 <hr class="rule" />
 
-<!-- ============ 6. 문제 해결 ============ -->
-<section class="doc" id="s6">
-  <div class="sec-head"><span class="sec-num">6</span><h2>문제 해결</h2></div>
+<!-- ============ 7. 문제 해결 ============ -->
+<section class="doc" id="s7">
+  <div class="sec-head"><span class="sec-num">7</span><h2>문제 해결</h2></div>
   <div class="tw"><table>
     <thead><tr><th>증상</th><th>원인</th><th>해결</th></tr></thead>
     <tbody>
@@ -1192,9 +1419,9 @@ az containerapp logs show -g &lt;리소스그룹&gt; -n &lt;워커앱이름&gt; 
 
 <hr class="rule" />
 
-<!-- ============ 7. 비용 ============ -->
-<section class="doc" id="s7">
-  <div class="sec-head"><span class="sec-num">7</span><h2>비용 관리와 정리</h2></div>
+<!-- ============ 8. 비용 ============ -->
+<section class="doc" id="s8">
+  <div class="sec-head"><span class="sec-num">8</span><h2>비용 관리와 정리</h2></div>
   <ul>
     <li><b>문서별 추정 비용</b>은 관리자 대시보드와 상태 페이지에 표시됩니다.</li>
     <li>비용을 아예 쓰지 않으려면 분석 티어를 <b>저품질(text_ocr)</b> 로 두세요.</li>
@@ -1220,9 +1447,9 @@ azd down --purge --force</code></pre></div>
 
 <hr class="rule" />
 
-<!-- ============ 8. 보안 ============ -->
-<section class="doc" id="s8">
-  <div class="sec-head"><span class="sec-num">8</span><h2>보안 · 데이터 취급</h2></div>
+<!-- ============ 9. 보안 ============ -->
+<section class="doc" id="s9">
+  <div class="sec-head"><span class="sec-num">9</span><h2>보안 · 데이터 취급</h2></div>
   <p class="sec-sub">고객사 보안 검토에서 자주 나오는 질문에 대한 답입니다.</p>
   <div class="card">
     <ul style="margin:0">
@@ -1239,9 +1466,9 @@ azd down --purge --force</code></pre></div>
 
 <hr class="rule" />
 
-<!-- ============ 9. 도움 요청 ============ -->
-<section class="doc" id="s9">
-  <div class="sec-head"><span class="sec-num">9</span><h2>도움 요청 시 함께 보내주세요</h2></div>
+<!-- ============ 10. 도움 요청 ============ -->
+<section class="doc" id="s10">
+  <div class="sec-head"><span class="sec-num">10</span><h2>도움 요청 시 함께 보내주세요</h2></div>
   <p class="sec-sub">문제가 해결되지 않으면 아래 정보를 정리해 전달해 주세요. 훨씬 빨리 원인을 찾을 수 있습니다.</p>
   <ol>
     <li>어느 트랙(A/B/C)의 몇 번 단계인지</li>
