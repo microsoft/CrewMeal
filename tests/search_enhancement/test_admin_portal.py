@@ -234,7 +234,7 @@ def test_settings_roundtrip(tmp_path: Path) -> None:
     assert saved.status_code == 303
     assert repository.get_all_settings().get("analysis_dpi") == 144
 
-    page = client.get("/admin/settings", headers=AUTH)
+    page = client.get("/admin/settings?tab=advanced", headers=AUTH)
     assert "analysis_dpi" in page.text
 
 
@@ -321,7 +321,7 @@ def test_generic_settings_form_rejects_publication_keys(tmp_path: Path) -> None:
 
 def test_settings_page_shows_publication_contract(tmp_path: Path) -> None:
     app, _, _ = _build(tmp_path)
-    page = TestClient(app).get("/admin/settings", headers=AUTH)
+    page = TestClient(app).get("/admin/settings?tab=publication", headers=AUTH)
     assert page.status_code == 200
     assert "검색 콘텐츠 게시 방식" in page.text
     assert "CrewmealSearchContent" in page.text
@@ -334,7 +334,7 @@ def test_publication_validation_form_carries_transition_identity(
     app, repository, _ = _build(tmp_path)
     transition = repository.request_publication_target("sharepoint_column")
 
-    page = TestClient(app).get("/admin/settings", headers=AUTH)
+    page = TestClient(app).get("/admin/settings?tab=publication", headers=AUTH)
 
     assert page.status_code == 200
     assert f'name="generation" value="{transition.generation}"' in page.text
@@ -510,7 +510,7 @@ def test_settings_page_shows_vision_model_card(tmp_path: Path) -> None:
     app, _, _ = _build(tmp_path)
     client = TestClient(app)
 
-    page = client.get("/admin/settings", headers=AUTH)
+    page = client.get("/admin/settings?tab=analysis", headers=AUTH)
 
     assert page.status_code == 200
     assert "이미지 분석 모델" in page.text
@@ -545,7 +545,7 @@ def test_settings_page_shows_analysis_tier_card(tmp_path: Path) -> None:
     app, _, _ = _build(tmp_path)
     client = TestClient(app)
 
-    page = client.get("/admin/settings", headers=AUTH)
+    page = client.get("/admin/settings?tab=analysis", headers=AUTH)
 
     assert page.status_code == 200
     assert "분석 품질 티어" in page.text
@@ -588,7 +588,7 @@ def test_settings_page_shows_decryption_card(
     app, _, _ = _build(tmp_path)
     client = TestClient(app)
 
-    page = client.get("/admin/settings", headers=AUTH)
+    page = client.get("/admin/settings?tab=decryption", headers=AUTH)
 
     assert page.status_code == 200
     assert "암호화 문서 복호화" in page.text
@@ -606,7 +606,7 @@ def test_settings_page_shows_mip_available_when_configured(
     app, _, _ = _build(tmp_path)
     client = TestClient(app)
 
-    page = client.get("/admin/settings", headers=AUTH)
+    page = client.get("/admin/settings?tab=decryption", headers=AUTH)
 
     assert page.status_code == 200
     assert "사용 가능" in page.text
@@ -679,7 +679,7 @@ def test_settings_page_renders_live_tenant_health(
         },
     )
     app, _, _ = _build(tmp_path)
-    page = TestClient(app).get("/admin/settings", headers=AUTH)
+    page = TestClient(app).get("/admin/settings?tab=decryption", headers=AUTH)
 
     assert page.status_code == 200
     assert "테넌트 준비됨" in page.text
@@ -700,7 +700,7 @@ def test_settings_page_shows_setup_wizard(
         admin_router, "_mip_live_health", lambda _settings, force=False: {}
     )
     app, _, _ = _build(tmp_path)
-    page = TestClient(app).get("/admin/settings", headers=AUTH)
+    page = TestClient(app).get("/admin/settings?tab=decryption", headers=AUTH)
 
     assert page.status_code == 200
     assert "MIP 테넌트 준비 마법사" in page.text
@@ -770,3 +770,169 @@ def test_mip_live_health_force_probes_when_disabled(
 
     assert health["mip"]["decrypt_ready"] is False
     assert "unavailable" in health["mip"]["detail"]
+
+
+def _seed_named_document(
+    repository: SearchEnhancementRepository, file_name: str, *, item_id: str
+) -> DocumentRecord:
+    key = DocumentKey(
+        tenant_id="tenant", site_id="site", drive_id="drive", item_id=item_id
+    )
+    repository.upsert_document(
+        key=key,
+        list_id="list",
+        list_item_id="7",
+        web_url=f"https://tenant.sharepoint.com/sites/test/{file_name}",
+        file_name=file_name,
+        connection_id="conn",
+        desired_enabled=True,
+        status="Ready",
+        request_id=str(uuid4()),
+    )
+    document = repository.get_document(key)
+    assert document is not None
+    return document
+
+
+def test_settings_tabs_render_one_section_at_a_time(tmp_path: Path) -> None:
+    client = TestClient(_build(tmp_path)[0])
+
+    formats = client.get("/admin/settings?tab=formats", headers=AUTH)
+    publication = client.get("/admin/settings?tab=publication", headers=AUTH)
+
+    assert "문서 형식 지원" in formats.text
+    assert "검색 콘텐츠 게시 방식" not in formats.text
+    assert "검색 콘텐츠 게시 방식" in publication.text
+    assert "문서 형식 지원" not in publication.text
+    # Every tab is reachable from every tab.
+    for entry in admin_router.SETTINGS_TABS:
+        assert f'/admin/settings?tab={entry["id"]}' in formats.text
+
+
+def test_unknown_settings_tab_falls_back_to_the_default(tmp_path: Path) -> None:
+    client = TestClient(_build(tmp_path)[0])
+
+    page = client.get("/admin/settings?tab=nonsense", headers=AUTH)
+
+    assert page.status_code == 200
+    assert "문서 형식 지원" in page.text
+
+
+def test_saving_a_section_returns_to_its_own_tab(tmp_path: Path) -> None:
+    client = TestClient(_build(tmp_path)[0])
+
+    saved = client.post(
+        "/admin/settings/formats",
+        data={"enabled": ["pptx"]},
+        headers=AUTH,
+        follow_redirects=False,
+    )
+
+    assert saved.headers["location"] == "/admin/settings?tab=formats&saved=1"
+
+
+def test_format_card_explains_what_each_format_does(tmp_path: Path) -> None:
+    client = TestClient(_build(tmp_path)[0])
+
+    page = client.get("/admin/settings?tab=formats", headers=AUTH)
+
+    # Excel behaves unlike every other format, so the difference has to be
+    # visible before an admin flips the switch.
+    assert "시트별 문서형/데이터형 자동 판별" in page.text
+    assert "데이터형 시트는 렌더링 없이" in page.text
+    assert "PyMuPDF 렌더" in page.text
+
+
+def test_dashboard_breaks_documents_down_by_format(tmp_path: Path) -> None:
+    app, repository, store = _build(tmp_path)
+    _seed_document(repository, store)
+    _seed_named_document(repository, "ledger.xlsx", item_id="item-2")
+    _seed_named_document(repository, "contract.docx", item_id="item-3")
+    client = TestClient(app)
+
+    page = client.get("/admin", headers=AUTH)
+
+    assert page.status_code == 200
+    assert "형식별 문서" in page.text
+    assert '/admin/documents?format=xlsx' in page.text
+    assert '/admin/documents?format=pptx' in page.text
+
+
+def test_documents_can_be_filtered_by_format(tmp_path: Path) -> None:
+    app, repository, store = _build(tmp_path)
+    _seed_document(repository, store)
+    _seed_named_document(repository, "ledger.xlsx", item_id="item-2")
+    _seed_named_document(repository, "macro-book.XLSM", item_id="item-3")
+    client = TestClient(app)
+
+    excel = client.get("/admin/documents?format=xlsx", headers=AUTH)
+    powerpoint = client.get("/admin/documents?format=pptx", headers=AUTH)
+
+    # Matching is case-insensitive on the extension, and covers every extension
+    # the handler owns.
+    assert "ledger.xlsx" in excel.text
+    assert "macro-book.XLSM" in excel.text
+    assert "deck.pptx" not in excel.text
+    assert "deck.pptx" in powerpoint.text
+    assert "ledger.xlsx" not in powerpoint.text
+
+
+def test_unknown_document_format_filter_is_ignored(tmp_path: Path) -> None:
+    app, repository, store = _build(tmp_path)
+    _seed_document(repository, store)
+    client = TestClient(app)
+
+    page = client.get("/admin/documents?format=nonsense", headers=AUTH)
+
+    assert page.status_code == 200
+    assert "deck.pptx" in page.text
+
+
+def test_tryout_stores_the_upload_under_its_real_type(tmp_path: Path) -> None:
+    app, repository, _ = _build(tmp_path)
+    client = TestClient(app)
+
+    response = client.post(
+        "/admin/tryout",
+        files={
+            "file": (
+                "ledger.xlsx",
+                b"PK\x03\x04 fake xlsx bytes",
+                "application/vnd.openxmlformats-officedocument."
+                "spreadsheetml.sheet",
+            )
+        },
+        data={"comment": ""},
+        headers=AUTH,
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+
+    document = repository.list_documents(source_kind="upload")[0]
+    artifacts = repository.list_artifacts(document.key)
+    source = next(a for a in artifacts if a.kind == "source_pptx")
+    # The artifact kind is a legacy slot name the worker looks up, but the file
+    # name and content type must describe the document that was actually
+    # uploaded -- they are shown verbatim on the document detail page.
+    assert source.blob_path.endswith("source.xlsx")
+    assert source.content_type == (
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+
+def test_tryout_page_lists_the_enabled_formats(tmp_path: Path) -> None:
+    app, _, _ = _build(tmp_path)
+    client = TestClient(app)
+
+    client.post(
+        "/admin/settings/formats",
+        data={"enabled": ["pptx", "xlsx"]},
+        headers=AUTH,
+        follow_redirects=False,
+    )
+    page = client.get("/admin/tryout", headers=AUTH)
+
+    assert page.status_code == 200
+    assert "PPTX를 직접 업로드" not in page.text
+    assert 'accept=".pptx,.xlsm,.xlsx"' in page.text
+    assert '<span class="chip">.pdf</span>' not in page.text

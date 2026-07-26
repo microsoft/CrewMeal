@@ -86,7 +86,18 @@ class XlsxHandler:
     display_name = "Excel"
     extensions = frozenset({".xlsx", ".xlsm"})
     content_types = frozenset({XLSX_CONTENT_TYPE, XLSM_CONTENT_TYPE})
+    content_type_by_extension = {
+        ".xlsx": XLSX_CONTENT_TYPE,
+        ".xlsm": XLSM_CONTENT_TYPE,
+    }
     supported = True
+    pipeline = "시트별 문서형/데이터형 자동 판별"
+    summary = (
+        "시트마다 성격을 판별해 분기합니다. 견적서·정산서 같은 문서형 시트만 "
+        "렌더링해 분석하고, 대장·원장 같은 데이터형 시트는 렌더링 없이 "
+        "열 스키마와 대표 행만 요약합니다(비전 호출 없음). "
+        "SharePoint가 이미 셀 텍스트를 인덱싱하므로 전사가 아니라 요약이 목표입니다."
+    )
 
     def validate(self, data: bytes, *, filename: str, max_bytes: int) -> None:
         if Path(filename).suffix.lower() not in self.extensions:

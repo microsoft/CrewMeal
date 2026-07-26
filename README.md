@@ -3,12 +3,14 @@
 > **CrewMeal** = Copilot에게 제공하는 양질의 콘텐츠 → 부조종사(co-pilot)가 기내에서 먹는
 > 기내식 **Crew Meal**. Copilot이 잘 일하도록 먹여주는 잘 차려진 한 끼라는 뜻입니다.
 
-복잡한 사내 문서(`.pptx`·`.pdf`·`.hwp`·`.hwpx`·`.docx`·`.docm`)를 구조화된 검색 메타데이터로
+복잡한 사내 문서(`.pptx`·`.pdf`·`.hwp`·`.hwpx`·`.docx`·`.docm`·`.xlsx`·`.xlsm`)를 구조화된
+검색 메타데이터로
 강화해 SharePoint 라이브러리의 검색용 일반 텍스트 컬럼 또는 Microsoft Graph 검색 커넥터
 (Copilot Connector)의 `externalItem`으로 게시하는 워커입니다. 게시 방식은 관리자가
 선택하며 새 설치는 선택 전까지 어떤 대상에도 게시하지 않습니다.
 PPTX·PDF는 페이지 이미지와 원문 근거를 비전 LLM에 전달하고, HWP·HWPX는 rhwp
 RenderTree에서, DOCX·DOCM은 OOXML에서 본문·표·머리말·꼬리말·각주를 직접 추출합니다.
+XLSX·XLSM은 전사가 아니라 요약이 목표이므로 시트마다 문서형/데이터형을 판별해 분기합니다.
 이미지·수식처럼 semantic payload가 없는 HWP·Word 페이지만 선택적으로 렌더링·분석합니다.
 분석 결과는 Connector용
 허용 태그 HTML과 SharePoint 컬럼용 Markdown으로 렌더링하며 원본 문서는 수정하지
@@ -44,8 +46,8 @@ RenderTree에서, DOCX·DOCM은 OOXML에서 본문·표·머리말·꼬리말·�
 - **모든 포맷은 SharePoint 인제스트 경로로 흐릅니다.** 포맷을 켜면 인제스트·재조정·시연
   업로드에 자동 편입됩니다. 포맷별 활성화는 `format.<id>.enabled` 설정으로 관리하며
   구현되지 않은(스켈레톤) 포맷은 켤 수 없습니다.
-- **분석 모델 교체**는 `/admin/settings`의 「이미지 분석 모델」 카드에서 설정하며, 빈 값은
-  환경 변수 기본값을 사용합니다. 변경은 워커 재시작 후 적용됩니다.
+- **분석 모델 교체**는 `/admin/settings?tab=analysis`의 「이미지 분석 모델」 카드에서
+  설정하며, 빈 값은 환경 변수 기본값을 사용합니다. 변경은 워커 재시작 후 적용됩니다.
 - **복호화 파이프라인**은 기본 꺼짐입니다. **MIP 복호화는 구현되어 있으며**(아래 「MIP
   복호화」 참조) 켜면 MIP/IRM로 보호된 문서를 처리 전에 평문으로 복원합니다. SDK CLI를
   구성하지 않은 채 MIP를 켜거나 아직 구현되지 않은 제공자(기타 복호화)를 켜면 해당 문서
@@ -86,6 +88,34 @@ RenderTree에서, DOCX·DOCM은 OOXML에서 본문·표·머리말·꼬리말·�
 > 하나입니다. 배포된 PoC는 Storage·Key Vault 공개 접근이 구독 정책으로 강제 차단되어
 > `database` 저장소와 Container App 인라인 시크릿을 사용합니다. 로컬 워커와 단위
 > 테스트는 계속 SQLite와 로컬 파일을 사용합니다.
+
+## 관리 포털
+
+`/admin`은 대시보드 · 문서 · 시연 업로드 · 피드백 · 설정 다섯 화면으로 구성됩니다.
+포맷이 다섯 종으로 늘어나면서 **어떤 형식이 얼마나, 어떤 방식으로 처리되는지**를
+화면에서 바로 확인할 수 있도록 정리했습니다.
+
+| 화면 | 경로 | 내용 |
+| --- | --- | --- |
+| 대시보드 | `/admin` | 핵심 지표 · **형식별 문서 수**(누르면 해당 형식으로 필터된 문서 목록) · 문서/잡 상태 분포 · 최근 작업 |
+| 문서 | `/admin/documents` | 소스·**형식**·상태 필터. 목록에 형식 컬럼 표시 |
+| 시연 업로드 | `/admin/tryout` | 활성화된 확장자 안내 + 형식별 처리 방식 표. 업로드 파일은 실제 확장자·MIME으로 보관됩니다 |
+| 설정 | `/admin/settings?tab=…` | 아래 다섯 탭 |
+
+설정은 성격별 탭으로 나뉘며 각 탭은 `?tab=` 쿼리로 직접 링크·북마크할 수 있습니다.
+저장하면 원래 보던 탭으로 되돌아옵니다.
+
+| 탭 | `tab` | 카드 |
+| --- | --- | --- |
+| 문서 형식 | `formats` (기본) | 확장자·처리 방식·상태·활성화 토글 |
+| 분석 품질·모델 | `analysis` | 분석 품질 티어 · 이미지 분석 모델 |
+| 검색 게시 | `publication` | 검색 콘텐츠 게시 방식(컬럼/커넥터 전환) |
+| 복호화 | `decryption` | 암호화 문서 복호화 · MIP 테넌트 준비 마법사 |
+| 고급 | `advanced` | 저장된 원시 설정 키/값 직접 편집 |
+
+「문서 형식」 카드와 시연 업로드 페이지의 처리 방식 설명은 각 핸들러의 `pipeline`·
+`summary` 클래스 속성에서 가져옵니다. 새 포맷 핸들러를 추가할 때 두 값을 채우면
+포털 문구가 자동으로 따라옵니다(값이 없으면 안전하게 생략됩니다).
 
 ## Excel 시트 판별 (XLSX/XLSM)
 
@@ -142,7 +172,7 @@ app-only(무인) MIP 소비 복호화는 서비스 주체가 **Azure RMS 슈퍼�
 「[Azure Information Protection 슈퍼유저](https://learn.microsoft.com/azure/information-protection/configure-super-users)」를
 참고하세요. 이 권한 없이 MIP를 켜면 복호화가 런타임 오류로 실패합니다.
 
-> 💡 **관리 포털 준비 마법사** — `/admin/settings`의 「MIP 테넌트 준비 마법사」 카드는 자격 증명·
+> 💡 **관리 포털 준비 마법사** — `/admin/settings?tab=decryption`의 「MIP 테넌트 준비 마법사」 카드는 자격 증명·
 > RMS 토큰·슈퍼유저 롤·어댑터 구성의 준비 상태를 점검하고(「다시 점검」 버튼은 토글을 켜기
 > 전에도 실시간 확인), 관리자 동의 URL과 슈퍼유저 부여용 PowerShell(서비스 주체 object id 자동
 > 반영)을 그대로 제공합니다. 앱은 어떤 권한도 자체 부여하지 않으며, 명령은 디렉터리 관리자가
@@ -150,7 +180,7 @@ app-only(무인) MIP 소비 복호화는 서비스 주체가 **Azure RMS 슈퍼�
 
 ### 활성화
 
-1. 관리자 토글 `decryption.mip.enabled`를 켭니다(`/admin/settings`의 「복호화」 카드).
+1. 관리자 토글 `decryption.mip.enabled`를 켭니다(`/admin/settings?tab=decryption`의 「암호화 문서 복호화」 카드).
 2. 복호화 CLI 경로를 `CREWMEAL_MIP_SDK_CLI`로 지정합니다.
    - **프로덕션**: Microsoft MIP File SDK를 감싼 CLI 경로.
    - **로컬·CI·데모**: 내장 레퍼런스 CLI `python -m crewmeal.search_enhancement.mip_tool`.
@@ -441,10 +471,11 @@ python -m crewmeal.search_enhancement.rhwp_render_validation report
   로그인·콜백·로그아웃(MSAL). 콜백 URL을 M365 앱 등록의 Web 리다이렉트 URI로 등록해야 함.
 - `GET /admin` — 관리자 포탈(대시보드). `X-Admin-Key` 헤더 또는 로그인 세션으로 게이트하며
   키는 `CREWMEAL_ADMIN_KEY`입니다.
-  - `/admin/documents`, `/admin/documents/{token}` — 문서 목록·상세, 문서별 rerun/remove·job retry
-  - `/admin/settings` — 런타임 설정 조회·수정
+  - `/admin/documents`, `/admin/documents/{token}` — 문서 목록·상세, 문서별 rerun/remove·job retry.
+    목록은 `?source=`·`?format=`·`?status=`로 거를 수 있습니다(`format`은 형식 id, 예: `?format=xlsx`)
+  - `/admin/settings` — 런타임 설정 조회·수정 (`?tab=` 로 탭 직행)
   - `/admin/feedback`, `/admin/feedback/export.jsonl` — 튜닝 코멘트 코퍼스 열람·내보내기
-  - `/admin/tryout` — 지원 문서(PPTX·PDF·HWP·HWPX·DOCX·DOCM)를 직접 업로드해 파이프라인을 시험하는 플레이그라운드
+  - `/admin/tryout` — 활성화된 형식(PPTX·PDF·HWP·HWPX·DOCX·DOCM·XLSX·XLSM)을 직접 업로드해 파이프라인을 시험하는 플레이그라운드
 
 상태 페이지·관리자의 comment 재작업이 남긴 튜닝 코멘트는 피드백 코퍼스로 축적되며
 `/admin/feedback/export.jsonl`로 내보내 본체 분석 프롬프트·엔진 개선에 활용합니다.
@@ -456,7 +487,7 @@ python -m crewmeal.search_enhancement.rhwp_render_validation report
 
 ### 게시 대상과 전환
 
-`/admin/settings`의 **검색 콘텐츠 게시 방식** 카드에서 한 가지 대상을 선택합니다.
+`/admin/settings?tab=publication`의 **검색 콘텐츠 게시 방식** 카드에서 한 가지 대상을 선택합니다.
 
 | 대상 | 동작 |
 | --- | --- |

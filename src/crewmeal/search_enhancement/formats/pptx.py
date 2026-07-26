@@ -43,7 +43,13 @@ class PptxHandler:
     display_name = "PowerPoint"
     extensions = frozenset({".pptx"})
     content_types = frozenset({PPTX_CONTENT_TYPE})
+    content_type_by_extension = {".pptx": PPTX_CONTENT_TYPE}
     supported = True
+    pipeline = "LibreOffice 렌더 → 비전"
+    summary = (
+        "모든 슬라이드를 LibreOffice로 이미지 렌더링해 비전 AI가 읽습니다. "
+        "간트·다이어그램은 도형 좌표를 결정적 근거로 함께 넘깁니다."
+    )
 
     def validate(self, data: bytes, *, filename: str, max_bytes: int) -> None:
         validate_pptx(data, filename=filename, max_bytes=max_bytes)

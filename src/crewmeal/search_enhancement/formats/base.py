@@ -54,6 +54,18 @@ class DocumentHandler(Protocol):
 
     ``supported`` is ``False`` for formats that are registered (so they are
     detected and reported clearly) but not yet implemented end-to-end.
+
+    Three optional class attributes describe the handler to administrators and
+    are read through ``getattr`` so third-party handlers may omit them:
+
+    ``pipeline``
+        Short label for the processing approach (e.g. ``"PyMuPDF 렌더 → 비전"``).
+    ``summary``
+        One-paragraph explanation of what enabling the format actually does.
+    ``content_type_by_extension``
+        Canonical MIME type per extension, used when storing an upload. Without
+        it callers fall back to an arbitrary member of ``content_types``, which
+        is wrong for handlers that own several extensions.
     """
 
     format_id: str

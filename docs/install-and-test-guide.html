@@ -752,7 +752,7 @@ cd CrewMeal</code></pre></div>
         <li>브라우저에서 <a href="http://127.0.0.1:8000/admin">http://127.0.0.1:8000/admin</a> 접속</li>
         <li>관리자 키에 <code>local-admin-key</code> 입력 후 로그인</li>
         <li>상단 메뉴에서 <b>시연 업로드</b>(<code>/admin/tryout</code>) 클릭</li>
-        <li>테스트용 <code>.pptx</code> 파일을 선택하고 업로드</li>
+        <li>테스트용 <code>.pptx</code> 파일을 선택하고 업로드 (<code>.pdf</code>·<code>.hwp</code>·<code>.hwpx</code>·<code>.docx</code>·<code>.xlsx</code> 등 활성화된 형식이면 무엇이든 됩니다 — 페이지에 허용 확장자가 표시됩니다)</li>
       </ol>
       <p>
         업로드하면 자동으로 <b>상태 페이지</b>(<code>/s/...</code>)로 이동합니다.
@@ -1169,7 +1169,7 @@ foreach (<span class="v">$k</span> in <span class="v">$vars</span>.Keys) {
     <div class="body">
       <h3>게시 방식 선택 <label class="done"><input type="checkbox" data-step="c5" /> 완료</label></h3>
       <p>
-        관리자 포털 <code>{SERVICE_WEB_URI}/admin/settings</code> → <b>검색 콘텐츠 게시 방식</b>
+        관리자 포털 <code>{SERVICE_WEB_URI}/admin/settings?tab=publication</code> → <b>검색 콘텐츠 게시 방식</b>
         카드에서 하나를 고릅니다. <b>새 설치는 선택 전까지 아무 곳에도 게시하지 않습니다.</b>
       </p>
       <div class="tw"><table>
@@ -1210,7 +1210,7 @@ foreach (<span class="v">$k</span> in <span class="v">$vars</span>.Keys) {
     <span class="num"><span>C6</span></span>
     <div class="body">
       <h3>문서 형식 켜기 <label class="done"><input type="checkbox" data-step="c6" /> 완료</label></h3>
-      <p><code>/admin/settings</code> → <b>문서 형식 지원</b> 카드에서 테스트할 형식을 체크합니다.</p>
+      <p><code>/admin/settings?tab=formats</code> → <b>문서 형식 지원</b> 카드에서 테스트할 형식을 체크합니다. 카드에는 형식마다 어떤 방식으로 읽는지(처리 방식)도 함께 표시됩니다.</p>
       <div class="tw"><table>
         <thead><tr><th>형식</th><th>상태</th><th>추가 준비물</th></tr></thead>
         <tbody>
@@ -1303,7 +1303,7 @@ azd up</code></pre></div>
         <li>인덱싱은 수 분~수 시간 걸립니다 (테넌트 상황에 따라 다름).</li>
         <li>생성된 검색 콘텐츠에만 존재하는 <b>고유 문자열(canary)</b> 로 Microsoft Search를 검색해
             원본 문서가 결과에 나오는지 확인합니다.</li>
-        <li><code>/admin/settings</code> → <b>컬럼 검색 준비</b> 카드에 canary와 원본 URL을 기록합니다.</li>
+        <li><code>/admin/settings?tab=publication</code> → <b>컬럼 검색 준비</b> 카드에 canary와 원본 URL을 기록합니다.</li>
         <li>같은 문서(또는 라이브러리)로 범위를 지정한 Copilot에게 질문해서 canary 내용을 근거로 답하는지 확인합니다.</li>
       </ol>
       <div class="note ok">
@@ -1404,7 +1404,7 @@ azd up</code></pre></div>
       <tr><td><code>azd up</code> 이 쿼터 오류로 실패</td><td>모델 TPM 부족</td><td><code>infra/modules/foundry.bicep</code> 의 capacity 값 축소</td></tr>
       <tr><td>리전 오류</td><td><code>location</code> 이 <code>eastus2</code> 로 고정</td><td><code>infra/main.bicep</code> 의 <code>@allowed</code> 목록 수정</td></tr>
       <tr><td>상태가 계속 <code>Queued</code></td><td>워커 미실행</td><td>로컬은 <code>cli once</code>, Azure는 워커 앱 상태 확인</td></tr>
-      <tr><td>결과에 그림 설명이 없음</td><td>저품질 티어</td><td><code>/admin/settings</code> 에서 분석 티어를 <b>고품질</b>로 변경 후 재작업</td></tr>
+      <tr><td>결과에 그림 설명이 없음</td><td>저품질 티어</td><td><code>/admin/settings?tab=analysis</code> 에서 분석 티어를 <b>고품질</b>로 변경 후 재작업</td></tr>
       <tr><td>한글 OCR이 깨짐</td><td>기본 OCR 모델은 한국어 미지원</td><td>로컬은 <code>PPTX_OCR_REC_MODEL</code>/<code>PPTX_OCR_REC_KEYS</code> 지정, 컨테이너는 <code>--build-arg ENABLE_LOW_TIER_OCR=1</code> 로 한국어 모델 포함해 빌드</td></tr>
       <tr><td>MIP 문서 처리 실패</td><td>복호화 미구성</td><td>README 「MIP 복호화」 참고, 관리 포털의 준비 마법사로 점검</td></tr>
       <tr><td>검색에 반영되지 않음</td><td>재인덱싱 안 함</td><td>라이브러리 설정에서 수동 재인덱싱 후 대기</td></tr>

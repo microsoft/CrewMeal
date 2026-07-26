@@ -36,7 +36,13 @@ class PdfHandler:
     display_name = "PDF"
     extensions = frozenset({".pdf"})
     content_types = frozenset({PDF_CONTENT_TYPE})
+    content_type_by_extension = {".pdf": PDF_CONTENT_TYPE}
     supported = True
+    pipeline = "PyMuPDF 렌더 → 비전"
+    summary = (
+        "PyMuPDF로 페이지를 직접 이미지 렌더링해 비전 AI가 읽습니다. "
+        "LibreOffice 변환을 거치지 않아 페이지 수가 원본과 항상 일치합니다."
+    )
 
     def validate(self, data: bytes, *, filename: str, max_bytes: int) -> None:
         if Path(filename).suffix.lower() != ".pdf":

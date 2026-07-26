@@ -3,45 +3,122 @@
 {% block head_extra %}
 <style>
   main { max-width: 1120px; }
-  header.app-bar nav.admin-nav { margin-left: auto; display: flex; gap: 1rem; flex-wrap: wrap; }
-  header.app-bar nav.admin-nav a { font-size: 0.95rem; opacity: 0.92; }
-  header.app-bar nav.admin-nav a:hover { opacity: 1; text-decoration: underline; }
+
+  /* -- app bar / navigation ------------------------------------------- */
+  header.app-bar { padding-bottom: 0; flex-wrap: wrap; row-gap: 0.4rem; }
+  header.app-bar nav.admin-nav {
+    margin-left: auto; display: flex; align-items: flex-end;
+    gap: 0.15rem; flex-wrap: wrap;
+  }
+  header.app-bar nav.admin-nav a {
+    font-size: 0.95rem; padding: 0.45rem 0.75rem; border-radius: 8px 8px 0 0;
+    border-bottom: 3px solid transparent; opacity: 0.88;
+  }
+  header.app-bar nav.admin-nav a:hover { opacity: 1; background: rgba(255,255,255,0.12); }
+  header.app-bar nav.admin-nav a.active {
+    opacity: 1; font-weight: 600; background: rgba(255,255,255,0.16);
+    border-bottom-color: #fff;
+  }
+  header.app-bar nav.admin-nav a.logout {
+    margin-left: 0.6rem; opacity: 0.72; font-size: 0.88rem;
+    border-left: 1px solid rgba(255,255,255,0.35); border-radius: 0;
+  }
+  header.app-bar nav.admin-nav a.logout:hover { background: none; opacity: 1; }
+  header.app-bar .spacer { width: 100%; height: 0; }
+
+  /* -- page heading ---------------------------------------------------- */
+  .page-head { margin-bottom: 1.1rem; }
+  .page-head h1 { margin: 0 0 0.2rem; }
+  .page-head p { margin: 0; }
+
+  /* -- section (tab) navigation ---------------------------------------- */
+  .subnav { display: flex; gap: 0.35rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+  .subnav a {
+    text-decoration: none; color: inherit; font-size: 0.92rem;
+    padding: 0.45rem 0.85rem; border: 1px solid #d5d7de; border-radius: 999px;
+    background: #fff;
+  }
+  .subnav a:hover { border-color: #0b5cab; }
+  .subnav a.active { background: #0b5cab; border-color: #0b5cab; color: #fff; font-weight: 600; }
+  @media (prefers-color-scheme: dark) {
+    .subnav a { background: #23242a; border-color: #3c3d44; }
+  }
+
+  /* -- tables ---------------------------------------------------------- */
   table.grid { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
-  table.grid th, table.grid td { text-align: left; padding: 0.5rem 0.6rem; border-bottom: 1px solid #e2e3e8; vertical-align: top; }
+  table.grid th, table.grid td { text-align: left; padding: 0.55rem 0.6rem; border-bottom: 1px solid #e2e3e8; vertical-align: top; }
   table.grid th { color: #6b6c73; font-weight: 600; white-space: nowrap; }
   @media (prefers-color-scheme: dark) { table.grid th, table.grid td { border-color: #33343a; } }
+
+  /* -- stats ----------------------------------------------------------- */
   .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.85rem; }
   .stat { background: #eef3fa; border-radius: 10px; padding: 0.9rem 1rem; }
   @media (prefers-color-scheme: dark) { .stat { background: #1d2733; } }
   .stat .n { font-size: 1.6rem; font-weight: 700; }
   .stat .l { color: #6b6c73; font-size: 0.85rem; }
+  .stat.warn { background: #fbeceb; }
+  @media (prefers-color-scheme: dark) { .stat.warn { background: #33211f; } }
+  .group-label { font-size: 0.82rem; color: #6b6c73; margin: 0 0 0.4rem; text-transform: none; }
+
+  /* -- format tiles ----------------------------------------------------- */
+  .tile-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.85rem; }
+  .tile {
+    display: block; text-decoration: none; color: inherit;
+    border: 1px solid #e2e3e8; border-radius: 10px; padding: 0.85rem 0.95rem;
+  }
+  .tile:hover { border-color: #0b5cab; }
+  .tile.off { opacity: 0.55; }
+  .tile .n { font-size: 1.5rem; font-weight: 700; }
+  .tile .t { font-weight: 600; }
+  .tile .s { color: #6b6c73; font-size: 0.8rem; margin-top: 0.15rem; }
+  @media (prefers-color-scheme: dark) { .tile { border-color: #33343a; } }
+
+  /* -- badges / chips --------------------------------------------------- */
   .badge { display: inline-block; padding: 0.1rem 0.55rem; border-radius: 999px; font-size: 0.78rem; background: #e6e7ec; color: #333; }
   .badge.ok { background: #d7f0dd; color: #12602a; }
   .badge.err { background: #f6d9d7; color: #8b1a13; }
   .badge.run { background: #dfe8fb; color: #123a7a; }
+  .chip {
+    display: inline-block; padding: 0.12rem 0.5rem; margin: 0.15rem 0.2rem 0 0;
+    border: 1px solid #c9cbd3; border-radius: 6px; font-size: 0.8rem;
+    font-family: ui-monospace, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) { .chip { border-color: #44454c; } }
+
+  /* -- forms / misc ----------------------------------------------------- */
   form.inline { display: inline; }
   .toolbar { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; margin-bottom: 1rem; }
   code.path { font-size: 0.82rem; word-break: break-all; }
-  input[type=text], input[type=password], input[type=file], textarea, select {
+  input[type=text], input[type=password], input[type=file], input[type=url], textarea, select {
     font: inherit; padding: 0.45rem 0.55rem; border: 1px solid #c4c6cf;
     border-radius: 7px; background: #fff; color: inherit; width: 100%;
   }
   @media (prefers-color-scheme: dark) {
-    input[type=text], input[type=password], input[type=file], textarea, select { background: #2a2b31; border-color: #44454c; }
+    input[type=text], input[type=password], input[type=file], input[type=url], textarea, select { background: #2a2b31; border-color: #44454c; }
   }
   label { display: block; font-size: 0.85rem; color: #6b6c73; margin: 0.7rem 0 0.2rem; }
+  .notice { display: block; padding: 0.5rem 0.7rem; margin: 0 0 1rem; }
 </style>
 {% block admin_head %}{% endblock %}
 {% endblock %}
 
 {% block app_bar_extra %}
+{# Active state is derived from the path so no route has to pass it in.
+   The trailing slash is stripped because /admin and /admin/ both resolve
+   to the dashboard. #}
+{% set path = request.url.path.rstrip('/') or '/admin' %}
 <nav class="admin-nav">
-  <a href="/admin">대시보드</a>
-  <a href="/admin/documents">문서</a>
-  <a href="/admin/feedback">피드백</a>
-  <a href="/admin/settings">설정</a>
-  <a href="/admin/tryout">시연 업로드</a>
-  <a href="/admin/logout">로그아웃</a>
+  {% for href, label in [
+      ('/admin', '대시보드'),
+      ('/admin/documents', '문서'),
+      ('/admin/tryout', '시연 업로드'),
+      ('/admin/feedback', '피드백'),
+      ('/admin/settings', '설정'),
+  ] %}
+  {% set active = path == href or (href != '/admin' and path.startswith(href + '/')) %}
+  <a href="{{ href }}" class="{{ 'active' if active }}"{% if active %} aria-current="page"{% endif %}>{{ label }}</a>
+  {% endfor %}
+  <a href="/admin/logout" class="logout">로그아웃</a>
 </nav>
 {% endblock %}
 

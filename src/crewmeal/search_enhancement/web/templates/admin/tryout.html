@@ -3,20 +3,49 @@
 {% block title %}시연 업로드 · Crewmeal 관리자{% endblock %}
 
 {% block admin_content %}
-<div class="card" style="max-width: 620px;">
+<div class="page-head">
   <h1>시연 업로드</h1>
-  <p class="muted">PPTX를 직접 업로드해 동일 파이프라인으로 HTML 추출을 시연합니다.
+  <p class="muted">문서를 직접 올려 SharePoint 인제스트와 동일한 파이프라인으로 강화 결과를 확인합니다.
     커넥터에 게시하거나 SharePoint에 기록하지 않습니다.</p>
+</div>
+
+<div class="card" style="max-width: 680px;">
   {% if error %}
-  <p class="badge err" style="display:block; padding:0.5rem 0.7rem;">{{ error }}</p>
+  <p class="badge err notice">{{ error }}</p>
   {% endif %}
   <form method="post" action="/admin/tryout" enctype="multipart/form-data">
     <label for="file">문서 파일</label>
-    <input type="file" id="file" name="file" accept="{{ accept_extensions | default('.pptx') }}" required />
-    <p class="muted" style="margin:0.25rem 0 0.5rem;">지원 형식: {{ accept_extensions | default('.pptx') }}</p>
+    <input type="file" id="file" name="file" accept="{{ accept_extensions }}" required />
+    <p class="muted" style="margin:0.35rem 0 0.2rem;">활성화된 형식만 받습니다. 설정 &gt; 문서 형식에서 켜고 끕니다.</p>
+    <div>
+      {% for fmt in formats %}
+      {% for extension in fmt.extensions %}<span class="chip">{{ extension }}</span>{% endfor %}
+      {% else %}
+      <span class="muted">활성화된 형식이 없습니다.</span>
+      {% endfor %}
+    </div>
     <label for="comment">튜닝 코멘트 (선택)</label>
     <textarea id="comment" name="comment" rows="3" placeholder="추출 해석을 교정할 지시를 입력하면 프롬프트에 주입됩니다."></textarea>
     <div style="margin-top: 1rem;"><button class="btn" type="submit">업로드 후 처리</button></div>
   </form>
 </div>
+
+{% if formats %}
+<div class="card">
+  <h2 style="margin-top:0;">형식별 처리 방식</h2>
+  <table class="grid">
+    <tbody>
+      {% for fmt in formats %}
+      <tr>
+        <th>{{ fmt.display_name }}</th>
+        <td>
+          {% if fmt.pipeline %}<span class="badge">{{ fmt.pipeline }}</span>{% endif %}
+          {% if fmt.summary %}<div class="muted" style="margin-top:.3rem;">{{ fmt.summary }}</div>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
 {% endblock %}

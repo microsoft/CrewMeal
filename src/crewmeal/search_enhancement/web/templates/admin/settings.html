@@ -3,25 +3,118 @@
 {% block title %}설정 · Crewmeal 관리자{% endblock %}
 
 {% block admin_content %}
-<div class="card">
+<div class="page-head">
   <h1>설정</h1>
-  <p class="muted">런타임 설정을 편집합니다. 값은 JSON으로 저장됩니다(문자열은 그대로 저장).</p>
-  {% if saved %}<p class="badge ok" style="display:block; padding:0.5rem 0.7rem;">저장되었습니다.</p>{% endif %}
-
-  {% if settings %}
-  <table class="grid">
-    <thead><tr><th>키</th><th>값</th></tr></thead>
-    <tbody>
-      {% for key, value in settings.items() %}
-      <tr><td><code>{{ key }}</code></td><td><code class="path">{{ value | tojson }}</code></td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% else %}
-  <p class="muted">저장된 설정이 없습니다.</p>
-  {% endif %}
+  <p class="muted">런타임 동작을 편집합니다. 항목이 서로 독립적이라 성격별로 나눠 두었습니다.</p>
 </div>
 
+<nav class="subnav">
+  {% for entry in tabs %}
+  <a href="/admin/settings?tab={{ entry.id }}"
+     class="{{ 'active' if entry.id == active_tab }}"
+     {% if entry.id == active_tab %}aria-current="page"{% endif %}>{{ entry.label }}</a>
+  {% endfor %}
+</nav>
+
+{% if saved %}<p class="badge ok notice">저장되었습니다.</p>{% endif %}
+
+{# ------------------------------------------------------------------ #}
+{# 문서 형식                                                            #}
+{# ------------------------------------------------------------------ #}
+{% if active_tab == 'formats' %}
+<div class="card">
+  <h2 style="margin-top:0;">문서 형식 지원</h2>
+  <p class="muted">확장자별로 검색강화 처리를 켜고 끕니다. 비활성화하면 SharePoint 인제스트와 시연 업로드에서 제외됩니다.
+    형식마다 처리 방식과 비용 구조가 다르므로 아래 설명을 함께 확인하세요.</p>
+  <form method="post" action="/admin/settings/formats">
+    <table class="grid">
+      <thead><tr><th>형식</th><th>확장자</th><th>처리 방식</th><th>상태</th><th>활성화</th></tr></thead>
+      <tbody>
+        {% for fmt in formats %}
+        <tr>
+          <td><strong>{{ fmt.display_name }}</strong></td>
+          <td>{% for extension in fmt.extensions %}<span class="chip">{{ extension }}</span>{% endfor %}</td>
+          <td style="max-width: 30rem;">
+            {% if fmt.pipeline %}<span class="badge">{{ fmt.pipeline }}</span>{% endif %}
+            {% if fmt.summary %}<div class="muted" style="margin-top:.3rem;">{{ fmt.summary }}</div>{% endif %}
+          </td>
+          <td>
+            {% if fmt.supported %}
+            <span class="badge ok">구현됨</span>
+            {% else %}
+            <span class="badge">구현 예정</span>
+            {% endif %}
+          </td>
+          <td>
+            <input type="checkbox" name="enabled" value="{{ fmt.format_id }}"
+                   {% if fmt.enabled %}checked{% endif %}
+                   {% if not fmt.supported %}disabled title="아직 구현되지 않은 형식입니다."{% endif %} />
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div style="margin-top: 1rem;"><button class="btn" type="submit">형식 설정 저장</button></div>
+  </form>
+</div>
+{% endif %}
+
+{# ------------------------------------------------------------------ #}
+{# 분석 품질·모델                                                       #}
+{# ------------------------------------------------------------------ #}
+{% if active_tab == 'analysis' %}
+<div class="card">
+  <h2 style="margin-top:0;">분석 품질 티어</h2>
+  <p class="muted">문서 분석 방식을 선택합니다. <strong>고품질</strong>은 모든 슬라이드를 이미지로 렌더링해 비전 AI로 분석합니다(가장 정확하지만 LLM 토큰 비용 발생). <strong>저품질</strong>은 LibreOffice·비전을 건너뛰고 OOXML에서 텍스트·표·차트를 추출하고 이미지 내 글자는 OCR로 회수합니다(CPU만 사용, LLM 토큰 0). 텍스트·스크린샷 중심 문서에 강력하며, 다이어그램·아키텍처 문서는 고품질이 유리합니다. (워커 재시작 후 적용)</p>
+  <form method="post" action="/admin/settings/analysis">
+    <label for="analysis-tier">분석 티어</label>
+    <select id="analysis-tier" name="{{ 'analysis.tier' }}">
+      {% for opt in analysis_tier.tiers %}
+      <option value="{{ opt.value }}" {% if opt.value == analysis_tier.tier %}selected{% endif %}>{{ opt.label }}</option>
+      {% endfor %}
+    </select>
+    <p class="muted" style="margin:0.2rem 0 0.8rem;">저품질 선택 시 아래 OCR 설정이 적용됩니다.</p>
+    <label style="display:flex; align-items:center; gap:0.5rem;">
+      <input type="checkbox" name="{{ 'analysis.ocr.enabled' }}" value="1" {% if analysis_tier.ocr_enabled %}checked{% endif %} />
+      임베디드 이미지 OCR 사용 (저품질 티어)
+    </label>
+    {% if analysis_tier.ocr_model_configured %}
+    <p class="muted" style="margin:0.4rem 0 0.8rem;"><span class="badge ok">한국어 OCR 모델</span> <code>{{ analysis_tier.ocr_model_path }}</code></p>
+    {% else %}
+    <p class="muted" style="margin:0.4rem 0 0.8rem;"><span class="badge">한국어 OCR 모델 미설정</span> 기본 OCR 모델은 한글을 읽지 못합니다. 환경변수 <code>PPTX_OCR_REC_MODEL</code>·<code>PPTX_OCR_REC_KEYS</code>(또는 <code>PPTX_OCR_MODEL_DIR</code>)로 한국어 인식 모델을 지정하세요.</p>
+    {% endif %}
+    <div style="margin-top: 1rem;"><button class="btn" type="submit">분석 티어 저장</button></div>
+  </form>
+</div>
+
+<div class="card">
+  <h2 style="margin-top:0;">이미지 분석 모델</h2>
+  <p class="muted">페이지 이미지를 분석하는 비전 LLM을 교체합니다. 비용 절감을 위해 배포/모델 ID·엔드포인트·추론 강도를 바꿀 수 있습니다. 빈 값은 환경 변수 기본값을 사용합니다.</p>
+  <form method="post" action="/admin/settings/vision">
+    {% for field in vision_fields %}
+    <label for="vf-{{ field.key }}">{{ field.label }}</label>
+    {% if field.type == "select" %}
+    <select id="vf-{{ field.key }}" name="{{ field.key }}">
+      {% for opt in field.options %}
+      <option value="{{ opt.value }}" {% if opt.value == field.value %}selected{% endif %}>{{ opt.label }}</option>
+      {% endfor %}
+    </select>
+    {% else %}
+    <input type="text" id="vf-{{ field.key }}" name="{{ field.key }}"
+           value="{{ field.value }}"
+           {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %} />
+    {% endif %}
+    {% if field.help %}<p class="muted" style="margin:0.2rem 0 0.8rem;">{{ field.help }}</p>{% endif %}
+    {% endfor %}
+    <div style="margin-top: 1rem;"><button class="btn" type="submit">모델 설정 저장</button></div>
+  </form>
+</div>
+{% endif %}
+
+{# ------------------------------------------------------------------ #}
+{# 검색 게시                                                            #}
+{# ------------------------------------------------------------------ #}
+{% if active_tab == 'publication' %}
 <div class="card">
   <h2 style="margin-top:0;">검색 콘텐츠 게시 방식</h2>
   <p class="muted">SharePoint 라이브러리 컬럼과 Copilot Connector 중 하나를 선택합니다. 변경 시 모든 활성 문서를 새 대상으로 다시 게시한 뒤 이전 대상의 값을 정리합니다.</p>
@@ -36,7 +129,7 @@
     · 실패 {{ publication_progress.failed }}개 · 절단 {{ publication_progress.truncated }}개
   </p>
   {% if publication.last_error_message %}
-  <p class="badge" style="display:block; padding:0.5rem 0.7rem;">{{ publication.last_error_code }} · {{ publication.last_error_message }}</p>
+  <p class="badge notice">{{ publication.last_error_code }} · {{ publication.last_error_message }}</p>
   {% endif %}
 
   <form method="post" action="/admin/settings/publication">
@@ -107,85 +200,12 @@
   {% endif %}
   {% endif %}
 </div>
+{% endif %}
 
-<div class="card">
-  <h2 style="margin-top:0;">문서 형식 지원</h2>
-  <p class="muted">확장자별로 검색강화 처리를 켜고 끕니다. 비활성화하면 SharePoint 인제스트와 tryout 업로드에서 제외됩니다.</p>
-  <form method="post" action="/admin/settings/formats">
-    <table class="grid">
-      <thead><tr><th>형식</th><th>확장자</th><th>상태</th><th>활성화</th></tr></thead>
-      <tbody>
-        {% for fmt in formats %}
-        <tr>
-          <td>{{ fmt.display_name }}</td>
-          <td><code>{{ fmt.extensions | join(', ') }}</code></td>
-          <td>
-            {% if fmt.supported %}
-            <span class="badge ok">구현됨</span>
-            {% else %}
-            <span class="badge">구현 예정</span>
-            {% endif %}
-          </td>
-          <td>
-            <input type="checkbox" name="enabled" value="{{ fmt.format_id }}"
-                   {% if fmt.enabled %}checked{% endif %}
-                   {% if not fmt.supported %}disabled title="아직 구현되지 않은 형식입니다."{% endif %} />
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    <div style="margin-top: 1rem;"><button class="btn" type="submit">형식 설정 저장</button></div>
-  </form>
-</div>
-
-<div class="card">
-  <h2 style="margin-top:0;">분석 품질 티어</h2>
-  <p class="muted">문서 분석 방식을 선택합니다. <strong>고품질</strong>은 모든 슬라이드를 이미지로 렌더링해 비전 AI로 분석합니다(가장 정확하지만 LLM 토큰 비용 발생). <strong>저품질</strong>은 LibreOffice·비전을 건너뛰고 OOXML에서 텍스트·표·차트를 추출하고 이미지 내 글자는 OCR로 회수합니다(CPU만 사용, LLM 토큰 0). 텍스트·스크린샷 중심 문서에 강력하며, 다이어그램·아키텍처 문서는 고품질이 유리합니다. (워커 재시작 후 적용)</p>
-  <form method="post" action="/admin/settings/analysis">
-    <label for="analysis-tier">분석 티어</label>
-    <select id="analysis-tier" name="{{ 'analysis.tier' }}">
-      {% for opt in analysis_tier.tiers %}
-      <option value="{{ opt.value }}" {% if opt.value == analysis_tier.tier %}selected{% endif %}>{{ opt.label }}</option>
-      {% endfor %}
-    </select>
-    <p class="muted" style="margin:0.2rem 0 0.8rem;">저품질 선택 시 아래 OCR 설정이 적용됩니다.</p>
-    <label style="display:flex; align-items:center; gap:0.5rem;">
-      <input type="checkbox" name="{{ 'analysis.ocr.enabled' }}" value="1" {% if analysis_tier.ocr_enabled %}checked{% endif %} />
-      임베디드 이미지 OCR 사용 (저품질 티어)
-    </label>
-    {% if analysis_tier.ocr_model_configured %}
-    <p class="muted" style="margin:0.4rem 0 0.8rem;"><span class="badge ok">한국어 OCR 모델</span> <code>{{ analysis_tier.ocr_model_path }}</code></p>
-    {% else %}
-    <p class="muted" style="margin:0.4rem 0 0.8rem;"><span class="badge">한국어 OCR 모델 미설정</span> 기본 OCR 모델은 한글을 읽지 못합니다. 환경변수 <code>PPTX_OCR_REC_MODEL</code>·<code>PPTX_OCR_REC_KEYS</code>(또는 <code>PPTX_OCR_MODEL_DIR</code>)로 한국어 인식 모델을 지정하세요.</p>
-    {% endif %}
-    <div style="margin-top: 1rem;"><button class="btn" type="submit">분석 티어 저장</button></div>
-  </form>
-</div>
-
-<div class="card">
-  <h2 style="margin-top:0;">이미지 분석 모델</h2>
-  <p class="muted">페이지 이미지를 분석하는 비전 LLM을 교체합니다. 비용 절감을 위해 배포/모델 ID·엔드포인트·추론 강도를 바꿀 수 있습니다. 빈 값은 환경 변수 기본값을 사용합니다.</p>
-  <form method="post" action="/admin/settings/vision">
-    {% for field in vision_fields %}
-    <label for="vf-{{ field.key }}">{{ field.label }}</label>
-    {% if field.type == "select" %}
-    <select id="vf-{{ field.key }}" name="{{ field.key }}">
-      {% for opt in field.options %}
-      <option value="{{ opt.value }}" {% if opt.value == field.value %}selected{% endif %}>{{ opt.label }}</option>
-      {% endfor %}
-    </select>
-    {% else %}
-    <input type="text" id="vf-{{ field.key }}" name="{{ field.key }}"
-           value="{{ field.value }}"
-           {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %} />
-    {% endif %}
-    {% if field.help %}<p class="muted" style="margin:0.2rem 0 0.8rem;">{{ field.help }}</p>{% endif %}
-    {% endfor %}
-    <div style="margin-top: 1rem;"><button class="btn" type="submit">모델 설정 저장</button></div>
-  </form>
-</div>
-
+{# ------------------------------------------------------------------ #}
+{# 복호화                                                               #}
+{# ------------------------------------------------------------------ #}
+{% if active_tab == 'decryption' %}
 <div class="card">
   <h2 style="margin-top:0;">암호화 문서 복호화</h2>
   <p class="muted">암호화된 문서를 처리 전에 복호화하는 파이프라인입니다. 기본은 모두 꺼짐이며, 구현되지 않았거나 백엔드가 구성되지 않은 제공자를 켜면 해당 문서 처리 시 명확한 오류로 실패합니다. (워커 재시작 후 적용)</p>
@@ -314,9 +334,32 @@ function crewmealCopyPre(btn) {
   }
 }
 </script>
+{% endif %}
+
+{# ------------------------------------------------------------------ #}
+{# 고급 (원시 키/값)                                                    #}
+{# ------------------------------------------------------------------ #}
+{% if active_tab == 'advanced' %}
+<div class="card">
+  <h2 style="margin-top:0;">저장된 설정</h2>
+  <p class="muted">위 탭들이 실제로 기록하는 원시 키/값입니다. 값은 JSON으로 저장됩니다(문자열은 그대로 저장).</p>
+  {% if settings %}
+  <table class="grid">
+    <thead><tr><th>키</th><th>값</th></tr></thead>
+    <tbody>
+      {% for key, value in settings.items() %}
+      <tr><td><code>{{ key }}</code></td><td><code class="path">{{ value | tojson }}</code></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">저장된 설정이 없습니다.</p>
+  {% endif %}
+</div>
 
 <div class="card">
   <h2 style="margin-top:0;">설정 추가 / 수정</h2>
+  <p class="muted">전용 화면이 없는 키를 직접 다룹니다. 게시 관련 키는 검색 게시 탭에서만 변경할 수 있습니다.</p>
   <form method="post" action="/admin/settings">
     <label for="key">키</label>
     <input type="text" id="key" name="key" placeholder="예: analysis_dpi" required />
@@ -325,4 +368,5 @@ function crewmealCopyPre(btn) {
     <div style="margin-top: 1rem;"><button class="btn" type="submit">저장</button></div>
   </form>
 </div>
+{% endif %}
 {% endblock %}

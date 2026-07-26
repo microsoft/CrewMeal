@@ -78,7 +78,17 @@ class DocxHandler:
     display_name = "Word"
     extensions = frozenset({".docx", ".docm"})
     content_types = frozenset({DOCX_CONTENT_TYPE, DOCM_CONTENT_TYPE})
+    content_type_by_extension = {
+        ".docx": DOCX_CONTENT_TYPE,
+        ".docm": DOCM_CONTENT_TYPE,
+    }
     supported = True
+    pipeline = "OOXML 구조 우선 · 필요한 페이지만 비전"
+    summary = (
+        "OOXML에서 문단·표·머리글을 그대로 읽고, LibreOffice PDF는 페이지 구분에만 "
+        "씁니다. 도형·차트가 있거나 평탄화 손실이 생기는 복잡한 표가 놓인 페이지만 "
+        "이미지로 렌더링해 비전 AI로 교차 확인합니다."
+    )
 
     def validate(self, data: bytes, *, filename: str, max_bytes: int) -> None:
         if Path(filename).suffix.lower() not in self.extensions:

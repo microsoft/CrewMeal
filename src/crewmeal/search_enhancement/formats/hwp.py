@@ -57,7 +57,17 @@ class HwpHandler:
             "application/hwp+zip",
         }
     )
+    content_type_by_extension = {
+        ".hwp": HWP_CONTENT_TYPE,
+        ".hwpx": HWPX_CONTENT_TYPE,
+    }
     supported = True
+    pipeline = "rhwp 구조 우선 · 그림 페이지만 비전"
+    summary = (
+        "rhwp RenderTree에서 본문·표·머리글을 문서 구조 그대로 읽습니다. "
+        "글자 없이 그림만 있는 페이지만 이미지로 렌더링해 비전 AI에 넘기므로 "
+        "토큰 비용이 페이지 수에 비례하지 않습니다."
+    )
 
     def validate(self, data: bytes, *, filename: str, max_bytes: int) -> None:
         suffix = Path(filename).suffix.lower()

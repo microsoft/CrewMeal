@@ -271,7 +271,8 @@ $env:CREWMEAL_STATUS_REQUIRE_AUTH = "false"
 1. 브라우저에서 <http://127.0.0.1:8000/admin> 접속
 2. 관리자 키에 `local-admin-key` 입력 후 로그인
 3. 상단 메뉴에서 **시연 업로드**(`/admin/tryout`) 클릭
-4. 테스트용 `.pptx` 파일을 선택하고 업로드
+4. 테스트용 `.pptx` 파일을 선택하고 업로드 (`.pdf`·`.hwp`·`.hwpx`·`.docx`·`.xlsx` 등
+   활성화된 형식이면 무엇이든 됩니다 — 페이지에 허용 확장자가 표시됩니다)
 
 업로드하면 자동으로 **상태 페이지(`/s/...`)** 로 이동합니다. 이때 상태는
 `대기(Queued)` 입니다 — 아직 처리할 워커를 켜지 않았기 때문입니다.
@@ -588,7 +589,7 @@ cd $HOME\CrewMeal
 
 ### C-5. 게시 방식 선택
 
-관리자 포털 `{SERVICE_WEB_URI}/admin/settings` → **검색 콘텐츠 게시 방식**
+관리자 포털 `{SERVICE_WEB_URI}/admin/settings?tab=publication` → **검색 콘텐츠 게시 방식**
 카드에서 하나를 고릅니다. **새 설치는 선택 전까지 아무 곳에도 게시하지 않습니다.**
 
 | 방식 | 장점 | 단점 | 추천 |
@@ -629,7 +630,8 @@ cd $HOME\CrewMeal
 
 ### C-6. 문서 형식 켜기
 
-`/admin/settings` → **문서 형식 지원** 카드에서 테스트할 형식을 체크합니다.
+`/admin/settings?tab=formats` → **문서 형식 지원** 카드에서 테스트할 형식을 체크합니다.
+카드에는 형식마다 어떤 방식으로 읽는지(처리 방식)도 함께 표시됩니다.
 
 | 형식 | 상태 | 추가 준비물 |
 | --- | --- | --- |
@@ -710,7 +712,7 @@ cd $HOME\CrewMeal
 2. 인덱싱은 수 분~수 시간 걸립니다 (테넌트 상황에 따라 다름).
 3. 생성된 검색 콘텐츠에만 존재하는 **고유 문자열(canary)** 로 Microsoft Search를
    검색해 원본 문서가 결과에 나오는지 확인합니다.
-4. `/admin/settings` → **컬럼 검색 준비** 카드에 canary와 원본 URL을 기록합니다.
+4. `/admin/settings?tab=publication` → **컬럼 검색 준비** 카드에 canary와 원본 URL을 기록합니다.
 5. 같은 문서(또는 라이브러리)로 범위를 지정한 Copilot에게 질문해서
    canary 내용을 근거로 답하는지 확인합니다.
 
@@ -793,7 +795,7 @@ cd $HOME\CrewMeal
 | `azd up` 이 쿼터 오류로 실패 | 모델 TPM 부족 | `infra/modules/foundry.bicep` 의 capacity 값 축소 |
 | 리전 오류 | `location` 이 `eastus2` 로 고정 | `infra/main.bicep` 의 `@allowed` 목록 수정 |
 | 상태가 계속 `Queued` | 워커 미실행 | 로컬은 `cli once`, Azure는 워커 앱 상태 확인 |
-| 결과에 그림 설명이 없음 | 저품질 티어 | `/admin/settings` 에서 분석 티어를 **고품질**로 변경 후 재작업 |
+| 결과에 그림 설명이 없음 | 저품질 티어 | `/admin/settings?tab=analysis` 에서 분석 티어를 **고품질**로 변경 후 재작업 |
 | 한글 OCR이 깨짐 | 기본 OCR 모델은 한국어 미지원 | 로컬은 `PPTX_OCR_REC_MODEL`/`PPTX_OCR_REC_KEYS` 지정, 컨테이너는 `--build-arg ENABLE_LOW_TIER_OCR=1` 로 한국어 모델 포함해 빌드 |
 | MIP 문서 처리 실패 | 복호화 미구성 | README 「MIP 복호화」 참고, 관리 포털의 준비 마법사로 점검 |
 | 검색에 반영되지 않음 | 재인덱싱 안 함 | 라이브러리 설정에서 수동 재인덱싱 후 대기 |

@@ -3,18 +3,22 @@
 {% block title %}대시보드 · Crewmeal 관리자{% endblock %}
 
 {% block admin_content %}
-<div class="card">
+<div class="page-head">
   <h1>대시보드</h1>
-  <p class="muted">큐 상태와 최근 작업을 한눈에 확인합니다.</p>
-  <div class="stat-grid" style="margin-top: 1rem;">
+  <p class="muted">처리 현황과 형식별 유입을 한눈에 확인합니다.</p>
+</div>
+
+<div class="card">
+  <h2 style="margin-top:0;">핵심 지표</h2>
+  <div class="stat-grid">
     <div class="stat"><div class="n">{{ document_total }}</div><div class="l">전체 문서</div></div>
+    <div class="stat"><div class="n">{{ documents_ready }}</div><div class="l">강화 완료</div></div>
+    <div class="stat"><div class="n">{{ jobs_in_flight }}</div><div class="l">대기·처리 중 잡</div></div>
+    <div class="stat {{ 'warn' if documents_failed }}"><div class="n">{{ documents_failed }}</div><div class="l">실패 문서</div></div>
     <div class="stat"><div class="n">{{ feedback_count }}</div><div class="l">피드백 레코드</div></div>
     {% if total_cost and total_cost.has_usage %}
     <div class="stat"><div class="n">₩{{ total_cost.krw_display }}</div><div class="l">누적 비용(추정)</div></div>
     {% endif %}
-    {% for status, count in job_counts.items() %}
-    <div class="stat"><div class="n">{{ count }}</div><div class="l">잡 · {{ status }}</div></div>
-    {% endfor %}
   </div>
   {% if total_cost and total_cost.has_usage %}
   <p class="muted" style="margin:.75rem 0 0; font-size:.82rem;">
@@ -25,7 +29,26 @@
 </div>
 
 <div class="card">
-  <h2 style="margin-top:0;">문서 상태</h2>
+  <h2 style="margin-top:0;">형식별 문서</h2>
+  <p class="muted">타일을 누르면 해당 형식으로 걸러진 문서 목록이 열립니다. 처리 방식은 설정 &gt; 문서 형식에서 확인합니다.</p>
+  <div class="tile-grid">
+    {% for fmt in formats %}
+    <a class="tile {{ '' if fmt.enabled else 'off' }}" href="/admin/documents?format={{ fmt.format_id }}">
+      <div class="n">{{ fmt.document_count }}</div>
+      <div class="t">{{ fmt.display_name }}
+        {% if not fmt.supported %}<span class="badge">구현 예정</span>
+        {% elif not fmt.enabled %}<span class="badge">비활성</span>{% endif %}
+      </div>
+      <div class="s">{{ fmt.extensions | join(' · ') }}</div>
+      {% if fmt.pipeline %}<div class="s">{{ fmt.pipeline }}</div>{% endif %}
+    </a>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="card">
+  <h2 style="margin-top:0;">상태 분포</h2>
+  <p class="group-label">문서 상태</p>
   {% if document_counts %}
   <div class="stat-grid">
     {% for status, count in document_counts.items() %}
@@ -34,6 +57,17 @@
   </div>
   {% else %}
   <p class="muted">아직 문서가 없습니다.</p>
+  {% endif %}
+
+  <p class="group-label" style="margin-top:1.2rem;">잡 상태</p>
+  {% if job_counts %}
+  <div class="stat-grid">
+    {% for status, count in job_counts.items() %}
+    <div class="stat"><div class="n">{{ count }}</div><div class="l">{{ status }}</div></div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="muted">아직 잡이 없습니다.</p>
   {% endif %}
 </div>
 

@@ -505,6 +505,7 @@ class SearchEnhancementRepository:
         *,
         source_kind: str | None = None,
         status: str | None = None,
+        extensions: Sequence[str] | None = None,
         limit: int = 50,
         offset: int = 0,
     ) -> tuple[DocumentRecord, ...]:
@@ -513,21 +514,58 @@ class SearchEnhancementRepository:
             stmt = stmt.where(documents.c.source_kind == source_kind)
         if status is not None:
             stmt = stmt.where(documents.c.status == status)
+        extension_filter = _extension_filter(extensions)
+        if extension_filter is not None:
+            stmt = stmt.where(extension_filter)
         stmt = stmt.order_by(documents.c.updated_at.desc()).limit(limit).offset(offset)
         with self._engine.connect() as conn:
             rows = conn.execute(stmt).mappings().all()
         return tuple(_document_from_row(row) for row in rows)
 
     def count_documents(
-        self, *, source_kind: str | None = None, status: str | None = None
+        self,
+        *,
+        source_kind: str | None = None,
+        status: str | None = None,
+        extensions: Sequence[str] | None = None,
     ) -> int:
         stmt = select(func.count()).select_from(documents)
         if source_kind is not None:
             stmt = stmt.where(documents.c.source_kind == source_kind)
         if status is not None:
             stmt = stmt.where(documents.c.status == status)
+        extension_filter = _extension_filter(extensions)
+        if extension_filter is not None:
+            stmt = stmt.where(extension_filter)
         with self._engine.connect() as conn:
             return int(conn.execute(stmt).scalar_one())
+
+    def count_documents_by_extension_groups(
+        self, groups: Mapping[str, Sequence[str]]
+    ) -> dict[str, int]:
+        """Count documents per named group of file extensions.
+
+        One count per group rather than a single grouped query: SQLite and
+        PostgreSQL have no portable way to extract a file extension, so the
+        filter is a suffix ``LIKE`` the caller supplies. Groups are the handful
+        of registered formats, so the query count stays small.
+        """
+
+        counts: dict[str, int] = {}
+        with self._engine.connect() as conn:
+            for name, extensions in groups.items():
+                condition = _extension_filter(extensions)
+                if condition is None:
+                    counts[name] = 0
+                    continue
+                counts[name] = int(
+                    conn.execute(
+                        select(func.count())
+                        .select_from(documents)
+                        .where(condition)
+                    ).scalar_one()
+                )
+        return counts
 
     def document_status_counts(self) -> dict[str, int]:
         with self._engine.connect() as conn:
@@ -2325,6 +2363,37 @@ def _key_where(table: Any, key: DocumentKey) -> Any:
         table.c.drive_id == key.drive_id,
         table.c.item_id == key.item_id,
     )
+
+
+def _extension_filter(extensions: Sequence[str] | None) -> Any | None:
+    """Match ``documents.file_name`` against a set of file extensions.
+
+    Returns ``None`` when there is nothing to filter on so callers can skip the
+    clause entirely. Comparison is on a lowered column so it behaves the same on
+    SQLite (case-sensitive ``LIKE`` for non-ASCII) and PostgreSQL. ``%`` and
+    ``_`` in an extension are escaped -- extensions come from the format
+    registry today, but the helper must not silently turn into a wildcard match
+    if that ever changes.
+    """
+
+    if not extensions:
+        return None
+    clauses = []
+    for extension in extensions:
+        normalized = extension.strip().lower()
+        if not normalized:
+            continue
+        if not normalized.startswith("."):
+            normalized = f".{normalized}"
+        escaped = (
+            normalized.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        )
+        clauses.append(
+            func.lower(documents.c.file_name).like(f"%{escaped}", escape="\\")
+        )
+    if not clauses:
+        return None
+    return or_(*clauses)
 
 
 def _job_claim_exists(

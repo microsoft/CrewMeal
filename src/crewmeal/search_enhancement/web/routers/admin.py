@@ -18,6 +18,7 @@ from fastapi import (
     File,
     Form,
     HTTPException,
+    Query,
     Request,
     UploadFile,
     status,
@@ -29,6 +30,7 @@ from crewmeal.search_enhancement.artifact_store import ArtifactStore, artifact_p
 from crewmeal.config import AppConfig, normalize_analysis_tier
 from crewmeal.search_enhancement.formats import (
     all_handlers,
+    content_type_for,
     enabled_extensions,
     format_setting_key,
     format_status,
@@ -90,6 +92,51 @@ router = APIRouter(
 
 
 # --------------------------------------------------------------------------- #
+# Shared format view helpers
+#
+# Three pages need to talk about formats (dashboard breakdown, document filter,
+# tryout upload), so the registry is projected into view rows in one place.
+# --------------------------------------------------------------------------- #
+def _handlers_by_id() -> dict[str, Any]:
+    return {handler.format_id: handler for handler in all_handlers()}
+
+
+def _extensions_for_format(format_id: str | None) -> tuple[str, list[str] | None]:
+    """Resolve a ``?format=`` value to ``(normalized_id, extensions)``.
+
+    An unknown id is treated as "no filter" rather than a 404 -- a stale
+    bookmark should show the unfiltered list, not an error page.
+    """
+
+    handler = _handlers_by_id().get((format_id or "").strip())
+    if handler is None:
+        return "", None
+    return handler.format_id, sorted(handler.extensions)
+
+
+def _format_label_by_extension() -> dict[str, str]:
+    return {
+        extension: handler.display_name
+        for handler in all_handlers()
+        for extension in handler.extensions
+    }
+
+
+def _format_overview(
+    repository: SearchEnhancementRepository,
+) -> list[dict[str, Any]]:
+    """Per-format rows enriched with how many documents have been ingested."""
+
+    rows = format_status(repository.get_all_settings())
+    counts = repository.count_documents_by_extension_groups(
+        {row["format_id"]: row["extensions"] for row in rows}
+    )
+    for row in rows:
+        row["document_count"] = counts.get(row["format_id"], 0)
+    return rows
+
+
+# --------------------------------------------------------------------------- #
 # Auth
 # --------------------------------------------------------------------------- #
 @login_router.get("/login", response_class=HTMLResponse, response_model=None)
@@ -141,11 +188,17 @@ def admin_dashboard(
     repository: SearchEnhancementRepository = Depends(get_repository),
     templates: Jinja2Templates = Depends(get_templates),
 ) -> HTMLResponse:
+    document_counts = repository.document_status_counts()
+    job_counts = repository.job_status_counts()
     context = {
-        "document_counts": repository.document_status_counts(),
-        "job_counts": repository.job_status_counts(),
+        "document_counts": document_counts,
+        "job_counts": job_counts,
         "document_total": repository.count_documents(),
+        "documents_ready": document_counts.get("Ready", 0),
+        "documents_failed": document_counts.get("Failed", 0),
+        "jobs_in_flight": job_counts.get("queued", 0) + job_counts.get("processing", 0),
         "feedback_count": repository.count_feedback_records(),
+        "formats": _format_overview(repository),
         "recent_jobs": repository.list_recent_jobs(limit=12),
         "total_cost": estimate_cost(repository.job_usages()),
     }
@@ -162,27 +215,46 @@ def admin_documents(
     templates: Jinja2Templates = Depends(get_templates),
     source_kind: str | None = None,
     status_filter: str | None = None,
+    format_id: str | None = Query(default=None, alias="format"),
     page: int = 1,
 ) -> HTMLResponse:
     page = max(page, 1)
     page_size = 25
+    selected_format, extensions = _extensions_for_format(format_id)
     documents = repository.list_documents(
         source_kind=source_kind or None,
         status=status_filter or None,
+        extensions=extensions,
         limit=page_size,
         offset=(page - 1) * page_size,
     )
     total = repository.count_documents(
-        source_kind=source_kind or None, status=status_filter or None
+        source_kind=source_kind or None,
+        status=status_filter or None,
+        extensions=extensions,
     )
+    labels = _format_label_by_extension()
     context = {
-        "documents": documents,
+        "document_rows": [
+            {
+                "document": document,
+                "format_label": labels.get(
+                    Path(document.file_name or "").suffix.lower(), "—"
+                ),
+            }
+            for document in documents
+        ],
         "total": total,
         "page": page,
         "page_size": page_size,
         "has_next": page * page_size < total,
         "source_kind": source_kind or "",
         "status_filter": status_filter or "",
+        "format_id": selected_format,
+        "format_options": [
+            {"format_id": handler.format_id, "display_name": handler.display_name}
+            for handler in all_handlers()
+        ],
     }
     return templates.TemplateResponse(request, "admin/documents.html", context)
 
@@ -249,7 +321,34 @@ def admin_job_retry(
 
 # --------------------------------------------------------------------------- #
 # Settings
+#
+# The settings page groups eight cards that have nothing to do with each other
+# (formats, analysis, publication, decryption, raw key/value). They are split
+# across tabs on one route rather than separate routes so every save can bounce
+# back to the tab the administrator was on, and so bookmarks to /admin/settings
+# keep working.
 # --------------------------------------------------------------------------- #
+SETTINGS_TABS: tuple[dict[str, str], ...] = (
+    {"id": "formats", "label": "문서 형식"},
+    {"id": "analysis", "label": "분석 품질·모델"},
+    {"id": "publication", "label": "검색 게시"},
+    {"id": "decryption", "label": "복호화"},
+    {"id": "advanced", "label": "고급"},
+)
+DEFAULT_SETTINGS_TAB = SETTINGS_TABS[0]["id"]
+
+
+def _settings_tab(tab: str | None) -> str:
+    valid = {entry["id"] for entry in SETTINGS_TABS}
+    return tab if tab in valid else DEFAULT_SETTINGS_TAB
+
+
+def _settings_redirect(tab: str) -> RedirectResponse:
+    return RedirectResponse(
+        f"/admin/settings?tab={tab}&saved=1", status_code=status.HTTP_303_SEE_OTHER
+    )
+
+
 def _mip_live_health(
     all_settings: Mapping[str, Any], *, force: bool = False
 ) -> dict[str, dict[str, Any]]:
@@ -326,6 +425,7 @@ def _build_settings_context(
     *,
     saved: bool,
     force_mip_probe: bool,
+    tab: str = DEFAULT_SETTINGS_TAB,
 ) -> dict[str, Any]:
     """Shared settings-page context for the GET view and the re-check action."""
 
@@ -347,6 +447,8 @@ def _build_settings_context(
     return {
         "settings": all_settings,
         "formats": format_status(all_settings),
+        "tabs": SETTINGS_TABS,
+        "active_tab": tab,
         "vision_fields": vision_model_fields(app_config, all_settings),
         "analysis_tier": analysis_tier_status(app_config, all_settings),
         "decryption": decryption_status(
@@ -382,9 +484,10 @@ def admin_settings(
     repository: SearchEnhancementRepository = Depends(get_repository),
     templates: Jinja2Templates = Depends(get_templates),
     saved: bool = False,
+    tab: str | None = None,
 ) -> HTMLResponse:
     context = _build_settings_context(
-        repository, saved=saved, force_mip_probe=False
+        repository, saved=saved, force_mip_probe=False, tab=_settings_tab(tab)
     )
     return templates.TemplateResponse(request, "admin/settings.html", context)
 
@@ -404,7 +507,7 @@ def admin_settings_decryption_recheck(
     """
 
     context = _build_settings_context(
-        repository, saved=False, force_mip_probe=True
+        repository, saved=False, force_mip_probe=True, tab="decryption"
     )
     return templates.TemplateResponse(request, "admin/settings.html", context)
 
@@ -430,9 +533,7 @@ def admin_settings_publication_save(
         and transition.effective_target is parsed
     ):
         _queue_publication_republish(repository)
-    return RedirectResponse(
-        "/admin/settings?saved=1", status_code=status.HTTP_303_SEE_OTHER
-    )
+    return _settings_redirect("publication")
 
 
 @router.post("/settings/publication/column-provisioned")
@@ -450,9 +551,7 @@ def admin_settings_publication_column_provisioned(
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     if repository.get_publication_transition().status != "active":
         _queue_publication_republish(repository)
-    return RedirectResponse(
-        "/admin/settings?saved=1", status_code=status.HTTP_303_SEE_OTHER
-    )
+    return _settings_redirect("publication")
 
 
 @router.post("/settings/publication/reindex-requested")
@@ -468,9 +567,7 @@ def admin_settings_publication_reindex_requested(
         )
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
-    return RedirectResponse(
-        "/admin/settings?saved=1", status_code=status.HTTP_303_SEE_OTHER
-    )
+    return _settings_redirect("publication")
 
 
 @router.post("/settings/publication/search-verified")
@@ -497,9 +594,7 @@ def admin_settings_publication_search_verified(
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     repository.set_setting("publication.search_canary", phrase)
     repository.set_setting("publication.search_source_url", url)
-    return RedirectResponse(
-        "/admin/settings?saved=1", status_code=status.HTTP_303_SEE_OTHER
-    )
+    return _settings_redirect("publication")
 
 
 @router.post("/settings/publication/copilot-verified")
@@ -515,9 +610,7 @@ def admin_settings_publication_copilot_verified(
         )
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
-    return RedirectResponse(
-        "/admin/settings?saved=1", status_code=status.HTTP_303_SEE_OTHER
-    )
+    return _settings_redirect("publication")
 
 
 def _queue_publication_republish(
@@ -555,9 +648,7 @@ def admin_settings_decryption_save(
             decryption_setting_key(provider.provider_id),
             provider.provider_id in checked,
         )
-    return RedirectResponse(
-        "/admin/settings?saved=1", status_code=status.HTTP_303_SEE_OTHER
-    )
+    return _settings_redirect("decryption")
 
 
 @router.post("/settings/analysis")
@@ -577,9 +668,7 @@ async def admin_settings_analysis_save(
     if tier is not None:
         repository.set_setting(ANALYSIS_TIER_KEY, tier)
     repository.set_setting(ANALYSIS_OCR_KEY, ANALYSIS_OCR_KEY in form)
-    return RedirectResponse(
-        "/admin/settings?saved=1", status_code=status.HTTP_303_SEE_OTHER
-    )
+    return _settings_redirect("analysis")
 
 
 @router.post("/settings/vision")
@@ -598,9 +687,7 @@ async def admin_settings_vision_save(
     for key in VISION_SETTING_KEYS:
         if key in form:
             repository.set_setting(key, str(form[key]).strip())
-    return RedirectResponse(
-        "/admin/settings?saved=1", status_code=status.HTTP_303_SEE_OTHER
-    )
+    return _settings_redirect("analysis")
 
 
 @router.post("/settings/formats")
@@ -623,9 +710,7 @@ def admin_settings_formats_save(
             format_setting_key(handler.format_id),
             handler.format_id in checked,
         )
-    return RedirectResponse(
-        "/admin/settings?saved=1", status_code=status.HTTP_303_SEE_OTHER
-    )
+    return _settings_redirect("formats")
 
 
 @router.post("/settings")
@@ -647,9 +732,7 @@ def admin_settings_save(
         parsed = value.strip()
     if normalized_key:
         repository.set_setting(normalized_key, parsed)
-    return RedirectResponse(
-        "/admin/settings?saved=1", status_code=status.HTTP_303_SEE_OTHER
-    )
+    return _settings_redirect("advanced")
 
 
 # --------------------------------------------------------------------------- #
@@ -725,6 +808,10 @@ def admin_tryout_form(
         {
             "error": error,
             "accept_extensions": accept,
+            "formats": [
+                row for row in format_status(repository.get_all_settings())
+                if row["enabled"]
+            ],
         },
     )
 
@@ -738,9 +825,8 @@ async def admin_tryout_submit(
     artifacts: ArtifactStore = Depends(get_artifact_store),
 ) -> RedirectResponse:
     filename = file.filename or "upload.pptx"
-    if Path(filename).suffix.lower() not in enabled_extensions(
-        repository.get_all_settings()
-    ):
+    suffix = Path(filename).suffix.lower()
+    if suffix not in enabled_extensions(repository.get_all_settings()):
         return RedirectResponse(
             "/admin/tryout?error=지원하지+않거나+비활성화된+문서+형식입니다.",
             status_code=status.HTTP_303_SEE_OTHER,
@@ -752,15 +838,21 @@ async def admin_tryout_submit(
     document = repository.create_upload_document(
         file_name=filename, connection_id=connection_id, created_by="admin"
     )
+    # ``source_pptx`` predates multi-format support and is now just the name of
+    # the "original upload" slot -- the worker looks the artifact up by that
+    # exact kind (worker._load_upload_source), so renaming it would orphan every
+    # existing row. The stored file name and content type, however, must follow
+    # the real upload: they are shown verbatim on the document detail page, and
+    # calling an .xlsx a PowerPoint there is simply wrong.
     stored = artifacts.put_bytes(
         artifact_path(
-            document.key, version=0, kind="source_pptx", filename="source.pptx"
+            document.key,
+            version=0,
+            kind="source_pptx",
+            filename=f"source{suffix}",
         ),
         data,
-        content_type=(
-            "application/vnd.openxmlformats-officedocument."
-            "presentationml.presentation"
-        ),
+        content_type=content_type_for(filename),
     )
     repository.record_artifact(
         document.key,

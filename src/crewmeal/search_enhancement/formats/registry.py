@@ -117,6 +117,24 @@ def content_fingerprint(
     return handler.fingerprint(data)
 
 
+def content_type_for(filename: str, *, active_only: bool = True) -> str:
+    """Canonical MIME type to store an uploaded ``filename`` under.
+
+    Derived server-side from the registry rather than trusting the browser's
+    ``Content-Type``. Handlers owning several extensions declare
+    ``content_type_by_extension``; otherwise a single-typed handler's only
+    content type is used.
+    """
+
+    handler = detect_handler(filename, active_only=active_only)
+    by_extension: Mapping[str, str] = getattr(handler, "content_type_by_extension", {})
+    resolved = by_extension.get(_suffix(filename))
+    if resolved:
+        return resolved
+    ordered = sorted(handler.content_types)
+    return ordered[0] if ordered else "application/octet-stream"
+
+
 # --------------------------------------------------------------------------- #
 # Admin-controlled per-format enablement
 #
@@ -180,7 +198,13 @@ def enabled_content_types(settings: Mapping[str, Any]) -> frozenset[str]:
 
 
 def format_status(settings: Mapping[str, Any]) -> list[dict[str, Any]]:
-    """Per-format rows for the admin settings UI."""
+    """Per-format rows for the admin settings UI.
+
+    ``pipeline`` and ``summary`` describe what enabling a format actually does.
+    They differ sharply between formats now (PowerPoint renders every page,
+    Excel branches per sheet), so an administrator cannot infer the cost or the
+    behaviour from the extension alone.
+    """
 
     rows: list[dict[str, Any]] = []
     for handler in _HANDLERS:
@@ -191,6 +215,8 @@ def format_status(settings: Mapping[str, Any]) -> list[dict[str, Any]]:
                 "extensions": sorted(handler.extensions),
                 "supported": handler.supported,
                 "enabled": is_format_enabled(handler.format_id, settings),
+                "pipeline": getattr(handler, "pipeline", ""),
+                "summary": getattr(handler, "summary", ""),
             }
         )
     return rows

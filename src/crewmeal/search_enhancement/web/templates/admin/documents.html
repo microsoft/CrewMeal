@@ -3,29 +3,41 @@
 {% block title %}문서 · Crewmeal 관리자{% endblock %}
 
 {% block admin_content %}
-<div class="card">
+<div class="page-head">
   <h1>문서</h1>
+  <p class="muted">소스·형식·상태로 걸러 확인합니다.</p>
+</div>
+
+<div class="card">
   <form class="toolbar" method="get" action="/admin/documents">
-    <select name="source_kind" onchange="this.form.submit()">
+    <select name="source_kind" onchange="this.form.submit()" style="max-width: 160px;">
       <option value="" {% if not source_kind %}selected{% endif %}>모든 소스</option>
       <option value="sharepoint" {% if source_kind == 'sharepoint' %}selected{% endif %}>SharePoint</option>
       <option value="upload" {% if source_kind == 'upload' %}selected{% endif %}>업로드</option>
+    </select>
+    <select name="format" onchange="this.form.submit()" style="max-width: 180px;">
+      <option value="" {% if not format_id %}selected{% endif %}>모든 형식</option>
+      {% for option in format_options %}
+      <option value="{{ option.format_id }}" {% if format_id == option.format_id %}selected{% endif %}>{{ option.display_name }}</option>
+      {% endfor %}
     </select>
     <input type="text" name="status_filter" value="{{ status_filter }}" placeholder="상태 (예: Ready)" style="max-width: 200px;" />
     <button class="btn secondary" type="submit">필터</button>
     <span class="muted">총 {{ total }}건</span>
   </form>
 
-  {% if documents %}
+  {% if document_rows %}
   <table class="grid">
     <thead>
-      <tr><th>파일</th><th>소스</th><th>상태</th><th>버전</th><th>수정</th><th></th></tr>
+      <tr><th>파일</th><th>형식</th><th>소스</th><th>상태</th><th>버전</th><th>수정</th><th></th></tr>
     </thead>
     <tbody>
-      {% for doc in documents %}
+      {% for row in document_rows %}
+      {% set doc = row.document %}
       {% set cls = 'ok' if doc.status == 'Ready' else ('err' if doc.status == 'Failed' else ('run' if doc.status == 'Processing' else '')) %}
       <tr>
         <td>{{ doc.file_name }}</td>
+        <td class="muted">{{ row.format_label }}</td>
         <td>{{ doc.source_kind }}</td>
         <td><span class="badge {{ cls }}">{{ doc.status }}</span></td>
         <td>{{ doc.enhancement_version }}</td>
@@ -38,13 +50,14 @@
     </tbody>
   </table>
 
+  {% set query = 'source_kind=' ~ source_kind ~ '&status_filter=' ~ status_filter ~ '&format=' ~ format_id %}
   <div class="toolbar" style="margin-top: 1rem;">
     {% if page > 1 %}
-    <a class="btn secondary" href="/admin/documents?source_kind={{ source_kind }}&status_filter={{ status_filter }}&page={{ page - 1 }}">이전</a>
+    <a class="btn secondary" href="/admin/documents?{{ query }}&page={{ page - 1 }}">이전</a>
     {% endif %}
     <span class="muted">{{ page }} 페이지</span>
     {% if has_next %}
-    <a class="btn secondary" href="/admin/documents?source_kind={{ source_kind }}&status_filter={{ status_filter }}&page={{ page + 1 }}">다음</a>
+    <a class="btn secondary" href="/admin/documents?{{ query }}&page={{ page + 1 }}">다음</a>
     {% endif %}
   </div>
   {% else %}

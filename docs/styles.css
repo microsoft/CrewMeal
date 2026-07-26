@@ -246,6 +246,7 @@ h3, h4 { overflow-wrap: anywhere; }
 }
 .slot.ppt .fmt { background: var(--vision); }
 .slot.hwp .fmt { background: var(--persimmon); }
+.slot.ooxml .fmt { background: var(--ok-ink); }
 .slot .eng { font-size: 0.82rem; color: var(--ink-soft); }
 .slot .eng b { display: block; color: var(--ink); font-size: 0.95rem; }
 .slot .via {
@@ -254,6 +255,7 @@ h3, h4 { overflow-wrap: anywhere; }
 }
 .slot.ppt .via { color: var(--vision-ink); background: var(--tint-vision); }
 .slot.hwp .via { color: var(--persimmon-ink); background: var(--tint-persimmon); }
+.slot.ooxml .via { color: var(--ok-ink); background: var(--ok-bg); }
 .tray-foot {
   margin-top: var(--s5); padding-top: var(--s4); border-top: 1px dashed var(--line);
   display: flex; align-items: center; flex-wrap: wrap; gap: var(--s2) var(--s3); font-size: 0.84rem; color: var(--ink-soft);
@@ -265,6 +267,7 @@ h3, h4 { overflow-wrap: anywhere; }
 /* ---------------- problem duo ---------------- */
 .problem { background: var(--paper-2); border-block: 1px solid var(--line); }
 .duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s5); }
+.duo.trio { grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
 .pcard {
   background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
   padding: clamp(var(--s5), 2.5vw, var(--s7)); box-shadow: var(--shadow-sm);
@@ -276,6 +279,7 @@ h3, h4 { overflow-wrap: anywhere; }
 }
 .pcard.ppt .ptag { color: var(--vision-ink); background: var(--tint-vision); }
 .pcard.hwp .ptag { color: var(--persimmon-ink); background: var(--tint-persimmon); }
+.pcard.xls .ptag { color: var(--ok-ink); background: var(--ok-bg); }
 .pcard h3 { font-family: var(--font-display); font-weight: 700; font-size: 1.3rem; letter-spacing: -0.01em; margin: 0 0 var(--s3); }
 .pcard p { margin: 0; color: var(--ink-soft); }
 .pcard .miss {
@@ -327,6 +331,29 @@ h3, h4 { overflow-wrap: anywhere; }
 }
 .chip-link:hover { border-color: var(--persimmon); text-decoration: none; }
 .chip-link svg { width: 14px; height: 14px; }
+
+/* hybrid strip — formats that use both lanes */
+.hybrid {
+  margin-top: var(--s5); padding: clamp(var(--s5), 2.5vw, var(--s6));
+  border: 1px dashed var(--line); border-radius: var(--radius); background: var(--paper-2);
+}
+.hybrid-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: var(--s5); }
+.hybrid-label { font-family: var(--font-display); font-weight: 700; font-size: 1.12rem; letter-spacing: -0.01em; margin: 0 0 var(--s5); }
+.hyb-tag {
+  display: inline-block; font-family: var(--font-mono); font-size: 0.74rem; font-weight: 700;
+  padding: var(--s1) var(--s3); border-radius: 999px; line-height: 1.5;
+  color: var(--ink); background: var(--card); border: 1px solid var(--line);
+}
+.hyb b { display: block; margin: var(--s3) 0 var(--s2); font-size: 1.02rem; }
+.hyb p { margin: 0; color: var(--ink-soft); font-size: 0.92rem; }
+.lanes { display: flex; gap: var(--s2); flex-wrap: wrap; margin-top: var(--s3); }
+.lanes span {
+  font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700;
+  padding: 4px var(--s2); border-radius: 6px; line-height: 1.4;
+}
+.lanes .v { color: var(--vision-ink); background: var(--tint-vision); }
+.lanes .h { color: var(--persimmon-ink); background: var(--tint-persimmon); }
+.lanes .k { color: var(--ok-ink); background: var(--ok-bg); }
 
 .converge {
   margin-top: var(--s5); display: flex; flex-direction: column; align-items: center; text-align: center;
@@ -409,6 +436,7 @@ figcaption { margin-top: var(--s3); font-size: 0.86rem; color: var(--ink-soft); 
 .via-mini { font-family: var(--font-mono); font-size: 0.8rem; }
 .via-mini.v { color: var(--vision-ink); }
 .via-mini.h { color: var(--persimmon-ink); }
+.via-mini.k { color: var(--ok-ink); }
 
 .pipeline { display: grid; gap: var(--s4); }
 .pstep { display: grid; grid-template-columns: 40px minmax(0,1fr); gap: var(--s4); align-items: start; }
@@ -424,6 +452,7 @@ figcaption { margin-top: var(--s3); font-size: 0.86rem; color: var(--ink-soft); 
 .pstep .split span { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; padding: 4px var(--s2); border-radius: 6px; line-height: 1.4; }
 .pstep .split .v { color: var(--vision-ink); background: var(--tint-vision); }
 .pstep .split .h { color: var(--persimmon-ink); background: var(--tint-persimmon); }
+.pstep .split .k { color: var(--ok-ink); background: var(--ok-bg); }
 
 /* ---------------- footer ---------------- */
 footer { background: var(--paper-2); border-top: 1px solid var(--line); padding-block: var(--s8) var(--s7); }
