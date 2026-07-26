@@ -3,13 +3,14 @@
 > **CrewMeal** = Copilot에게 제공하는 양질의 콘텐츠 → 부조종사(co-pilot)가 기내에서 먹는
 > 기내식 **Crew Meal**. Copilot이 잘 일하도록 먹여주는 잘 차려진 한 끼라는 뜻입니다.
 
-복잡한 사내 문서(`.pptx`·`.pdf`·`.hwp`·`.hwpx`)를 구조화된 검색 메타데이터로 강화해
-SharePoint 라이브러리의 검색용 일반 텍스트 컬럼 또는 Microsoft Graph 검색 커넥터
+복잡한 사내 문서(`.pptx`·`.pdf`·`.hwp`·`.hwpx`·`.docx`·`.docm`)를 구조화된 검색 메타데이터로
+강화해 SharePoint 라이브러리의 검색용 일반 텍스트 컬럼 또는 Microsoft Graph 검색 커넥터
 (Copilot Connector)의 `externalItem`으로 게시하는 워커입니다. 게시 방식은 관리자가
 선택하며 새 설치는 선택 전까지 어떤 대상에도 게시하지 않습니다.
 PPTX·PDF는 페이지 이미지와 원문 근거를 비전 LLM에 전달하고, HWP·HWPX는 rhwp
-RenderTree에서 본문·표·머리말·꼬리말·각주를 직접 추출합니다. 이미지·수식처럼 semantic
-payload가 없는 HWP 페이지만 선택적으로 렌더링·분석합니다. 분석 결과는 Connector용
+RenderTree에서, DOCX·DOCM은 OOXML에서 본문·표·머리말·꼬리말·각주를 직접 추출합니다.
+이미지·수식처럼 semantic payload가 없는 HWP·Word 페이지만 선택적으로 렌더링·분석합니다.
+분석 결과는 Connector용
 허용 태그 HTML과 SharePoint 컬럼용 Markdown으로 렌더링하며 원본 문서는 수정하지
 않습니다. 분석 모델은 관리 포털에서 교체할 수 있고,
 포맷별 지원과 암호화 복호화는 관리자 토글로 켜고 끕니다.
@@ -34,7 +35,7 @@ payload가 없는 HWP 페이지만 선택적으로 렌더링·분석합니다. �
 | PDF | ✅ 구현됨 | PyMuPDF 직접 렌더 · 페이지 텍스트 근거 · 암호화 PDF 라우팅 |
 | HWP/HWPX | ✅ 구현됨 | rhwp RenderTree semantic-first · visual-only 페이지만 native-skia PNG + Vision |
 | 게시 대상 선택 | ✅ 구현됨 | SharePoint 검색 컬럼 또는 Copilot Connector · 무중단 전환 상태 관리 |
-| DOCX | 🧩 구조만 | 핸들러 등록·감지, 추출 로직은 명확한 `NotImplemented` |
+| DOCX/DOCM | ✅ 구현됨 | OOXML semantic-first · LibreOffice PDF는 페이지 구분·렌더 수단 · 시각 요소와 복잡 표 페이지만 Vision |
 | XLSX | 🧩 구조만 | 핸들러 등록·감지, 셀/표 추출 예정 |
 | 모델 교체 | ✅ 구조 | 관리 포털에서 provider·배포·엔드포인트·reasoning 교체(env fallback) |
 | MIP 복호화 | ✅ 구현됨 | MIP/IRM 마커 감지 → MIP File SDK CLI(subprocess)로 위임 복호화. 무인 인증(RMS 슈퍼유저 app-only 토큰). 로컬·CI·데모용 레퍼런스 CLI 내장 (아래 「MIP 복호화」) |
@@ -60,12 +61,14 @@ payload가 없는 HWP 페이지만 선택적으로 렌더링·분석합니다. �
    평문으로 복원합니다. MIP 복호화는 MIP File SDK CLI로 위임합니다(「MIP 복호화」 참조).
    지문·포맷 감지·검증은 항상 평문을 대상으로 하므로 변경 감지가 올바르게 동작합니다.
 3. 포맷별 기준 근거를 추출합니다. PPTX/PDF는 원문과 페이지 이미지를, HWP/HWPX는 rhwp
-   RenderTree의 본문·표·머리말·꼬리말·각주를 사용합니다.
+   RenderTree의, DOCX/DOCM은 OOXML의 본문·표·머리말·꼬리말·각주를 사용합니다.
 4. HWP/HWPX에서 이미지·수식 등 semantic payload가 없는 페이지에 한해서만 rhwp
-   native-skia PNG를 생성합니다.
+   native-skia PNG를 생성합니다. DOCX/DOCM은 LibreOffice PDF를 **페이지 구분과 렌더 수단으로만**
+   사용해 OOXML 블록을 페이지에 배정하고, 그림·도형·차트·수식이 있는 페이지와 병합·중첩
+   때문에 평탄화 손실이 우려되는 표가 있는 페이지의 PNG만 남깁니다.
 5. (PPTX) Open XML에서 간트 막대·연결선 같은 결정적 geometry 근거를 계산합니다.
-6. PPTX/PDF 전체 페이지와 HWP/HWPX의 선택된 visual-only 페이지만 비전 LLM에 전달합니다.
-   HWP semantic 원문과 표는 모델 결과로 대체하지 않고 시각 설명만 병합합니다.
+6. PPTX/PDF 전체 페이지와 HWP/HWPX·DOCX/DOCM의 선택된 visual 페이지만 비전 LLM에 전달합니다.
+   HWP·Word semantic 원문과 표는 모델 결과로 대체하지 않고 시각 설명만 병합합니다.
 7. 응답을 Connector용 허용 태그 HTML 또는 SharePoint 컬럼용 Markdown으로 렌더링해
    관리자가 선택한 대상에 게시합니다.
 
@@ -413,7 +416,7 @@ python -m crewmeal.search_enhancement.rhwp_render_validation report
   - `/admin/documents`, `/admin/documents/{token}` — 문서 목록·상세, 문서별 rerun/remove·job retry
   - `/admin/settings` — 런타임 설정 조회·수정
   - `/admin/feedback`, `/admin/feedback/export.jsonl` — 튜닝 코멘트 코퍼스 열람·내보내기
-  - `/admin/tryout` — 지원 문서(PPTX·PDF·HWP·HWPX)를 직접 업로드해 파이프라인을 시험하는 플레이그라운드
+  - `/admin/tryout` — 지원 문서(PPTX·PDF·HWP·HWPX·DOCX·DOCM)를 직접 업로드해 파이프라인을 시험하는 플레이그라운드
 
 상태 페이지·관리자의 comment 재작업이 남긴 튜닝 코멘트는 피드백 코퍼스로 축적되며
 `/admin/feedback/export.jsonl`로 내보내 본체 분석 프롬프트·엔진 개선에 활용합니다.
@@ -478,7 +481,8 @@ Markdown으로 각각 저장했습니다. 고유 canary는 두 포맷 모두 검
 - 검색 콘텐츠 site column 내부 이름: `CrewmealSearchContent`
 
 워커는 지원 문서를 임시 폴더에만 다운로드합니다. PPTX·PDF는 144 DPI 페이지 이미지와
-원문 근거를 구성된 이미지 분석 모델에 전달하고, HWP·HWPX는 rhwp semantic 근거를
+원문 근거를 구성된 이미지 분석 모델에 전달하고, HWP·HWPX는 rhwp semantic 근거를,
+DOCX·DOCM은 OOXML semantic 근거를
 우선 사용해 필요한 페이지만 Vision으로 보강합니다. 모델의 strict JSON Schema 응답과
 semantic 결과는 코드가 허용 태그 HTML로 렌더링합니다. 발표자 노트는 PPTX에서 별도
 섹션으로 추가하며 원본 문서, PDF, PNG, HTML 본문과 비밀 값은 SQLite에 저장하지 않습니다.

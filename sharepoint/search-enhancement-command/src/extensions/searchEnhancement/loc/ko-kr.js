@@ -7,7 +7,7 @@ define([], function() {
     "RemoveConfirmation": "Copilot 커넥터 검색 항목을 삭제할까요?",
     "EnhanceQueued": "검색강화 요청이 등록되었습니다.",
     "RemoveQueued": "검색강화 삭제 요청이 등록되었습니다.",
-    "InvalidSelection": "PowerPoint 파일 한 개만 선택하세요.",
+    "InvalidSelection": "지원하는 문서 파일 한 개만 선택하세요.",
     "LibraryUnavailable": "현재 문서 라이브러리를 확인할 수 없습니다.",
     "UpdateFailed": "검색강화 요청을 저장하지 못했습니다."
   };

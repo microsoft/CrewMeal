@@ -57,7 +57,7 @@ interface IIngestResponseBody {
   jobType: string;
 }
 
-interface ISelectedPowerPoint {
+interface ISelectedDocument {
   itemId: number;
   fileName: string;
   status: SearchStatus;
@@ -95,7 +95,7 @@ export default class SearchEnhancementCommandSet extends BaseListViewCommandSet<
   private _onListViewStateChanged = (
     _args: ListViewStateChangedEventArgs
   ): void => {
-    const selection: ISelectedPowerPoint | undefined = this._selectedPowerPoint();
+    const selection: ISelectedDocument | undefined = this._selectedDocument();
     const canEdit: boolean =
       !this._executing &&
       this.context.pageContext.list?.permissions.hasPermission(
@@ -111,7 +111,7 @@ export default class SearchEnhancementCommandSet extends BaseListViewCommandSet<
   };
 
   private async _executeEnhance(): Promise<void> {
-    const selection: ISelectedPowerPoint | undefined = this._selectedPowerPoint();
+    const selection: ISelectedDocument | undefined = this._selectedDocument();
     if (!selection) {
       await Dialog.alert(strings.InvalidSelection);
       return;
@@ -127,7 +127,7 @@ export default class SearchEnhancementCommandSet extends BaseListViewCommandSet<
   }
 
   private async _executeRemove(): Promise<void> {
-    const selection: ISelectedPowerPoint | undefined = this._selectedPowerPoint();
+    const selection: ISelectedDocument | undefined = this._selectedDocument();
     if (!selection) {
       await Dialog.alert(strings.InvalidSelection);
       return;
@@ -143,7 +143,7 @@ export default class SearchEnhancementCommandSet extends BaseListViewCommandSet<
   }
 
   private async _submitCommand(
-    selection: ISelectedPowerPoint,
+    selection: ISelectedDocument,
     command: SearchEnhancementCommand,
     queuedStatus: SearchStatus
   ): Promise<void> {
@@ -185,7 +185,7 @@ export default class SearchEnhancementCommandSet extends BaseListViewCommandSet<
   }
 
   private async _enqueueRequest(
-    selection: ISelectedPowerPoint,
+    selection: ISelectedDocument,
     command: SearchEnhancementCommand,
     requestId: string
   ): Promise<IIngestResponseBody> {
@@ -288,7 +288,7 @@ export default class SearchEnhancementCommandSet extends BaseListViewCommandSet<
     return (this.properties.apiResource || DEFAULT_API_RESOURCE).trim();
   }
 
-  private _selectedPowerPoint(): ISelectedPowerPoint | undefined {
+  private _selectedDocument(): ISelectedDocument | undefined {
     const rows: readonly RowAccessor[] | undefined =
       this.context.listView.selectedRows;
     if (!rows || rows.length !== 1) {
@@ -317,8 +317,8 @@ export default class SearchEnhancementCommandSet extends BaseListViewCommandSet<
     if (enhanceCommand) {
       enhanceCommand.visible = enhance;
       enhanceCommand.title =
-        this._selectedPowerPoint()?.status === 'Failed' ||
-        this._selectedPowerPoint()?.status === 'Stale'
+        this._selectedDocument()?.status === 'Failed' ||
+        this._selectedDocument()?.status === 'Stale'
           ? strings.RetryCommand
           : strings.EnhanceCommand;
     }

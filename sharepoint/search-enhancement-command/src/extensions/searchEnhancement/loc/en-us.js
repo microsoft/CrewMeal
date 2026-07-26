@@ -7,7 +7,7 @@ define([], function() {
     "RemoveConfirmation": "Delete the Copilot connector search item?",
     "EnhanceQueued": "The search-enhancement request is queued.",
     "RemoveQueued": "The removal request is queued.",
-    "InvalidSelection": "Select exactly one PowerPoint file.",
+    "InvalidSelection": "Select exactly one supported document.",
     "LibraryUnavailable": "The current document library is unavailable.",
     "UpdateFailed": "Could not update the search-enhancement request."
   };

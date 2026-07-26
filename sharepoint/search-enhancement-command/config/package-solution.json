@@ -16,10 +16,10 @@
     },
     "metadata": {
       "shortDescription": {
-        "default": "Opt-in Copilot search enhancement for SharePoint PowerPoint files"
+        "default": "Opt-in Copilot search enhancement for SharePoint documents"
       },
       "longDescription": {
-        "default": "Queues selected PowerPoint files for structured Copilot connector indexing without changing the source file."
+        "default": "Queues selected documents for structured Copilot connector indexing without changing the source file."
       },
       "screenshotPaths": [],
       "videoUrl": "",
