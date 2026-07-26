@@ -28,19 +28,20 @@ from dataclasses import dataclass, field
 
 from defusedxml import ElementTree
 
-from crewmeal.search_enhancement.models import (
-    ChartDataPoint,
-    ContentChart,
-    ContentTable,
+from crewmeal.search_enhancement.models import ContentChart, ContentTable
+from crewmeal.search_enhancement.ooxml import (
+    CHART_NS,
+    DRAWING_NS,
+    OFFICE_REL_NS,
+    RELATIONSHIPS_NS,
+    TableComplexity,
+    chart_content,
+    local_name as _local_name,
+    normalize_space as _normalize_space,
+    search_key as _search_key,
 )
 
 WORD_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
-RELATIONSHIPS_NS = "http://schemas.openxmlformats.org/package/2006/relationships"
-OFFICE_REL_NS = (
-    "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
-)
-DRAWING_NS = "http://schemas.openxmlformats.org/drawingml/2006/main"
-CHART_NS = "http://schemas.openxmlformats.org/drawingml/2006/chart"
 EXTENDED_PROPS_NS = (
     "http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"
 )
@@ -53,6 +54,18 @@ NS = {
     "pr": RELATIONSHIPS_NS,
     "ep": EXTENDED_PROPS_NS,
 }
+
+__all__ = [
+    "DocxBlock",
+    "DocxExtraction",
+    "DocxSemanticError",
+    "MAX_TABLE_CELLS",
+    "TableComplexity",
+    "align_blocks_to_pages",
+    "extract_docx",
+    "split_blocks_by_breaks",
+    "visual_warnings",
+]
 
 DOCUMENT_PART = "word/document.xml"
 
@@ -78,45 +91,6 @@ _VISUAL_LABELS = {
 
 class DocxSemanticError(ValueError):
     """Raised when a Word package cannot be normalized safely."""
-
-
-@dataclass(frozen=True, slots=True)
-class TableComplexity:
-    """Why a normalized table may not faithfully represent the original.
-
-    Any non-empty signal set promotes the table's page to visual analysis: the
-    flattened grid is still published (it is searchable text), but the Vision
-    model also reads the rendered table so merged/nested structure is recovered.
-    """
-
-    nested: bool = False
-    vertical_merge: bool = False
-    horizontal_merge: bool = False
-    multi_row_header: bool = False
-    ragged_rows: bool = False
-
-    @property
-    def is_complex(self) -> bool:
-        return (
-            self.nested
-            or self.vertical_merge
-            or self.multi_row_header
-            or self.ragged_rows
-        )
-
-    def reasons(self) -> tuple[str, ...]:
-        values: list[str] = []
-        if self.nested:
-            values.append("중첩 표")
-        if self.vertical_merge:
-            values.append("세로 병합")
-        if self.horizontal_merge:
-            values.append("가로 병합")
-        if self.multi_row_header:
-            values.append("다단 머리글")
-        if self.ragged_rows:
-            values.append("행별 열 수 불일치")
-        return tuple(values)
 
 
 @dataclass(frozen=True, slots=True)
@@ -604,52 +578,7 @@ def _paragraph_chart(
         chart_root = _read_xml(package, part)
     except DocxSemanticError:
         return None
-    return _chart_content(chart_root)
-
-
-def _chart_content(chart_root: ElementTree.Element) -> ContentChart | None:
-    title = _normalize_space(
-        " ".join(
-            text
-            for element in chart_root.findall(".//c:title//a:t", NS)
-            if (text := (element.text or "").strip())
-        )
-    )
-    data_points: list[ChartDataPoint] = []
-    for series in chart_root.findall(".//c:ser", NS):
-        series_name = _normalize_space(
-            " ".join(
-                text
-                for element in series.findall("c:tx//c:v", NS)
-                if (text := (element.text or "").strip())
-            )
-        )
-        categories = [
-            text
-            for element in series.findall("c:cat//c:pt/c:v", NS)
-            if (text := (element.text or "").strip())
-        ]
-        values = [
-            text
-            for element in series.findall("c:val//c:pt/c:v", NS)
-            if (text := (element.text or "").strip())
-        ]
-        for position, value in enumerate(values):
-            label = (
-                categories[position]
-                if position < len(categories)
-                else f"항목 {position + 1}"
-            )
-            data_points.append(
-                ChartDataPoint(series=series_name, label=label, value=value)
-            )
-    if not data_points:
-        return None
-    return ContentChart(
-        title=title or "차트",
-        data_points=tuple(data_points),
-        insights=(),
-    )
+    return chart_content(chart_root)
 
 
 def _part_lines(
@@ -935,17 +864,3 @@ def _resolve_part(source_part: str, target: str) -> str:
     return posixpath.normpath(
         posixpath.join(posixpath.dirname(source_part), target)
     )
-
-
-def _local_name(tag: str) -> str:
-    return tag.rsplit("}", 1)[-1]
-
-
-def _normalize_space(value: str) -> str:
-    return re.sub(r"\s+", " ", value).strip()
-
-
-def _search_key(value: str) -> str:
-    """Collapse text to a comparison key that survives layout differences."""
-
-    return re.sub(r"\s+", "", value).casefold()

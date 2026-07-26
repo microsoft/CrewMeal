@@ -637,7 +637,7 @@ cd $HOME\CrewMeal
 | PDF | ✅ | 없음 |
 | HWP / HWPX | ✅ | 서버 이미지에 rhwp 0.7.19 포함 |
 | DOCX / DOCM | ✅ | 서버 이미지에 LibreOffice 포함 |
-| XLSX | 🧩 구조만 | 아직 켤 수 없음 |
+| XLSX / XLSM | ✅ | 서버 이미지에 LibreOffice 포함 |
 
 ### C-7. SharePoint 명령(SPFx) 배포
 

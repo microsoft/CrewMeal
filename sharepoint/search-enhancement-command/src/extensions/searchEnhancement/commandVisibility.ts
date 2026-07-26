@@ -29,7 +29,9 @@ export const SUPPORTED_EXTENSIONS: string[] = [
   '.hwp',
   '.hwpx',
   '.docx',
-  '.docm'
+  '.docm',
+  '.xlsx',
+  '.xlsm'
 ];
 
 export function isSupportedFile(fileName: string | undefined): boolean {

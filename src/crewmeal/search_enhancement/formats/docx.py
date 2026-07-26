@@ -28,13 +28,12 @@ from collections import Counter
 from dataclasses import replace
 from pathlib import Path
 
-import fitz
-
 from crewmeal.config import AppConfig
 from crewmeal.libreoffice import (
     LibreOfficeConversionError,
     convert_document_to_pdf,
     inspect_pdf,
+    pages_with_rendered_visuals as _pages_with_rendered_visuals,
 )
 from crewmeal.models import RendererManifest, SourceManifest
 from crewmeal.search_enhancement.docx_semantic import (
@@ -70,10 +69,6 @@ _ZIP_MAGIC = b"PK\x03\x04"
 #: Password-protected Office files are OLE2 compound documents wrapping the
 #: encrypted OOXML package, not ZIPs.
 _OLE2_MAGIC = b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1"
-
-#: Vector drawings below this count are page furniture (rules, table borders,
-#: underlines) rather than real diagrams, so they must not force a Vision call.
-_MIN_MEANINGFUL_DRAWINGS = 12
 
 
 class DocxHandler:
@@ -467,30 +462,3 @@ class DocxHandler:
             },
             notes_by_slide={},
         )
-
-
-def _pages_with_rendered_visuals(pdf_path: Path) -> set[int]:
-    """Pages whose rendering contains raster images or substantial vectors.
-
-    LibreOffice flattens SmartArt, grouped shapes and some equations into vector
-    drawings with no OOXML anchor we can map back, so the rendered PDF is the
-    only reliable signal for them. Trivial drawing counts are ignored so table
-    borders and paragraph rules do not force needless Vision calls.
-    """
-
-    pages: set[int] = set()
-    try:
-        document = fitz.open(pdf_path)
-    except (fitz.FileDataError, RuntimeError):
-        return pages
-    with document:
-        for page_index, page in enumerate(document, start=1):
-            try:
-                if page.get_images():
-                    pages.add(page_index)
-                    continue
-                if len(page.get_drawings()) >= _MIN_MEANINGFUL_DRAWINGS:
-                    pages.add(page_index)
-            except (RuntimeError, ValueError):
-                continue
-    return pages

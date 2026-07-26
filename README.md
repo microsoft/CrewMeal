@@ -36,7 +36,7 @@ RenderTree에서, DOCX·DOCM은 OOXML에서 본문·표·머리말·꼬리말·�
 | HWP/HWPX | ✅ 구현됨 | rhwp RenderTree semantic-first · visual-only 페이지만 native-skia PNG + Vision |
 | 게시 대상 선택 | ✅ 구현됨 | SharePoint 검색 컬럼 또는 Copilot Connector · 무중단 전환 상태 관리 |
 | DOCX/DOCM | ✅ 구현됨 | OOXML semantic-first · LibreOffice PDF는 페이지 구분·렌더 수단 · 시각 요소와 복잡 표 페이지만 Vision |
-| XLSX | 🧩 구조만 | 핸들러 등록·감지, 셀/표 추출 예정 |
+| XLSX/XLSM | ✅ 구현됨 | 시트별 문서형/데이터형 자동 판별 · 문서형은 렌더+복잡 표 Vision · 데이터형은 스키마·샘플 요약(렌더·Vision 없음) |
 | 모델 교체 | ✅ 구조 | 관리 포털에서 provider·배포·엔드포인트·reasoning 교체(env fallback) |
 | MIP 복호화 | ✅ 구현됨 | MIP/IRM 마커 감지 → MIP File SDK CLI(subprocess)로 위임 복호화. 무인 인증(RMS 슈퍼유저 app-only 토큰). 로컬·CI·데모용 레퍼런스 CLI 내장 (아래 「MIP 복호화」) |
 | 기타 복호화 | 🧩 구조·토글 | 배포별 암호화 솔루션용 복호화 파이프라인 훅 |
@@ -62,13 +62,18 @@ RenderTree에서, DOCX·DOCM은 OOXML에서 본문·표·머리말·꼬리말·�
    지문·포맷 감지·검증은 항상 평문을 대상으로 하므로 변경 감지가 올바르게 동작합니다.
 3. 포맷별 기준 근거를 추출합니다. PPTX/PDF는 원문과 페이지 이미지를, HWP/HWPX는 rhwp
    RenderTree의, DOCX/DOCM은 OOXML의 본문·표·머리말·꼬리말·각주를 사용합니다.
+   XLSX/XLSM은 **시트마다** 문서형(견적서·정산서 등 인쇄를 전제로 그린 양식)인지
+   데이터형(대장·원장 등 raw dump)인지 판별해 서로 다르게 처리합니다.
 4. HWP/HWPX에서 이미지·수식 등 semantic payload가 없는 페이지에 한해서만 rhwp
    native-skia PNG를 생성합니다. DOCX/DOCM은 LibreOffice PDF를 **페이지 구분과 렌더 수단으로만**
    사용해 OOXML 블록을 페이지에 배정하고, 그림·도형·차트·수식이 있는 페이지와 병합·중첩
    때문에 평탄화 손실이 우려되는 표가 있는 페이지의 PNG만 남깁니다.
+   XLSX/XLSM은 변환 전에 데이터형 시트를 통합문서 사본에서 숨겨 렌더 대상에서 제외하므로
+   원장 시트가 수백 페이지로 번지지 않고 soffice 호출도 1회로 끝납니다.
 5. (PPTX) Open XML에서 간트 막대·연결선 같은 결정적 geometry 근거를 계산합니다.
-6. PPTX/PDF 전체 페이지와 HWP/HWPX·DOCX/DOCM의 선택된 visual 페이지만 비전 LLM에 전달합니다.
-   HWP·Word semantic 원문과 표는 모델 결과로 대체하지 않고 시각 설명만 병합합니다.
+6. PPTX/PDF 전체 페이지와 HWP/HWPX·DOCX/DOCM·XLSX/XLSM의 선택된 visual 페이지만 비전 LLM에
+   전달합니다. HWP·Word·Excel semantic 원문과 표는 모델 결과로 대체하지 않고 시각 설명만
+   병합합니다.
 7. 응답을 Connector용 허용 태그 HTML 또는 SharePoint 컬럼용 Markdown으로 렌더링해
    관리자가 선택한 대상에 게시합니다.
 
@@ -81,6 +86,29 @@ RenderTree에서, DOCX·DOCM은 OOXML에서 본문·표·머리말·꼬리말·�
 > 하나입니다. 배포된 PoC는 Storage·Key Vault 공개 접근이 구독 정책으로 강제 차단되어
 > `database` 저장소와 Container App 인라인 시크릿을 사용합니다. 로컬 워커와 단위
 > 테스트는 계속 SQLite와 로컬 파일을 사용합니다.
+
+## Excel 시트 판별 (XLSX/XLSM)
+
+Excel은 앞선 포맷과 성격이 다릅니다. SharePoint 검색 컬럼은 63,999자가 상한이라
+1만 행 시트 하나도 담기지 않고, SharePoint가 이미 셀 텍스트를 네이티브 인덱싱하므로
+단순 전사는 가치가 없습니다. 그래서 **전사가 아니라 요약**을 목표로 하고, 한국 기업
+통합문서에서 양식 시트와 원장 시트가 한 파일에 섞이는 패턴에 맞춰 **시트 단위**로
+갈래를 나눕니다.
+
+| | 문서형 (견적서·정산서·품의서) | 데이터형 (대장·원장·raw dump) |
+| --- | --- | --- |
+| 판별 신호 | 인쇄 영역 지정, 병합 셀 비율, 사용 범위가 작음 | 행 수가 많음, ListObject/AutoFilter/피벗, 열 타입이 동질적 |
+| 렌더링 | LibreOffice Calc PDF | 없음 (변환 전에 숨김) |
+| 산출 | 렌더된 페이지 수만큼 유닛 · 본문 + 정규화된 표 | 요약 유닛 1개 · 스키마 + 상위 행 샘플 |
+| Vision | 복잡한 표가 있는 페이지만 | 호출 안 함 |
+
+판별은 단일 신호가 아니라 가중 점수이며, **애매하면 데이터형으로 기웁니다**. 원장을
+양식으로 잘못 읽는 쪽이 훨씬 비싸기 때문입니다(수백 페이지 렌더 + Vision 호출).
+판별 결과와 근거는 유닛 경고로 노출되므로 오탐을 추적할 수 있습니다.
+
+날짜는 엑셀이 일련번호로 저장하므로 `xl/styles.xml`의 서식을 해석해 ISO 날짜로
+변환합니다(1900 윤년 버그와 `date1904` 통합문서 포함). 하지 않으면 검색 결과에
+`45678` 같은 숫자만 남습니다.
 
 ## MIP 복호화 (Microsoft Purview 정보 보호)
 

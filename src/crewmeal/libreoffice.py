@@ -188,3 +188,36 @@ def inspect_pdf(
             page_images=page_images,
             render_dpi=render_dpi,
         )
+
+
+#: Vector drawings below this count are page furniture (rules, table borders,
+#: cell gridlines) rather than real diagrams, so they must not force a Vision
+#: call.
+_MIN_MEANINGFUL_DRAWINGS = 12
+
+
+def pages_with_rendered_visuals(pdf_path: Path) -> set[int]:
+    """Pages whose rendering contains raster images or substantial vectors.
+
+    LibreOffice flattens SmartArt, grouped shapes, charts and some equations
+    into vector drawings with no source anchor we can map back, so the rendered
+    PDF is the only reliable signal for them. Trivial drawing counts are ignored
+    so table borders and cell gridlines do not force needless Vision calls.
+    """
+
+    pages: set[int] = set()
+    try:
+        document = fitz.open(pdf_path)
+    except (fitz.FileDataError, RuntimeError):
+        return pages
+    with document:
+        for page_index, page in enumerate(document, start=1):
+            try:
+                if page.get_images():
+                    pages.add(page_index)
+                    continue
+                if len(page.get_drawings()) >= _MIN_MEANINGFUL_DRAWINGS:
+                    pages.add(page_index)
+            except (RuntimeError, ValueError):
+                continue
+    return pages

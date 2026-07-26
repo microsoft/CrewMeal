@@ -31,6 +31,8 @@ test('offers the commands for every format the worker supports', () => {
   assert.ok(SUPPORTED_EXTENSIONS.includes('.docx'));
   assert.ok(SUPPORTED_EXTENSIONS.includes('.pdf'));
   assert.ok(SUPPORTED_EXTENSIONS.includes('.hwp'));
+  assert.ok(SUPPORTED_EXTENSIONS.includes('.xlsx'));
+  assert.ok(SUPPORTED_EXTENSIONS.includes('.xlsm'));
 });
 
 test('matches extensions case-insensitively', () => {
