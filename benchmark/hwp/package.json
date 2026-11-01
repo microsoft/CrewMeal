@@ -4,6 +4,6 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "kordoc": "4.2.3"
+    "kordoc": "4.24.36"
   }
 }
